@@ -1,0 +1,7 @@
+# Auto Claude data directory
+.auto-claude/
+claudecodeui/
+claude-code-webui/
+/_*
+/.next
+/node_modules

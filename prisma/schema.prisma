@@ -1,0 +1,321 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// User model for authentication - compatible with Auth.js v5
+model User {
+  id                    String    @id @default(uuid())
+  name                  String?
+  email                 String    @unique
+  emailVerified         DateTime? @map("email_verified")
+  password              String?   @db.Text // For email/password authentication
+  image                 String?
+  pendingEmail          String?   @db.Text @map("pending_email") // For email change
+  pendingEmailToken     String?   @db.Text @map("pending_email_token") // Email change verification token
+  pendingEmailExpires   DateTime? @map("pending_email_expires") // Email change token expires
+  subscriptionLevel     String    @default("FREE") @map("subscription_level") // FREE, PRO, ENTERPRISE
+  subscriptionStartDate DateTime? @map("subscription_start_date")
+  subscriptionEndDate   DateTime? @map("subscription_end_date")
+  subscriptionId        String?   @map("subscription_id") // External payment provider ID
+  usageMetrics          Json?     @map("usage_metrics") // { skills: int, businessModels: int, apiCalls: int }
+  tenantId              String?   @map("tenant_id")    // Tenant membership
+  tenantRole            String?   @map("tenant_role")  // ADMIN, MEMBER, VIEWER
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  accounts            Account[]
+  sessions            Session[]
+  skills              Skill[]
+  claudeConversations ClaudeConversation[]
+  settings            UserSettings?
+  subscriptions       Subscription[]
+  invoices            Invoice[]
+  tenant              Tenant?   @relation(fields: [tenantId], references: [id])
+  auditLogs           TenantAuditLog[]
+  privacySettings     UserPrivacySettings?
+  shareTokens         ShareToken[]
+
+  @@map("users")
+}
+
+// Auth.js v5 required models
+model Account {
+  id                String  @id @default(uuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// Core application models
+model Skill {
+  id          String   @id @default(uuid())
+  title       String
+  description String?  @db.Text
+  content     String   @db.LongText
+  tags        Json? // Array of tags
+  category    String?
+  difficulty  String?  @default("beginner") // beginner, intermediate, advanced
+  userId      String   @map("user_id")
+  isPublic    Boolean  @default(false) @map("is_public")
+  filePath    String?  @map("file_path") // Path to skill file on filesystem
+  metadata    Json? // Additional metadata
+  tenantId    String?  @map("tenant_id") // For tenant isolation
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant              Tenant?              @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  claudeConversations ClaudeConversation[]
+
+  @@map("skills")
+}
+
+model ClaudeConversation {
+  id        String   @id @default(uuid())
+  title     String?
+  userId    String   @map("user_id")
+  skillId   String?  @map("skill_id")
+  sessionId String?  @map("session_id") // Claude Agent SDK session ID
+  messages  Json // Array of conversation messages
+  metadata  Json? // Claude session metadata
+  status    String   @default("active") // active, completed, aborted
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill Skill? @relation(fields: [skillId], references: [id], onDelete: SetNull)
+
+  @@map("claude_conversations")
+}
+
+// Skill marketplace and templates
+model SkillTemplate {
+  id            String   @id @default(uuid())
+  title         String
+  description   String?  @db.Text
+  content       String   @db.LongText
+  tags          Json?
+  category      String
+  difficulty    String   @default("beginner")
+  isOfficial    Boolean  @default(false) @map("is_official")
+  filePath      String   @map("file_path")
+  metadata      Json?
+  downloadCount Int      @default(0) @map("download_count")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("skill_templates")
+}
+
+// User preferences and settings
+model UserSettings {
+  id                 String  @id @default(uuid())
+  userId             String  @unique @map("user_id")
+  theme              String  @default("system") // light, dark, system
+  language           String  @default("zh-CN")
+  notifications      Json? // Notification preferences
+  claudePreferences  Json? // Claude integration preferences
+  autoExpandTools    Boolean @default(false) @map("auto_expand_tools")
+  showRawParameters  Boolean @default(false) @map("show_raw_parameters")
+  showThinking       Boolean @default(true) @map("show_thinking")
+  autoScrollToBottom Boolean @default(true) @map("auto_scroll_to_bottom")
+  sendByCtrlEnter    Boolean @default(false) @map("send_by_ctrl_enter")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
+}
+
+// Subscription tracking model
+model Subscription {
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  level          String   // FREE, PRO, ENTERPRISE
+  startDate      DateTime @map("start_date")
+  endDate        DateTime? @map("end_date")
+  status         String   @default("active") // active, cancelled, expired, past_due
+  amount         Decimal  @db.Decimal(10, 2)
+  currency       String   @default("CNY")
+  billingCycle   String   @map("billing_cycle") // monthly, quarterly, yearly
+  externalId     String?  @map("external_id") // Payment provider subscription ID
+  metadata       Json?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+// Invoice/billing record model
+model Invoice {
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  subscriptionId String?  @map("subscription_id")
+  invoiceNumber  String   @unique @map("invoice_number")
+  amount         Decimal  @db.Decimal(10, 2)
+  currency       String   @default("CNY")
+  status         String   @default("pending") // pending, paid, failed, refunded
+  dueDate        DateTime @map("due_date")
+  paidAt         DateTime? @map("paid_at")
+  downloadUrl    String?  @map("download_url")
+  metadata       Json?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("invoices")
+}
+
+// Tenant model for enterprise multi-tenancy
+model Tenant {
+  id          String   @id @default(uuid())
+  name        String
+  description String?  @db.Text
+  settings    Json     @map("settings") // { branding, features, quotas }
+  plan        String   @default("TEAM") // TEAM, ENTERPRISE
+  maxMembers  Int      @default(10)
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  members     User[]
+  skills      Skill[]
+  invitations TenantInvitation[]
+  auditLogs   TenantAuditLog[]
+
+  @@map("tenants")
+}
+
+// Tenant invitation model
+model TenantInvitation {
+  id         String   @id @default(uuid())
+  tenantId   String   @map("tenant_id")
+  email      String
+  role       String   // ADMIN, MEMBER, VIEWER
+  token      String   @unique // Invitation token
+  expiresAt  DateTime @map("expires_at")
+  acceptedAt DateTime? @map("accepted_at")
+  status     String   @default("pending") // pending, accepted, expired, cancelled
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("tenant_invitations")
+}
+
+// Tenant audit log model
+model TenantAuditLog {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  userId    String   @map("user_id")
+  action    String   // CREATED, MEMBER_ADDED, MEMBER_REMOVED, ROLE_CHANGED, etc.
+  details   Json?
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("tenant_audit_logs")
+  @@index([tenantId, createdAt])
+}
+
+// Privacy settings model
+model UserPrivacySettings {
+  id                        String  @id @default(uuid())
+  userId                    String  @unique @map("user_id")
+  allowPublicProfile        Boolean @default(true) @map("allow_public_profile")
+  allowSearchIndexing       Boolean @default(true) @map("allow_search_indexing")
+  showEmail                 Boolean @default(false) @map("show_email")
+  showRealName              Boolean @default(true) @map("show_real_name")
+  thirdPartyDataSharing     Boolean @default(false) @map("third_party_data_sharing")
+  marketingEmails           Boolean @default(false) @map("marketing_emails")
+  analyticsEnabled          Boolean @default(true) @map("analytics_enabled")
+  defaultSkillVisibility    String  @default("private") @map("default_skill_visibility")
+  createdAt                 DateTime @default(now()) @map("created_at")
+  updatedAt                 DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_privacy_settings")
+}
+
+// Share token model for sharing content
+model ShareToken {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  contentId  String   @map("content_id")
+  contentType String @map("content_type") // 'skill' | 'businessModel'
+  token      String   @unique
+  expiresAt  DateTime? @map("expires_at")
+  accessCount Int     @default(0) @map("access_count")
+  maxAccess  Int?     @map("max_access")
+  password   String?  @db.Text
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("share_tokens")
+  @@index([token])
+}
+
+// Content access log for shared content
+model ContentAccessLog {
+  id         String   @id @default(uuid())
+  contentId  String   @map("content_id")
+  contentType String @map("content_type")
+  shareToken String?  @map("share_token")
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  visitedAt  DateTime @default(now()) @map("visited_at")
+
+  @@map("content_access_logs")
+  @@index([contentId, visitedAt])
+  @@index([shareToken])
+}

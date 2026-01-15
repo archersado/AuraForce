@@ -77,3 +77,112 @@ export interface TranslationError {
   suggestions?: string[];
   partialCommand?: Command;
 }
+
+/**
+ * Stream state for pause/resume functionality
+ */
+export type StreamState = 'idle' | 'active' | 'paused' | 'completed' | 'error';
+
+/**
+ * WebSocket connection states
+ */
+export type ConnectionState =
+  | 'disconnected'
+  | 'connecting'
+  | 'connected'
+  | 'error'
+  | 'reconnecting';
+
+/**
+ * Stream event types for WebSocket communication
+ */
+export type StreamEvent =
+  | 'stream-start'
+  | 'stream-chunk'
+  | 'stream-end'
+  | 'stream-error'
+  | 'connection-state-change';
+
+/**
+ * Stream chunk data from server
+ */
+export interface StreamChunk {
+  content: string;
+  isComplete: boolean;
+  isCodeComplete?: boolean;
+}
+
+/**
+ * Stream start event
+ */
+export interface StreamStart {
+  messageId: string;
+  timestamp: Date;
+}
+
+/**
+ * Stream end event
+ */
+export interface StreamEnd {
+  messageId: string;
+  timestamp: Date;
+  finalContent: string;
+}
+
+/**
+ * Stream error event
+ */
+export interface StreamError {
+  messageId: string;
+  errorCode: string;
+  message: string;
+  retryable: boolean;
+}
+
+/**
+ * Connection state change event
+ */
+export interface ConnectionStateChange {
+  state: ConnectionState;
+  previousState?: ConnectionState;
+  reason?: string;
+}
+
+/**
+ * Reconnection configuration
+ */
+export interface ReconnectConfig {
+  maxAttempts: number;
+  initialDelay: number;
+  maxDelay: number;
+  backoffFactor: number;
+}
+
+/**
+ * WebSocket client interface
+ */
+export interface WebSocketClient {
+  connect(url: string): Promise<void>;
+  disconnect(): void;
+  send(data: string): void;
+  on(event: StreamEvent, callback: (data: unknown) => void): void;
+  off(event: StreamEvent, callback: (data: unknown) => void): void;
+  getState(): ConnectionState;
+  isConnected(): boolean;
+}
+
+/**
+ * Streaming message extension
+ * Matches Message interface type field
+ */
+export interface StreamingMessage {
+  id: string;
+  type: 'user' | 'assistant' | 'system' | 'error';
+  content: string;
+  timestamp: Date;
+  isStreaming: boolean;
+  streamBuffer: string;
+  streamStartTime?: Date;
+  lastChunkTime?: Date;
+  command?: Command;
+}

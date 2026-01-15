@@ -3,30 +3,43 @@
  *
  * Displays session information and action buttons.
  * Shows session status and provides controls for managing the session.
+ * Includes WebSocket connection status with latency display and manual reconnect (Story 3.7).
  */
 
 'use client';
 
 import { useClaudeStore, type Session } from '@/lib/store/claude-store';
-import { Plus, Settings, Clock, Play, Pause, Square } from 'lucide-react';
+import type { SessionStatus } from '@/types/session';
+import { Plus, Settings, Clock, Play, Pause, Square, MessageSquare, CheckCircle, XCircle } from 'lucide-react';
+import { ConnectionStatus } from './ConnectionStatus';
+import { useWebSocketControls } from '@/lib/claude/websocket-manager';
 
 interface ChatHeaderProps {
   onNewChat?: () => void;
   onSettings?: () => void;
+  onShowSessions?: () => void; // Story 3.6 - Show session list panel
+  sessionTitle?: string; // Story 3.4 - Session title for display
+  onReconnect?: () => void; // Story 3.7 - Manual reconnect callback
 }
 
-const statusConfig: Record<Session['status'], { icon: typeof Play; label: string; color: string }> = {
+const statusConfig: Record<SessionStatus, { icon: typeof Play; label: string; color: string }> = {
   active: { icon: Play, label: 'Active', color: 'text-green-600' },
-  paused: { icon: Pause, label: 'Paused', color: 'text-yellow-600' },
-  terminated: { icon: Square, label: 'Terminated', color: 'text-red-600' },
+  completed: { icon: CheckCircle, label: 'Completed', color: 'text-gray-500' },
+  aborted: { icon: XCircle, label: 'Aborted', color: 'text-red-600' },
 };
 
-export function ChatHeader({ onNewChat, onSettings }: ChatHeaderProps) {
+export function ChatHeader({ onNewChat, onSettings, onShowSessions, sessionTitle, onReconnect }: ChatHeaderProps) {
   const currentSession = useClaudeStore((state) => state.currentSession);
   const messages = useClaudeStore((state) => state.messages);
+  const {
+    latency,
+    reconnectAttempts,
+    maxReconnectAttempts,
+    reconnect,
+  } = useWebSocketControls();
 
   const session = currentSession;
-  const title = session?.title || 'New Chat';
+  const title = sessionTitle || session?.title || 'New Chat';
   const messageCount = messages.length;
   const timeString = session?.updatedAt
     ? new Date(session.updatedAt).toLocaleTimeString([], {
@@ -39,6 +52,12 @@ export function ChatHeader({ onNewChat, onSettings }: ChatHeaderProps) {
     ? statusConfig[session.status]
     : statusConfig.active;
   const StatusIcon = statusConfigData.icon;
+
+  // Handle manual reconnect
+  const handleReconnect = () => {
+    reconnect();
+    onReconnect?.();
+  };
 
   return (
     <div className="border-b border-gray-200 bg-white px-4 py-3">
@@ -71,12 +90,33 @@ export function ChatHeader({ onNewChat, onSettings }: ChatHeaderProps) {
 
         {/* Action buttons */}
         <div className="flex items-center gap-2 ml-4">
+          {/* Connection status indicator (Story 3.7 - WebSocket integration) */}
+          <ConnectionStatus
+            position="header"
+            compact
+            latency={latency}
+            reconnectAttempts={reconnectAttempts}
+            maxReconnectAttempts={maxReconnectAttempts}
+            onReconnect={handleReconnect}
+          />
+
+          {/* Sessions button (Story 3.6 - Multi-session panel) */}
+          <button
+            type="button"
+            onClick={onShowSessions}
+            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            aria-label="Show sessions"
+            title="Show sessions (⌘+⇧+S)"
+          >
+            <MessageSquare className="w-5 h-5" />
+          </button>
+
           <button
             type="button"
             onClick={onNewChat}
             className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
             aria-label="New chat"
-            title="New chat"
+            title="New chat (⌘+N)"
           >
             <Plus className="w-5 h-5" />
           </button>

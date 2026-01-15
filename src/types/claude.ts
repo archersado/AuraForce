@@ -257,7 +257,7 @@ export const DEFAULT_CLAUDE_CONFIG: Required<ClaudeClientConfig> = {
   maxTokens: 4096,
   timeout: 30000,
   maxRetries: 3,
-  dangerouslyAllowBrowser: false,
+  dangerouslyAllowBrowser: true,
 }
 
 export const DEFAULT_RETRY_CONFIG: RetryConfig = {

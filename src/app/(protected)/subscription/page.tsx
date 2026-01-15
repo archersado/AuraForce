@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { CurrentPlanCard, UsageDisplay } from '@/components/subscription/usage-display';
 import { PlanComparison } from '@/components/subscription/plan-comparison';
-import { PlanChangeForm } from '@/components/subscription/plan-change-form';
+import PlanChangeFormWrapper from '@/components/subscription/plan-change-form-wrapper';
 
 export const metadata: Metadata = {
   title: '订阅管理 - AuraForce',
@@ -49,11 +49,7 @@ export default function SubscriptionPage() {
             </div>
 
             <div className="p-6">
-              <PlanChangeForm
-                onSuccess={() => {
-                  window.location.reload();
-                }}
-              />
+              <PlanChangeFormWrapper />
             </div>
           </div>
         </div>

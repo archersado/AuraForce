@@ -6,7 +6,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -25,11 +25,8 @@ const verifySchema = z.object({
 
 type VerifyFormData = z.infer<typeof verifySchema>;
 
-export default function VerifyPage() {
+function VerifyForm({ defaultEmail }: { defaultEmail: string }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const defaultEmail = searchParams.get('email') || '';
-
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -263,5 +260,20 @@ export default function VerifyPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function VerifyPageWrapper() {
+  const searchParams = useSearchParams();
+  const defaultEmail = searchParams.get('email') || '';
+
+  return <VerifyForm defaultEmail={defaultEmail} />;
+}
+
+export default function VerifyPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="w-8 h-8 border-4 border-blue-300 border-t-blue-600 rounded-full animate-spin" /></div>}>
+      <VerifyPageWrapper />
+    </Suspense>
   );
 }

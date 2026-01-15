@@ -43,6 +43,8 @@ model User {
   auditLogs           TenantAuditLog[]
   privacySettings     UserPrivacySettings?
   shareTokens         ShareToken[]
+  workflowSpecs       WorkflowSpec[]
+  workspaceProjects   UserWorkspaceProject[]
 
   @@map("users")
 }
@@ -117,6 +119,7 @@ model ClaudeConversation {
   title     String?
   userId    String   @map("user_id")
   skillId   String?  @map("skill_id")
+  projectId String?  @map("project_id") // Project ID for session isolation
   sessionId String?  @map("session_id") // Claude Agent SDK session ID
   messages  Json // Array of conversation messages
   metadata  Json? // Claude session metadata
@@ -128,6 +131,8 @@ model ClaudeConversation {
   user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   skill Skill? @relation(fields: [skillId], references: [id], onDelete: SetNull)
 
+  @@index([userId])
+  @@index([userId, projectId])
   @@map("claude_conversations")
 }
 
@@ -318,4 +323,72 @@ model ContentAccessLog {
   @@map("content_access_logs")
   @@index([contentId, visitedAt])
   @@index([shareToken])
+}
+
+// Workflow specification model for BMAD workflow uploads
+model WorkflowSpec {
+  id             String   @id @default(uuid())
+  name           String   // From spec frontmatter
+  description    String?  @db.Text // From spec frontmatter
+  version        String?  @default("1.0.0") // From spec frontmatter
+  author         String?  // From spec frontmatter (default current user)
+  ccPath         String   @unique @map("cc_path") // Unique CC deployment path
+  ccPathVersion  Int      @default(1) @map("cc_path_version") // Path versioning for migrations
+  userId         String   @map("user_id")
+  status         String   @default("deployed") // deployed, error, syncing, out-of-sync
+  syncStatus     String   @default("synced") @map("sync_status") // synced, out-of-sync, missing, conflicted
+  metadata       Json?    // Additional metadata as JSON (tags, requires, resources, etc.)
+  contentHash    String?  @map("content_hash") // File content hash for sync verification
+  pathHistory    Json?    @map("path_history") // Previous paths for migration scenarios
+  lastSyncAt     DateTime @default(now()) @map("last_sync_at") // Last sync verification timestamp
+  deployedAt     DateTime @default(now()) @map("deployed_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dependencies WorkflowDependency[] @relation("SourceWorkflow")
+  dependents   WorkflowDependency[] @relation("TargetWorkflow")
+
+  @@index([userId])
+  @@index([ccPath])
+  @@index([syncStatus])
+  @@index([status, userId])
+  @@index([contentHash])
+  @@map("workflow_specs")
+}
+
+// Workflow dependency tracking model
+model WorkflowDependency {
+  id               String   @id @default(uuid())
+  sourceWorkflowId String   @map("source_workflow_id")
+  targetWorkflowId String   @map("target_workflow_id")
+  dependencyType   String   @map("dependency_type") // agent, workflow, resource
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  sourceWorkflow WorkflowSpec @relation("SourceWorkflow", fields: [sourceWorkflowId], references: [id], onDelete: Cascade)
+  targetWorkflow WorkflowSpec @relation("TargetWorkflow", fields: [targetWorkflowId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceWorkflowId, targetWorkflowId, dependencyType])
+  @@index([sourceWorkflowId])
+  @@index([targetWorkflowId])
+  @@map("workflow_dependencies")
+}
+
+// User workspace project model for managing user projects
+model UserWorkspaceProject {
+  id                   String   @id @default(uuid())
+  userId               String   @map("user_id")
+  name                 String   // Project name
+  path                 String   // File system path
+  description          String?  @db.Text
+  workflowTemplateId   String?  @map("workflow_template_id") // Template used to create project
+  lastOpenedAt         DateTime? @map("last_opened_at")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, name])
+  @@map("user_workspace_projects")
 }

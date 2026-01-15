@@ -15,6 +15,9 @@ import { TypingIndicator } from './TypingIndicator';
 export function MessageList() {
   const messages = useClaudeStore((state) => state.messages);
   const isStreaming = useClaudeStore((state) => state.isStreaming);
+  const activeStreamId = useClaudeStore((state) => state.activeStreamId);
+  const resolveInteractiveMessage = useClaudeStore((state) => state.resolveInteractiveMessage);
+  const respondToTool = useClaudeStore((state) => state.respondToTool);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when messages change
@@ -22,6 +25,10 @@ export function MessageList() {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
+    console.log('[MessageList] Messages updated, count:', messages.length);
+    messages.forEach((msg, i) => {
+      console.log(`  [${i}] ${msg.type}: "${msg.content.substring(0, 30)}..." (isStreaming: ${msg.isStreaming})`);
+    });
   }, [messages, isStreaming]);
 
   if (messages.length === 0) {
@@ -62,7 +69,13 @@ export function MessageList() {
     >
       <div className="max-w-4xl mx-auto space-y-4">
         {messages.map((message) => (
-          <MessageBubble key={message.id} message={message} />
+          <MessageBubble
+            key={message.id}
+            message={message}
+            onInteractiveResponse={resolveInteractiveMessage}
+            onToolResponse={respondToTool}
+            isStreamingBlocked={activeStreamId !== null}
+          />
         ))}
 
         {/* Show typing indicator when streaming */}

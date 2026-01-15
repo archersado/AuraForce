@@ -3,6 +3,7 @@
  *
  * Renders an individual message bubble with markdown support and syntax highlighting.
  * Supports user and assistant messages with different styling.
+ * System messages with toolUseData render as independent tool execution bubbles.
  */
 
 'use client';
@@ -12,10 +13,17 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { type Message } from '@/lib/store/claude-store';
+import { InteractiveMessage } from '@/components/claude/InteractiveMessage';
+import { ToolMessageBubble } from '@/components/claude/ToolMessageBubble';
+import { ToolUse, ToolUseInline } from '@/components/claude/ToolUse';
+import { ToolCall } from '@/components/claude/ToolCall';
+import { Message } from '@/lib/store/claude-store';
 
 interface MessageBubbleProps {
   message: Message;
+  onInteractiveResponse?: (messageId: string, response: unknown) => void;
+  onToolResponse?: (toolId: string, response: unknown) => void;
+  isStreamingBlocked?: boolean;  // Block interactive responses during streaming
 }
 
 const messageVariants = {
@@ -24,9 +32,26 @@ const messageVariants = {
   exit: { opacity: 0, y: -20 },
 };
 
-export function MessageBubble({ message }: MessageBubbleProps) {
-  const isUser = message.role === 'user';
-  const isAssistant = message.role === 'assistant';
+export function MessageBubble({ message, onInteractiveResponse, onToolResponse, isStreamingBlocked = false }: MessageBubbleProps) {
+  const isUser = message.type === 'user';
+  const isAssistant = message.type === 'assistant';
+  const isSystem = message.type === 'system';
+
+  // If this is a system message with tool use data, render as a tool message bubble
+  if (isSystem && message.toolUseData) {
+    return (
+      <motion.div
+        className="flex justify-start mb-3"
+        variants={messageVariants}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        transition={{ duration: 0.2 }}
+      >
+        <ToolMessageBubble toolUseData={message.toolUseData} />
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
@@ -49,7 +74,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
           }
         `}
         role="article"
-        aria-label={`${message.role} message`}
+        aria-label={`${message.type} message`}
       >
         {/* Message header with timestamp */}
         <div className="flex items-center gap-2 mb-1">
@@ -79,6 +104,10 @@ export function MessageBubble({ message }: MessageBubbleProps) {
               code({ className, children, ...props }: any) {
                 const match = /language-(\w+)/.exec(className || '');
                 const isInline = !match;
+
+                // During streaming, render code blocks as plain text until complete
+                // to prevent unnecessary syntax highlighting recalculations
+                const isStreamingAndIncomplete = message.isStreaming && !match;
 
                 return !isInline && match ? (
                   <div className="my-2 rounded-lg overflow-hidden bg-gray-900">
@@ -142,15 +171,45 @@ export function MessageBubble({ message }: MessageBubbleProps) {
           </ReactMarkdown>
         </div>
 
-        {/* Streaming indicator */}
+        {/* Tool executions */}
+        {message.toolExecutions && message.toolExecutions.length > 0 && (
+          <div className="mt-3 space-y-2">
+            {message.toolExecutions.map((toolExecution) => (
+              <ToolCall
+                key={toolExecution.toolId}
+                execution={toolExecution}
+                onToolResponse={onToolResponse}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Interactive message component (askuserquestions, confirm, etc.) */}
+        {message.interactive && !message.isStreaming && (
+          <div className={`mt-3 ${isUser ? 'self-end' : 'self-start'}`}>
+            <InteractiveMessage
+              message={message.interactive}
+              onResponse={(response) => {
+                if (onInteractiveResponse) {
+                  onInteractiveResponse(message.id, response);
+                }
+              }}
+              disabled={isStreamingBlocked}
+            />
+          </div>
+        )}
+
+        {/* Streaming indicator and cursor */}
         {message.isStreaming && (
-          <motion.span
-            className="inline-block ml-1"
-            animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 1, repeat: Infinity }}
-          >
-            ▊
-          </motion.span>
+          <div className="flex items-center gap-1">
+            <motion.span
+              className="inline-block"
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 1, repeat: Infinity }}
+            >
+              ▊
+            </motion.span>
+          </div>
         )}
       </div>
     </motion.div>

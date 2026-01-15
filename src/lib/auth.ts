@@ -14,6 +14,7 @@ import NextAuth from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import { prisma } from './prisma'
+import { hash } from 'bcryptjs'
 
 /**
  * AuthConfig for Auth.js v5
@@ -34,7 +35,6 @@ export const authConfig: NextAuthConfig = {
   },
   providers: [
     // Credentials provider for email/password authentication
-    // Note: Password hashing and validation will be implemented in Epic 2
     CredentialsProvider({
       name: 'credentials',
       credentials: {
@@ -42,21 +42,42 @@ export const authConfig: NextAuthConfig = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        // TODO AURA: Implement actual authentication in Epic 2 (Story 2.2)
-        // For now, this is a placeholder that accepts any credentials
-        // In production, this should validate against Prisma User model
         if (!credentials?.email) {
           return null
         }
 
-        // Placeholder implementation - will be replaced in Epic 2
+        const email = credentials.email as string
+        const password = credentials.password as string
+
+        // Find user by email
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string },
+          where: { email },
         })
 
-        // TODO AURA: Add bcryptjs password comparison in Epic 2
-        // For foundation setup, return null to require production implementation
-        return null
+        if (!user) {
+          return null
+        }
+
+        // Check if user has a password
+        if (!user.password) {
+          return null
+        }
+
+        // Verify password using bcryptjs
+        const { compare } = await import('bcryptjs')
+        const isPasswordValid = await compare(password, user.password)
+
+        if (!isPasswordValid) {
+          return null
+        }
+
+        // Return user object (without password)
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          image: user.image,
+        }
       },
     }),
   ],

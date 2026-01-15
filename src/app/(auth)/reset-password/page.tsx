@@ -1,11 +1,16 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
+import { Suspense } from 'react';
 import ResetPasswordForm from '@/components/auth/reset-password-form';
 
 export const metadata: Metadata = {
   title: '重置密码 - AuraForce',
   description: '重置您的 AuraForce 账户密码',
 };
+
+function ResetPasswordWrapper() {
+  return <ResetPasswordForm />;
+}
 
 export default function ResetPasswordPage() {
   return (
@@ -44,7 +49,9 @@ export default function ResetPasswordPage() {
 
         {/* Reset password card */}
         <div className="bg-white rounded-xl shadow-lg p-8">
-          <ResetPasswordForm />
+          <Suspense fallback={<div className="flex justify-center py-8"><div className="w-8 h-8 border-4 border-purple-300 border-t-purple-600 rounded-full animate-spin" /></div>}>
+            <ResetPasswordWrapper />
+          </Suspense>
         </div>
 
         {/* Security note */}

@@ -31,31 +31,70 @@ function createTransporter() {
   const smtpPass = process.env.SMTP_PASS;
   const smtpFrom = process.env.SMTP_FROM || 'noreply@auraforce.com';
 
+  console.log('[Email Service] SMTP Config:', {
+    host: smtpHost ? 'configured' : 'missing',
+    port: smtpPort,
+    user: smtpUser ? 'configured' : 'missing',
+    pass: smtpPass ? 'configured' : 'missing',
+  });
+
   if (!smtpHost || !smtpUser || !smtpPass) {
-    console.warn('SMTP not configured. Email sending is disabled.');
+    console.warn('[Email Service] SMTP not configured. Email sending is disabled.');
     return null;
   }
 
-  return nodemailer.createTransport({
-    host: smtpHost,
-    port: smtpPort,
-    secure: smtpPort === 465, // true for 465, false for other ports
-    auth: {
-      user: smtpUser,
-      pass: smtpPass,
-    },
-  });
+  // Remove spaces from app password if any
+  const cleanPass = smtpPass.replace(/\s+/g, '');
+
+  try {
+    const transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465, // true for 465, false for other ports
+      auth: {
+        user: smtpUser,
+        pass: cleanPass,
+      },
+      // Add TLS configuration
+      tls: {
+        rejectUnauthorized: false, // This may be needed for some SMTP servers
+      },
+    });
+
+    // Verify connection
+    transporter.verify(function (error, success) {
+      if (error) {
+        console.error('[Email Service] SMTP connection failed:', error.message);
+      } else {
+        console.log('[Email Service] SMTP server is ready to take our messages');
+      }
+    });
+
+    return transporter;
+  } catch (error) {
+    console.error('[Email Service] Failed to create transporter:', error);
+    return null;
+  }
+}
+
+let transporterInstance: any = null;
+
+function getTransporter() {
+  if (!transporterInstance) {
+    transporterInstance = createTransporter();
+  }
+  return transporterInstance;
 }
 
 /**
  * Send an email
  */
 export async function sendEmail({ to, subject, html }: EmailOptions): Promise<boolean> {
-  const transporter = createTransporter();
+  const transporter = getTransporter();
 
   if (!transporter) {
-    console.log('Email sending disabled. Would send to:', to, 'Subject:', subject);
-    console.log('Email content preview:', html.substring(0, 200) + '...');
+    console.log('[Email Service] Email sending disabled. Would send to:', to, 'Subject:', subject);
+    console.log('[Email Service] Email content preview:', html.substring(0, 200) + '...');
     return false;
   }
 
@@ -69,10 +108,17 @@ export async function sendEmail({ to, subject, html }: EmailOptions): Promise<bo
       html,
     });
 
-    console.log('Email sent successfully to:', to);
+    console.log('[Email Service] Email sent successfully to:', to);
     return true;
   } catch (error) {
-    console.error('Failed to send email:', error);
+    console.error('[Email Service] Failed to send email:', error);
+    if (error instanceof Error) {
+      console.error('[Email Service] Error details:', {
+        message: error.message,
+        code: (error as any).code,
+        command: (error as any).command,
+      });
+    }
     return false;
   }
 }

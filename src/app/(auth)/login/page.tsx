@@ -1,11 +1,16 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
+import { Suspense } from 'react';
 import LoginForm from '@/components/auth/login-form';
 
 export const metadata: Metadata = {
   title: '登录 - AuraForce',
   description: '登录 AuraForce 开始您的技能之旅',
 };
+
+function LoginFormWrapper() {
+  return <LoginForm />;
+}
 
 export default function LoginPage() {
   return (
@@ -37,7 +42,9 @@ export default function LoginPage() {
 
         {/* Login form card */}
         <div className="bg-white rounded-xl shadow-lg p-8">
-          <LoginForm />
+          <Suspense fallback={<div className="flex justify-center py-8"><div className="w-8 h-8 border-4 border-purple-300 border-t-purple-600 rounded-full animate-spin" /></div>}>
+            <LoginFormWrapper />
+          </Suspense>
         </div>
 
         {/* Back to home */}

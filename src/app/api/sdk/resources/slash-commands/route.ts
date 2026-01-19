@@ -7,9 +7,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@anthropic-ai/claude-agent-sdk';
-import { readFileSync, existsSync } from 'fs';
+import { readFileSync, existsSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
-import { glob } from 'glob';
 
 // Simple API response types for this endpoint
 interface ApiResponse<T = unknown> {
@@ -20,6 +19,36 @@ interface ApiResponse<T = unknown> {
     message: string;
     details?: Record<string, unknown>;
   };
+}
+
+// Helper function to recursively find files matching a pattern
+function findFilesRecursively(dir: string, filename: string): string[] {
+  const results: string[] = [];
+
+  if (!existsSync(dir)) {
+    return results;
+  }
+
+  try {
+    const files = readdirSync(dir);
+
+    for (const file of files) {
+      const filePath = join(dir, file);
+      const stat = statSync(filePath);
+
+      if (stat.isDirectory()) {
+        // Recursive search in subdirectory
+        results.push(...findFilesRecursively(filePath, filename));
+      } else if (file === filename) {
+        // Found matching file, return relative path
+        results.push(filePath.replace(dir + '/', ''));
+      }
+    }
+  } catch (error) {
+    console.warn(`Error reading directory ${dir}:`, error);
+  }
+
+  return results;
 }
 
 // Function to load global MCP server configurations
@@ -33,8 +62,8 @@ function loadGlobalMcpServers(): Record<string, any> {
       return mcpServers;
     }
 
-    // Find all .mcp.json files in the plugins directory
-    const mcpConfigFiles = glob.sync('**/.mcp.json', { cwd: claudeDir });
+    // Find all .mcp.json files recursively
+    const mcpConfigFiles = findFilesRecursively(claudeDir, '.mcp.json');
 
     for (const configFile of mcpConfigFiles) {
       try {

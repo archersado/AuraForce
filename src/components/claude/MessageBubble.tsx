@@ -9,10 +9,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { MarkdownRenderer } from '@/components/claude/MarkdownRenderer';
 import { InteractiveMessage } from '@/components/claude/InteractiveMessage';
 import { ToolMessageBubble } from '@/components/claude/ToolMessageBubble';
 import { ToolUse, ToolUseInline } from '@/components/claude/ToolUse';
@@ -64,7 +61,7 @@ export function MessageBubble({ message, onInteractiveResponse, onToolResponse, 
     >
       <div
         className={`
-          max-w-[80%] md:max-w-[70%] rounded-2xl px-4 py-3
+          max-w-[90%] md:max-w-[85%] rounded-2xl px-4 py-3
           ${
             isUser
               ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-br-md'
@@ -96,79 +93,12 @@ export function MessageBubble({ message, onInteractiveResponse, onToolResponse, 
         </div>
 
         {/* Message content with markdown rendering */}
-        <div className="prose prose-sm max-w-none">
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            components={{
-              // Code blocks with syntax highlighting
-              code({ className, children, ...props }: any) {
-                const match = /language-(\w+)/.exec(className || '');
-                const isInline = !match;
-
-                // During streaming, render code blocks as plain text until complete
-                // to prevent unnecessary syntax highlighting recalculations
-                const isStreamingAndIncomplete = message.isStreaming && !match;
-
-                return !isInline && match ? (
-                  <div className="my-2 rounded-lg overflow-hidden bg-gray-900">
-                    <SyntaxHighlighter
-                      language={match[1]}
-                      style={vscDarkPlus as React.CSSProperties}
-                      PreTag="div"
-                      {...props}
-                    >
-                      {String(children).replace(/\n$/, '')}
-                    </SyntaxHighlighter>
-                  </div>
-                ) : (
-                  <code
-                    className={`
-                      ${className || ''}
-                      ${
-                        isUser
-                          ? 'bg-purple-500/30 text-white'
-                          : 'bg-gray-200 text-gray-800'
-                      }
-                      px-1 py-0.5 rounded text-sm font-mono
-                    `}
-                    {...props}
-                  >
-                    {children}
-                  </code>
-                );
-              },
-              // Paragraphs
-              p: ({ children }) => (
-                <p className="mb-2 last:mb-0">{children}</p>
-              ),
-              // Lists
-              ul: ({ children }) => (
-                <ul className="list-disc list-inside mb-2">{children}</ul>
-              ),
-              ol: ({ children }) => (
-                <ol className="list-decimal list-inside mb-2">{children}</ol>
-              ),
-              // Links
-              a: ({ children, href }) => (
-                <a
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={isUser ? 'text-purple-200' : 'text-blue-600 underline'}
-                >
-                  {children}
-                </a>
-              ),
-              // Blockquotes
-              blockquote: ({ children }) => (
-                <blockquote className="border-l-4 border-gray-400 pl-4 italic my-2">
-                  {children}
-                </blockquote>
-              ),
-            }}
-          >
-            {message.content}
-          </ReactMarkdown>
+        <div className="prose prose-sm max-w-none overflow-auto">
+          <MarkdownRenderer
+            content={message.content}
+            isStreaming={message.isStreaming}
+            isUserMessage={isUser}
+          />
         </div>
 
         {/* Tool executions */}

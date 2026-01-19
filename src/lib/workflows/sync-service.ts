@@ -34,10 +34,11 @@ export interface SyncDiagnostic {
 export interface SyncConflict {
   workflowId: string;
   workflowName: string;
+  contentHash?: string;
+  fileHash?: string;
+  databaseHash?: string;
   databaseContent?: string;
   fileContent?: string;
-  databaseHash?: string;
-  fileHash?: string;
   lastSyncAt: Date;
 }
 

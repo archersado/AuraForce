@@ -84,6 +84,15 @@ export function validateWorkflowSpecContent(content: string): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
 
+  if (!metadata) {
+    return {
+      valid: false,
+      errors: ['Failed to extract metadata from file'],
+      warnings: [],
+      metadata: undefined,
+    };
+  }
+
   if (!metadata.name || metadata.name.trim() === '') {
     errors.push('Missing required field: name');
   }

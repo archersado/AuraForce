@@ -381,9 +381,10 @@ export class GraphAnalyzer {
    * Export graph in specified format
    */
   static exportGraph(graph: WorkflowGraph, options: GraphExportOptions): string {
-    switch (options.format) {
+    const { format, includeMetadata = true, pretty = true } = options;
+    switch (format) {
       case 'json':
-        return this.exportAsJSON(graph, options.pretty);
+        return this.exportAsJSON(graph, includeMetadata, pretty);
 
       case 'dot':
         return this.exportAsDOT(graph);
@@ -395,15 +396,15 @@ export class GraphAnalyzer {
         return this.exportAsSVG(graph);
 
       default:
-        throw new Error(`Unsupported export format: ${options.format}`);
+        throw new Error(`Unsupported export format: ${format}`);
     }
   }
 
   /**
    * Export graph as JSON
    */
-  private static exportAsJSON(graph: WorkflowGraph, pretty = true): string {
-    const data = options.includeMetadata ? graph : {
+  private static exportAsJSON(graph: WorkflowGraph, includeMetadata = true, pretty = true): string {
+    const data = includeMetadata ? graph : {
       nodes: graph.nodes,
       edges: graph.edges,
     };

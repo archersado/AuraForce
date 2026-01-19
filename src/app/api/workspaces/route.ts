@@ -16,7 +16,7 @@ const PLATFORM_WORKSPACE_ROOT = path.join(process.cwd(), 'workspaces');
 /**
  * Ensure workspace directory exists
  */
-function ensureUserWorkspaceDir(userId: string): void {
+function ensureUserWorkspaceDir(userId: string): string {
   const userWorkspacePath = path.join(PLATFORM_WORKSPACE_ROOT, userId);
   if (!existsSync(userWorkspacePath)) {
     mkdirSync(userWorkspacePath, { recursive: true });

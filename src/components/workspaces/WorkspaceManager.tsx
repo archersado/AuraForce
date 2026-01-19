@@ -98,8 +98,27 @@ export default function WorkspaceManager({ onSelectProject, onCreateProject }: W
   };
 
   const handleDeleteProject = async (projectId: string) => {
-    // TODO: Implement delete functionality
-    console.log('Delete project:', projectId);
+    if (!window.confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/workspaces/${projectId}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete project');
+      }
+
+      if (data.success) {
+        await fetchProjects();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete project');
+    }
   };
 
   useEffect(() => {

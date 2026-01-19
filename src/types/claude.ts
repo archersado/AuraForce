@@ -5,6 +5,8 @@
  * including messages, responses, streaming events, and errors.
  */
 
+import { claude } from '@/lib/config';
+
 /**
  * Claude message role
  */
@@ -252,7 +254,7 @@ export interface RetryConfig {
  * Default configurations
  */
 export const DEFAULT_CLAUDE_CONFIG: Required<ClaudeClientConfig> = {
-  apiKey: process.env.ANTHROPIC_API_KEY || '',
+  apiKey: claude.apiKey,
   model: 'claude-3-5-sonnet-20241022',
   maxTokens: 4096,
   timeout: 30000,

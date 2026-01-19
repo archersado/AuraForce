@@ -1,7 +1,8 @@
 # Auto Claude data directory
 .auto-claude/
-claudecodeui/
-claude-code-webui/
+.playwright-mcp/
 /_*
 /.next
 /node_modules
+/workspaces
+.env.local

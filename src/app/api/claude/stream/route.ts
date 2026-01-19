@@ -11,6 +11,7 @@
 
 import { NextRequest } from 'next/server';
 import { query } from '@anthropic-ai/claude-agent-sdk';
+import { claude as claudeConfig } from '@/lib/config';
 
 /**
  * Validate API key from request headers or body
@@ -22,7 +23,7 @@ import { query } from '@anthropic-ai/claude-agent-sdk';
  */
 function validateApiKey(request: NextRequest): boolean {
   const headerApiKey = request.headers.get('x-api-key');
-  const envApiKey = process.env.ANTHROPIC_API_KEY;
+  const envApiKey = claudeConfig.apiKey;
 
   console.log('[Stream API] Key validation:', {
     headerApiKey: headerApiKey ? headerApiKey.substring(0, 10) + '...' : 'none',
@@ -169,13 +170,13 @@ The Story 3.3 implementation includes:
             // Real mode - use Claude Agent SDK directly (claudecodeui pattern)
             console.log('[Stream API] Starting real Claude query with model:', model, 'content length:', content.length);
             console.log('[Stream API] Env vars check:', {
-                ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY ? process.env.ANTHROPIC_API_KEY.substring(0, 20) + '...' : 'NOT_SET',
-                ANTHROPIC_BASE_URL: process.env.ANTHROPIC_BASE_URL || 'NOT_SET',
-                ANTHROPIC_MODEL: process.env.ANTHROPIC_MODEL || 'NOT_SET',
+                ANTHROPIC_API_KEY: claudeConfig.apiKey ? claudeConfig.apiKey.substring(0, 20) + '...' : 'NOT_SET',
+                ANTHROPIC_BASE_URL: claudeConfig.baseUrl || 'NOT_SET',
+                ANTHROPIC_MODEL: claudeConfig.defaultModel || 'NOT_SET',
             });
 
-            // Use model from request or fall back to env, then default to 'sonnet'
-            const actualModel = (process.env.ANTHROPIC_MODEL || model || 'sonnet').trim();
+            // Use model from request or fall back to config, then default to 'sonnet'
+            const actualModel = (claudeConfig.defaultModel || model || 'sonnet').trim();
 
             // Use project path if provided, otherwise use current working directory
             const workingDir = projectPath || process.cwd();
@@ -198,12 +199,12 @@ The Story 3.3 implementation includes:
               env: {
                 // IMPORTANT: Keep PATH so child processes can find Node.js
                 ...(process.env.PATH && { PATH: process.env.PATH }),
-                ...(process.env.ANTHROPIC_AUTH_TOKEN && { ANTHROPIC_AUTH_TOKEN: process.env.ANTHROPIC_AUTH_TOKEN }),                
-                ...(process.env.ANTHROPIC_BASE_URL && { ANTHROPIC_BASE_URL: process.env.ANTHROPIC_BASE_URL }),
-                ...(process.env.ANTHROPIC_MODEL && { ANTHROPIC_MODEL: process.env.ANTHROPIC_MODEL }),
+                ...(claudeConfig.authToken && { ANTHROPIC_AUTH_TOKEN: claudeConfig.authToken }),
+                ...(claudeConfig.baseUrl && { ANTHROPIC_BASE_URL: claudeConfig.baseUrl }),
+                ...(claudeConfig.defaultModel && { ANTHROPIC_MODEL: claudeConfig.defaultModel }),
                 // IMPORTANT: Force override ANTHROPIC_API_KEY with our value (server-side only, ignore NEXT_PUBLIC_ version)
-                ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
-                ANTHROPIC_AUTH_TOKEN: process.env.ANTHROPIC_AUTH_TOKEN,
+                ANTHROPIC_API_KEY: claudeConfig.apiKey,
+                ANTHROPIC_AUTH_TOKEN: claudeConfig.authToken,
                 // Add project context to environment
                 ...(projectPath && { PROJECT_PATH: projectPath }),
                 ...(projectId && { PROJECT_ID: projectId }),

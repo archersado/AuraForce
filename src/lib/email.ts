@@ -5,6 +5,7 @@
  */
 
 import nodemailer from 'nodemailer';
+import { email as emailConfig, isDevelopment } from '@/lib/config';
 
 export interface EmailOptions {
   to: string;
@@ -24,12 +25,7 @@ export interface PasswordResetEmailOptions {
 
 // Create SMTP transporter
 function createTransporter() {
-  // Check if SMTP is configured
-  const smtpHost = process.env.SMTP_HOST;
-  const smtpPort = parseInt(process.env.SMTP_PORT || '587');
-  const smtpUser = process.env.SMTP_USER;
-  const smtpPass = process.env.SMTP_PASS;
-  const smtpFrom = process.env.SMTP_FROM || 'noreply@auraforce.com';
+  const { host: smtpHost, port: smtpPort, user: smtpUser, password: smtpPass, from: smtpFrom } = emailConfig.smtp;
 
   console.log('[Email Service] SMTP Config:', {
     host: smtpHost ? 'configured' : 'missing',
@@ -99,10 +95,8 @@ export async function sendEmail({ to, subject, html }: EmailOptions): Promise<bo
   }
 
   try {
-    const smtpFrom = process.env.SMTP_FROM || 'noreply@auraforce.com';
-
     await transporter.sendMail({
-      from: smtpFrom,
+      from: emailConfig.smtp.from,
       to,
       subject,
       html,
@@ -127,8 +121,8 @@ export async function sendEmail({ to, subject, html }: EmailOptions): Promise<bo
  * Send verification email
  */
 export async function sendVerificationEmail({ to, token }: VerificationEmailOptions): Promise<boolean> {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-  const verifyUrl = appUrl + '/verify?email=' + to + '&token=' + token;
+  const appUrl = emailConfig.appUrl;
+  const verifyUrl = `${appUrl}/verify?email=${to}&token=${token}`;
 
   const html = `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -169,8 +163,8 @@ export async function sendVerificationEmail({ to, token }: VerificationEmailOpti
  * Send password reset email
  */
 export async function sendPasswordResetEmail({ to, token }: PasswordResetEmailOptions): Promise<boolean> {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-  const resetUrl = appUrl + '/reset-password?token=' + token;
+  const appUrl = emailConfig.appUrl;
+  const resetUrl = `${appUrl}/reset-password?token=${token}`;
 
   const html = `<!DOCTYPE html>
 <html lang="zh-CN">

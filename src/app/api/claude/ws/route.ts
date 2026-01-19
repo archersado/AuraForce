@@ -15,6 +15,7 @@ import { query } from '@anthropic-ai/claude-agent-sdk';
 import { createServer } from 'http';
 import type { Server as HTTPServer } from 'http';
 import { WebSocketServer as WSS, WebSocket as WS } from 'ws';
+import { claude as claudeConfig } from '@/lib/config';
 import type {
   WebSocketMessage,
   ChatRequestPayload,
@@ -110,7 +111,7 @@ let httpServer: HTTPServer | null = null;
  * Validate API key from message payload
  */
 function validateApiKey(apiKey?: string): boolean {
-  const envApiKey = process.env.ANTHROPIC_API_KEY;
+  const envApiKey = claudeConfig.apiKey;
 
   // Accept if provided API key and looks valid
   if (apiKey && apiKey.length > 5 && !apiKey.includes('your-')) {
@@ -267,7 +268,7 @@ async function handleChatRequest(ws: ExtendedWebSocket, message: WebSocketMessag
   ws.appSessionId = appSessionId;
 
   // Determine API key to use
-  const actualApiKey = apiKey || process.env.ANTHROPIC_AUTH_TOKEN || process.env.ANTHROPIC_API_KEY;
+  const actualApiKey = apiKey || claudeConfig.authToken || claudeConfig.apiKey;
   const useMock = !actualApiKey || actualApiKey.includes('your-');
 
   // Set environment variable
@@ -389,7 +390,7 @@ async function handleRealChat(
   console.log(`[WS] Real Claude: ${ws.connectionId}, project=${projectName || 'default'}`);
 
   // Use model from request or environment
-  const actualModel = process.env.ANTHROPIC_MODEL || model || 'sonnet';
+  const actualModel = model || claudeConfig.defaultModel || 'sonnet';
 
   // Use project path if provided, otherwise use current working directory
   const workingDir = projectPath || process.cwd();
@@ -422,12 +423,12 @@ async function handleRealChat(
     env: {
       // IMPORTANT: Keep PATH so child processes can find Node.js
       ...(process.env.PATH && { PATH: process.env.PATH }),
-      ...(process.env.ANTHROPIC_AUTH_TOKEN && { ANTHROPIC_AUTH_TOKEN: process.env.ANTHROPIC_AUTH_TOKEN }),
-      ...(process.env.ANTHROPIC_BASE_URL && { ANTHROPIC_BASE_URL: process.env.ANTHROPIC_BASE_URL }),
-      ...(process.env.ANTHROPIC_MODEL && { ANTHROPIC_MODEL: process.env.ANTHROPIC_MODEL }),
-      // IMPORTANT: Use server-side ANTHROPIC_API_KEY only (ignore NEXT_PUBLIC_ for security)
-      ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
-      ANTHROPIC_AUTH_TOKEN: process.env.ANTHROPIC_AUTH_TOKEN,
+      ...(claudeConfig.authToken && { ANTHROPIC_AUTH_TOKEN: claudeConfig.authToken }),
+      ...(claudeConfig.baseUrl && { ANTHROPIC_BASE_URL: claudeConfig.baseUrl }),
+      ...(claudeConfig.defaultModel && { ANTHROPIC_MODEL: claudeConfig.defaultModel }),
+      // IMPORTANT: Use server-side API key only (ignore NEXT_PUBLIC_ for security)
+      ANTHROPIC_API_KEY: claudeConfig.apiKey,
+      ANTHROPIC_AUTH_TOKEN: claudeConfig.authToken,
       // Add project context to environment
       ...(projectPath && { PROJECT_PATH: projectPath }),
       ...(projectId && { PROJECT_ID: projectId }),

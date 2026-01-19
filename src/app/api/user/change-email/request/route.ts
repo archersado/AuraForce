@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth/session';
 import { prisma } from '@/lib/db';
+import { app, isDevelopment } from '@/lib/config';
 import { verifyPassword, sanitizeEmail, validateEmail } from '@/lib/auth/password-validation';
 import { generateVerificationToken } from '@/lib/auth/password-validation';
 import { checkRateLimit } from '@/lib/rate-limiting';
@@ -140,7 +141,7 @@ export async function POST(request: NextRequest) {
     console.log('  Token:', token);
     console.log('  New Email:', sanitizedNewEmail);
     console.log('  Old Email:', user.email);
-    console.log('  Confirmation URL:', `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/user/change-email/confirm?token=${token}&userId=${user.id}`);
+    console.log('  Confirmation URL:', `${app.url}/api/user/change-email/confirm?token=${token}&userId=${user.id}`);
 
     return NextResponse.json({
       success: true,
@@ -154,7 +155,7 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         message: '邮箱更改请求失败，请稍后重试',
-        error: process.env.NODE_ENV === 'development' ? String(error) : undefined,
+        error: isDevelopment() ? String(error) : undefined,
       },
       { status: 500 }
     );

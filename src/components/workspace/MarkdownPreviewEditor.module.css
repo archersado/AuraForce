@@ -1,0 +1,298 @@
+/**
+ * Markdown Preview Editor Styles
+ *
+ * Styles for the markdown preview editor component.
+ * Provides beautiful rendering of markdown elements in preview mode.
+ */
+
+/* Base Editor Styles */
+.markdown-preview-editor {
+  @apply relative flex flex-col h-full bg-white border border-gray-200 rounded-lg overflow-hidden;
+}
+
+/* Container for the editor content */
+.editor-content {
+  @apply flex-1 overflow-auto min-h-0 p-4 md:p-6;
+  @apply prose prose-sm md:prose-base lg:prose-lg max-w-none;
+  @apply focus:outline-none;
+  min-height: 300px;
+}
+
+/* ============================================
+ * Markdown Element Styles (Preview Mode)
+ * ============================================ */
+
+/* Headers */
+.md-header {
+  @apply font-bold text-gray-900 mt-6 mb-3;
+  @apply border-b border-gray-200 pb-2;
+}
+
+.md-h1 {
+  @apply text-2xl md:text-3xl;
+}
+
+.md-h2 {
+  @apply text-xl md:text-2xl;
+}
+
+.md-h3 {
+  @apply text-lg md:text-xl;
+}
+
+.md-h4 {
+  @apply text-base md:text-lg;
+}
+
+.md-h5 {
+  @apply text-sm md:text-base;
+}
+
+.md-h6 {
+  @apply text-xs md:text-sm text-gray-600;
+}
+
+/* Paragraphs */
+.md-paragraph {
+  @apply mb-4 leading-relaxed text-gray-700;
+}
+
+/* Bold */
+.md-bold {
+  @apply font-bold text-gray-900;
+}
+
+/* Italic */
+.md-italic {
+  @apply italic text-gray-700;
+}
+
+/* Inline Code */
+.md-inline-code {
+  @apply bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded text-sm font-mono;
+  @apply border border-gray-200;
+}
+
+/* Code Blocks */
+.md-code-block {
+  @apply my-4 p-4 bg-gray-900 rounded-lg overflow-x-auto;
+  @apply border border-gray-700;
+}
+
+.md-code-block code {
+  @apply text-gray-100 font-mono text-sm;
+  @apply whitespace-pre;
+}
+
+/* Blockquotes */
+.md-blockquote {
+  @apply border-l-4 border-purple-400 pl-4 py-2 my-4;
+  @apply bg-purple-50 rounded-r;
+  @apply italic text-gray-700;
+}
+
+/* Lists */
+.md-list {
+  @apply my-4 list-inside;
+}
+
+.md-list-unordered {
+  @apply list-disc space-y-2 text-gray-700;
+}
+
+.md-list-ordered {
+  @apply list-decimal space-y-2 text-gray-700;
+}
+
+.md-list-item {
+  @apply leading-relaxed;
+}
+
+/* Links */
+.md-link {
+  @apply text-purple-600 hover:text-purple-700;
+  @apply underline decoration-purple-300 hover:decoration-purple-500;
+  @apply underline-offset-2 transition-colors;
+}
+
+/* Images */
+.md-image {
+  @apply max-w-full h-auto rounded-lg my-4;
+  @apply border border-gray-200;
+}
+
+/* Horizontal Rules */
+.md-hr {
+  @apply my-6 border-t-2 border-gray-200;
+}
+
+/* Line Breaks */
+.md-br {
+  @apply block;
+}
+
+/* ============================================
+ * Editable Element Styles
+ * ============================================ */
+
+/* Hover effect for editable blocks */
+.markdown-preview-editor [contenteditable='true'] .md-header:hover,
+.markdown-preview-editor [contenteditable='true'] .md-paragraph:hover,
+.markdown-preview-editor [contenteditable='true'] .md-list-item:hover {
+  @apply outline-none ring-2 ring-purple-200 ring-opacity-50 rounded;
+}
+
+/* Focus styles for editing */
+.markdown-preview-editor [contenteditable='true']:focus {
+  @apply outline-none;
+}
+
+/* ============================================
+ * Content Selection Styles
+ * ============================================ */
+
+/* Custom selection styling */
+.markdown-preview-editor ::selection {
+  @apply bg-purple-100 text-purple-900;
+}
+
+/* ============================================
+ * Code Block Language Badge
+ * ============================================ */
+
+.md-code-block[data-md-lang]::before {
+  content: attr(data-md-lang);
+  position: absolute;
+  top: 0;
+  right: 0;
+  @apply px-2 py-0.5 text-xs font-mono text-gray-400 bg-gray-800 rounded-bl;
+}
+
+/* ============================================
+ * Animations
+ * ============================================ */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.15s ease-out;
+}
+
+/* ============================================
+ * Toolbar Styles
+ * ============================================ */
+
+.format-toolbar {
+  @apply fixed z-50 bg-white shadow-xl border border-gray-200 rounded-lg p-1;
+  @apply flex flex-wrap gap-0.5 max-w-sm;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.format-toolbar button {
+  @apply p-2 hover:bg-gray-100 rounded-md transition-all;
+  @apply active:scale-95;
+}
+
+.format-toolbar button:hover {
+  @apply bg-gray-50;
+}
+
+/* ============================================
+ * Responsive Adjustments
+ * ============================================ */
+
+@media (max-width: 640px) {
+  .editor-content {
+    @apply prose-sm p-3;
+  }
+
+  .md-header {
+    @apply mt-4 mb-2;
+  }
+
+  .md-paragraph {
+    @apply mb-3;
+  }
+}
+
+/* ============================================
+ * Dark Mode Support (Optional)
+ * ============================================ */
+
+@media (prefers-color-scheme: dark) {
+  .markdown-preview-editor {
+    @apply bg-gray-900 border-gray-700;
+  }
+
+  .editor-content {
+    @apply prose-invert;
+  }
+
+  .md-header {
+    @apply text-gray-100 border-gray-700;
+  }
+
+  .md-paragraph {
+    @apply text-gray-300;
+  }
+
+  .md-inline-code {
+    @apply bg-gray-800 text-gray-100 border-gray-700;
+  }
+
+  .md-blockquote {
+    @apply bg-purple-900/20 border-purple-500;
+  }
+
+  .md-code-block {
+    @apply bg-gray-800 border-gray-700;
+  }
+
+  .md-hr {
+    @apply border-gray-700;
+  }
+
+  .format-toolbar {
+    @apply bg-gray-800 border-gray-700;
+  }
+
+  .format-toolbar button {
+    @apply hover:bg-gray-700;
+  }
+}
+
+/* ============================================
+ * Print Styles
+ * ============================================ */
+
+@media print {
+  .markdown-preview-editor {
+    @apply border-none;
+  }
+
+  .format-toolbar {
+    @apply hidden;
+  }
+
+  .md-header {
+    @apply page-break-before;
+    page-break-after: avoid;
+  }
+
+  .md-code-block {
+    @apply page-break-inside-avoid;
+  }
+
+  .md-image {
+    @apply max-w-full;
+  }
+}

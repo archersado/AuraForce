@@ -51,6 +51,7 @@ export interface WorkflowEdge {
 export interface WorkflowStep {
   id: string;
   name: string;
+  description?: string;
   type: string;
   action?: string;
   agent?: string;

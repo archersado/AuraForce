@@ -1,0 +1,97 @@
+{
+  "enterprise_color_scheme": {
+    "primary": {
+      "main": "#1976d2",
+      "light": "#4791db",
+      "dark": "#115293",
+      "background": "#e3f2fd"
+    },
+    "secondary": {
+      "main": "#424242",
+      "light": "#6d6d6d",
+      "dark": "#1b1b1b",
+      "background": "#f5f5f5"
+    },
+    "accent": {
+      "success": "#388e3c",
+      "warning": "#f57c00",
+      "error": "#d32f2f",
+      "info": "#0288d1"
+    }
+  },
+  "diagram_styles": {
+    "user_actor": {
+      "type": "rectangle",
+      "strokeColor": "#1976d2",
+      "backgroundColor": "#e3f2fd",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    "system_boundary": {
+      "type": "rectangle",
+      "strokeColor": "#388e3c",
+      "backgroundColor": "#e8f5e9",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    "module_component": {
+      "type": "rectangle",
+      "strokeColor": "#0288d1",
+      "backgroundColor": "#b3e5fc",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": { "type": 3, "value": 8 }
+    },
+    "data_store": {
+      "type": "rectangle",
+      "strokeColor": "#424242",
+      "backgroundColor": "#f5f5f5",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    "external_entity": {
+      "type": "rectangle",
+      "strokeColor": "#7b1fa2",
+      "backgroundColor": "#f3e5f5",
+      "strokeWidth": 3,
+      "roughness": 0
+    },
+    "process_flow": {
+      "type": "arrow",
+      "strokeColor": "#424242",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    "data_flow": {
+      "type": "arrow",
+      "strokeColor": "#0288d1",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "strokeStyle": "dashed"
+    }
+  },
+  "text_styles": {
+    "title": {
+      "fontSize": 14,
+      "fontFamily": "Helvetica, Arial, sans-serif",
+      "textAlign": "center"
+    },
+    "label": {
+      "fontSize": 12,
+      "fontFamily": "Helvetica, Arial, sans-serif",
+      "textAlign": "center"
+    },
+    "annotation": {
+      "fontSize": 10,
+      "fontFamily": "Helvetica, Arial, sans-serif",
+      "textAlign": "left"
+    }
+  },
+  "layout_guidelines": {
+    "element_spacing": 20,
+    "group_spacing": 40,
+    "grid_size": 10,
+    "minimum_width": 120,
+    "minimum_height": 60
+  }
+}

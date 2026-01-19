@@ -1,12 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import { FolderOpen } from 'lucide-react';
 import WorkflowSpecUpload from '@/components/workflows/WorkflowSpecUpload';
 import WorkflowSpecList from '@/components/workflows/WorkflowSpecList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { WorkspacePanel } from '@/components/workspace';
 
 export default function WorkflowsPage() {
   const [refreshKey, setRefreshKey] = useState(0);
+  const [workspaceOpen, setWorkspaceOpen] = useState(false);
 
   const handleUploadComplete = () => {
     setRefreshKey(prev => prev + 1);
@@ -18,13 +21,28 @@ export default function WorkflowsPage() {
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-5xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-          工作流管理
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          上传和管理 BMAD 工作流规范文件，部署到 Claude Code 环境
-        </p>
+      {/* Workspace Panel Modal */}
+      <WorkspacePanel
+        isOpen={workspaceOpen}
+        onClose={() => setWorkspaceOpen(false)}
+      />
+
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+            工作流管理
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            上传和管理 BMAD 工作流规范文件，部署到 Claude Code 环境
+          </p>
+        </div>
+        <button
+          onClick={() => setWorkspaceOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+        >
+          <FolderOpen className="w-4 h-4" />
+          Open Workspace Files
+        </button>
       </div>
 
       <Tabs defaultValue="list" className="w-full">

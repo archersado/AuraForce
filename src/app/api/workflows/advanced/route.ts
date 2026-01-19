@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
         orderBy,
         take: Math.min(limit, 100),
         skip: (page - 1) * Math.min(limit, 100),
-        select: {
+        select: includeDependencies ? {
           id: true,
           name: true,
           description: true,
@@ -96,16 +96,33 @@ export async function GET(request: NextRequest) {
           deployedAt: true,
           lastSyncAt: true,
           updatedAt: true,
-        },
-        include: includeDependencies ? {
           dependencies: {
-            include: {
+            select: {
+              id: true,
+              sourceId: true,
+              targetId: true,
+              dependencyType: true,
               targetWorkflow: {
                 select: { id: true, name: true, version: true },
               },
             },
           },
-        } : undefined,
+        } : {
+          id: true,
+          name: true,
+          description: true,
+          version: true,
+          author: true,
+          ccPath: true,
+          ccPathVersion: true,
+          status: true,
+          syncStatus: true,
+          metadata: true,
+          deployedAt: true,
+          lastSyncAt: true,
+          updatedAt: true,
+          dependencies: false,
+        },
       }),
       prisma.workflowSpec.count({ where }),
     ]);

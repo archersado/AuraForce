@@ -194,35 +194,67 @@ export function ChatInterface({ projectPath, projectId, projectName }: ChatInter
   }, [updateMessageStreaming, setStreaming, setConnectionState, setStreamError, setSessionControlState, setActiveStreamId]);
 
   // Initialize session on mount or when URL changes (Story 3.4)
+  // Also handles auto-restoring project sessions when entering a workspace
   useEffect(() => {
     async function initializeSession() {
-      // Priority order: URL param > localStorage > create new
+      // Priority order:
+      // 1. URL param session
+      // 2. Latest project session (if projectId is set)
+      // 3. localStorage active session
+      // 4. Create new session
+
       const targetSessionId = sessionIdParam || SessionStorage.getActiveSessionId();
 
-      if (targetSessionId) {
-        // Load existing session from URL param or localStorage
+      // If we have a URL session explicitly set, use that
+      if (sessionIdParam) {
         try {
-          await loadSession(targetSessionId);
-          console.log('[ChatInterface] Loaded existing session:', targetSessionId);
-          // Update localStorage if loaded from URL param
-          if (targetSessionId !== sessionIdParam) {
-            SessionStorage.setActiveSessionId(targetSessionId);
+          await loadSession(sessionIdParam);
+          SessionStorage.setActiveSessionId(sessionIdParam);
+          console.log('[ChatInterface] Loaded session from URL param:', sessionIdParam);
+        } catch (error) {
+          console.error('[ChatInterface] Failed to load URL session:', error);
+          SessionStorage.clearActiveSessionId();
+          createSession();
+        }
+        return;
+      }
+
+      // If we have a projectId, try to load the latest session for that project
+      if (projectId) {
+        try {
+          const response = await fetch(`/api/sessions/project/${projectId}/latest`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.data) {
+              await loadSession(data.data.id);
+              SessionStorage.setActiveSessionId(data.data.id);
+              console.log('[ChatInterface] Loaded latest session for project:', projectId, 'session:', data.data.id);
+              return;
+            }
           }
         } catch (error) {
-          console.error('[ChatInterface] Failed to load session:', error);
-          // Clear stale localStorage entry and create new session
+          console.error('[ChatInterface] Failed to load project session:', error);
+        }
+        // If no project session exists or loading fails, fall through to create new session
+      }
+
+      // Otherwise, use localStorage or create new
+      if (targetSessionId) {
+        try {
+          await loadSession(targetSessionId);
+          console.log('[ChatInterface] Loaded session from localStorage:', targetSessionId);
+        } catch (error) {
+          console.error('[ChatInterface] Failed to load localStorage session:', error);
           SessionStorage.clearActiveSessionId();
-          showToast('error', 'Failed to load session. Starting a new one.');
           createSession();
         }
       } else {
-        // Create new session
         createSession();
       }
     }
 
     initializeSession();
-  }, [sessionIdParam, loadSession, createSession, showToast]);
+  }, [sessionIdParam, projectId, loadSession, createSession]);
 
   // Update project context when project changes
   useEffect(() => {
@@ -402,6 +434,9 @@ export function ChatInterface({ projectPath, projectId, projectName }: ChatInter
             else if (jsonData.type === 'claude-response') {
               const sdkMessage = jsonData.data;
 
+              // Log the received message for debugging
+              console.log('[ChatInterface] Received claude-response message:', JSON.stringify(sdkMessage, null, 2));
+
               // Skip system messages
               if (sdkMessage.type === 'system') {
                 console.log('[ChatInterface] Skipping system message');
@@ -413,9 +448,30 @@ export function ChatInterface({ projectPath, projectId, projectName }: ChatInter
                 continue;
               }
 
+              // NEW: Handle raw text content from assistant messages
+              // The SDK sends messages with `type: 'assistant'` or as complete messages
+              if (sdkMessage.type === 'assistant' && sdkMessage.message) {
+                const content = sdkMessage.message.content;
+                if (content && Array.isArray(content)) {
+                  // Extract text from content blocks
+                  const textBlocks = content
+                    .filter((block: any) => block.type === 'text')
+                    .map((block: any) => block.text || '');
+
+                  if (textBlocks.length > 0) {
+                    const fullText = textBlocks.join('\n');
+                    console.log('[ChatInterface] Displaying assistant message content, length:', fullText.length);
+                    const chunk: StreamChunk = {
+                      content: fullText,
+                      isComplete: true,
+                    };
+                    streamManagerRef.current?.handleStreamChunk(chunk, assistantMessageId);
+                  }
+                }
+              }
               // Handle message content (NOTE: this is the COMPLETE final content, NOT incremental)
               // Skip this for streaming - we only use stream_event for incremental updates
-              if (sdkMessage.message && sdkMessage.message.content) {
+              else if (sdkMessage.message && sdkMessage.message.content) {
                 console.log('[ChatInterface] Skipping message.content (complete content), will use stream_event for incremental updates');
                 // 跳过 message.content，因为这是完整的最后内容
                 // 如果使用它会导致重复，增量内容已经通过 stream_event 发送了

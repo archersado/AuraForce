@@ -1,0 +1,356 @@
+code: 'app-creator'
+module:
+  code: 1
+  name: 'app-creator'
+  title: 'App Creator'
+  version: '1.0.0'
+  description: '智能应用程序创建助手，从创意到MVP实现的完整解决方案'
+  icon: '🚀'
+  category: 'Product Development'
+
+  authors:
+    - name: 'BMAD Team'
+      email: 'team@bmad.dev'
+
+  repository:
+    url: 'https://github.com/bmad/framework'
+    type: 'git'
+
+  tags:
+    - 'MVP Development'
+    - 'Product Strategy'
+    - 'Market Research'
+    - 'UX/UI Design'
+    - 'Technical Architecture'
+
+  compatibility:
+    bmad_min_version: '2.0.0'
+    platforms:
+      - 'macOS'
+      - 'Linux'
+      - 'Windows'
+
+  requirements:
+    external: []
+    internal:
+      - 'core'
+      - 'bmb'
+
+  installation:
+    post_install: |
+      # Post-installation steps will be run by bmad installer
+      - Verify all agent files are present
+      - Create default output directories
+      - Initialize sidecar folders
+
+    pre_remove: |
+      # Pre-removal cleanup steps
+      - Backup user session data
+      - Clean up temporary files
+
+  configuration:
+    user_configuration:
+      sections:
+        - name: 'coding_preference'
+          title: '代码生成偏好'
+          description: '选择你需要的代码生成级别'
+          type: 'select'
+          options:
+            - value: 'detailed_guidance'
+              label: '详细指导'
+              description: '提供逐步指导和最佳实践建议'
+            - value: 'code_templates'
+              label: '代码模板'
+              description: '提供可定制的代码模板'
+            - value: 'full_code'
+              label: '完整代码'
+              description: '生成完整可运行的代码'
+          default: 'detailed_guidance'
+
+        - name: 'tech_stack_preference'
+          title: '技术栈偏好'
+          description: '选择你熟悉的技术栈'
+          type: 'multi_select'
+          options:
+            - value: 'react_node'
+              label: 'React + Node.js'
+              description: '现代前端和后端组合'
+            - value: 'vue_python'
+              label: 'Vue + Python'
+              description: '渐进式前端和Python后端'
+            - value: 'nextjs_fullstack'
+              label: 'Next.js Full Stack'
+              description: '全栈React框架'
+            - value: 'custom'
+              label: '自定义'
+              description: '在对话中自定技术栈'
+          default: ['react_node']
+
+        - name: 'deployment_preference'
+          title: '部署偏好'
+          description: '选择你的部署平台'
+          type: 'select'
+          options:
+            - value: 'vercel'
+              label: 'Vercel/Netlify'
+              description: '现代无服务器平台'
+            - value: 'aws'
+              label: 'AWS/GCP'
+              description: '云服务提供商'
+            - value: 'docker'
+              label: 'Docker/Kubernetes'
+              description: '容器化部署'
+            - value: 'custom'
+              label: '自定义'
+              description: '自定义部署方案'
+          default: 'vercel'
+
+        - name: 'documentation_language'
+          title: '文档语言'
+          description: '选择输出文档的语言'
+          type: 'select'
+          options:
+            - value: 'en'
+              label: 'English'
+              description: '英文文档'
+            - value: 'zh'
+              label: '中文'
+              description: '中文文档'
+            - value: 'bilingual'
+              label: '双语言'
+              description: '中英文双语文档'
+          default: 'bilingual'
+
+    module_settings:
+      sections:
+        - name: 'output_directory'
+          title: '输出目录'
+          description: '设置工作流输出的保存位置'
+          type: 'path'
+          default: '_bmad-output'
+
+        - name: 'auto_save_sessions'
+          title: '自动保存会话'
+          description: '自动将代理会话保存到sidecar'
+          type: 'boolean'
+          default: true
+
+        - name: 'enable_party_mode'
+          title: '启用Party Mode'
+          description: '启用多代理协作功能'
+          type: 'boolean'
+          default: true
+
+        - name: 'workflow_timeout'
+          title: '工作流超时'
+          description: '单个工作流的最大执行时间（分钟）'
+          type: 'number'
+          min: 5
+          max: 120
+          default: 30
+
+  components:
+    agents:
+      - 'chen'
+      - 'nova'
+      - 'alex'
+      - 'luna'
+      - 'atlas'
+
+    workflows:
+      - 'idea-validation'
+      - 'product-definition'
+      - 'market-research'
+      - 'project-planning'
+      - 'design-sprint'
+      - 'tech-architecture'
+      - 'mvp-implementation'
+      - 'mvp-builder-master'
+
+    tasks: []
+
+    templates: []
+
+    assets:
+      - path: '_module-installer/_assets'
+        description: 'Installation and setup assets'
+
+  workflows:
+    idea_validation:
+      name: 'Idea Validation'
+      title: '创意验证'
+      description: '验证创意并定义产品方向'
+      primary_agent: 'chen'
+      estimated_duration: '15-30 minutes'
+      outputs:
+        - '产品概念文档'
+        - 'MVP范围定义'
+        - '价值主张'
+      triggers:
+        - command: 'idea-validation'
+          description: 'Start Idea Validation workflow'
+
+    product_definition:
+      name: 'Product Definition'
+      title: '产品定义'
+      description: '生成完整的产品需求文档'
+      primary_agent: 'alex'
+      estimated_duration: '30-45 minutes'
+      outputs:
+        - '产品需求文档(PRD)'
+        - '功能清单'
+        - '用户故事'
+      triggers:
+        - command: 'product-definition'
+          description: 'Start Product Definition workflow'
+
+    market_research:
+      name: 'Market Research'
+      title: '市场研究'
+      description: '进行市场调研和竞争分析'
+      primary_agent: 'nova'
+      estimated_duration: '20-40 minutes'
+      outputs:
+        - '市场研究报告'
+        - '竞品分析'
+        - '用户画像'
+      triggers:
+        - command: 'market-research'
+          description: 'Start Market Research workflow'
+
+    project_planning:
+      name: 'Project Planning'
+      title: '项目规划'
+      description: '制定项目计划和时间表'
+      primary_agent: 'alex'
+      estimated_duration: '15-25 minutes'
+      outputs:
+        - '项目计划'
+        - '里程碑清单'
+        - '资源需求'
+      triggers:
+        - command: 'project-planning'
+          description: 'Start Project Planning workflow'
+
+    design_sprint:
+      name: 'Design Sprint'
+      title: '设计冲刺'
+      description: '创建用户体验和界面设计'
+      primary_agent: 'luna'
+      estimated_duration: '30-60 minutes'
+      outputs:
+        - '用户体验流程图'
+        - '界面设计稿'
+        - '交互原型'
+      triggers:
+        - command: 'design-sprint'
+          description: 'Start Design Sprint workflow'
+
+    tech_architecture:
+      name: 'Tech Architecture'
+      title: '技术架构'
+      description: '设计系统架构和技术方案'
+      primary_agent: 'atlas'
+      estimated_duration: '30-45 minutes'
+      outputs:
+        - '系统架构文档'
+        - '技术选型报告'
+        - 'API规范'
+      triggers:
+        - command: 'tech-architecture'
+          description: 'Start Tech Architecture workflow'
+
+    mvp_implementation:
+      name: 'MVP Implementation'
+      title: 'MVP实现'
+      description: '提供代码实现指导'
+      primary_agent: 'atlas'
+      estimated_duration: '45-90 minutes'
+      outputs:
+        - '实现指南'
+        - '代码模板'
+        - '部署配置'
+      triggers:
+        - command: 'mvp-implementation'
+          description: 'Start MVP Implementation workflow'
+
+    mvp_builder_master:
+      name: 'MVP Builder Master'
+      title: 'MVP构建主流程'
+      description: '端到端MVP构建完整流程'
+      primary_agent: 'chen'
+      estimated_duration: '2-4 hours'
+      outputs:
+        - '完整产品方案'
+        - '技术架构'
+        - '设计资产'
+        - '实现指南'
+      triggers:
+        - command: 'mvp-builder-master'
+          description: 'Start complete MVP building process'
+
+  agents:
+    chen:
+      name: 'Chen'
+      title: '产品策略专家'
+      icon: '🎯'
+      role: 'product-strategist'
+      description: '专注于产品定义、价值主张和需求优先级'
+      capabilities:
+        - '产品策略'
+        - '价值主张设计'
+        - '需求优先级'
+        - '产品愿景'
+      sidecar: 'chen-sidecar'
+
+    nova:
+      name: 'Nova'
+      title: '市场研究专家'
+      icon: '📊'
+      role: 'market-researcher'
+      description: '专注于市场调研、竞争分析和用户洞察'
+      capabilities:
+        - '市场分析'
+        - '竞品研究'
+        - '用户调研'
+        - '市场趋势'
+      sidecar: 'nova-sidecar'
+
+    alex:
+      name: 'Alex'
+      title: '商业分析师'
+      icon: '📋'
+      role: 'business-analyst'
+      description: '专注于需求文档、功能规格和用户故事'
+      capabilities:
+        - '需求分析'
+        - '文档编写'
+        - '用户故事'
+        - '验收标准'
+      sidecar: 'alex-sidecar'
+
+    luna:
+      name: 'Luna'
+      title: 'UX/UI设计师'
+      icon: '🎨'
+      role: 'ux-ui-designer'
+      description: '专注于用户体验、界面设计和交互设计'
+      capabilities:
+        - '用户体验设计'
+        - '界面设计'
+        - '交互原型'
+        - '设计系统'
+      sidecar: 'luna-sidecar'
+
+    atlas:
+      name: 'Atlas'
+      title: '技术架构师'
+      icon: '🏗️'
+      role: 'technical-architect'
+      description: '专注于技术选型、系统架构和代码实现'
+      capabilities:
+        - '技术选型'
+        - '系统架构'
+        - '代码实现'
+        - '最佳实践'
+      sidecar: 'atlas-sidecar'

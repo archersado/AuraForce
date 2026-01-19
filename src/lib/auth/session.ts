@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/db';
+import { session } from '@/lib/config';
 
 export interface SessionData {
   userId: string;
@@ -52,8 +53,8 @@ export async function createSession(
   const cookieStore = await cookies();
   cookieStore.set('auraforce-session', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: session.secureCookie,
+    sameSite: session.sameSite,
     path: '/',
     maxAge: daysToExpire * 24 * 60 * 60, // Convert days to seconds
   });

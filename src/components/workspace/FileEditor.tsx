@@ -3,6 +3,7 @@
  *
  * Code editor with syntax highlighting, line numbers,
  * search/replace, and save functionality.
+ * Includes AI-powered Markdown editor for .md files.
  */
 
 'use client';
@@ -29,7 +30,8 @@ import { css } from '@codemirror/lang-css';
 import { markdown } from '@codemirror/lang-markdown';
 import { tags } from '@lezer/highlight';
 import { HighlightStyle } from '@codemirror/language';
-import { ChevronLeft, ChevronDown, Save, Sparkles, File, Folder, FolderOpen, RefreshCw } from 'lucide-react';
+import { ChevronLeft, ChevronDown, Save, File, Folder, FolderOpen, RefreshCw, Sparkles } from 'lucide-react';
+import { AIMarkdownEditor } from './AIMarkdownEditor';
 import type { FileMetadata } from '@/lib/workspace/files-service';
 import { formatFileSize, formatDate } from '@/lib/workspace/files-service';
 import { listDirectory } from '@/lib/workspace/files-service';
@@ -143,6 +145,12 @@ export function FileEditor({
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const languageCompartment = useRef<Compartment>(new Compartment());
+  const contentRef = useRef(content); // Track latest content prop
+
+  // Update content ref when content prop changes
+  useEffect(() => {
+    contentRef.current = content;
+  }, [content]);
 
   // Load file tree when path changes or when projectRoot is set
   useEffect(() => {
@@ -306,6 +314,13 @@ export function FileEditor({
       });
     }
   };
+
+  // Check if file is a Markdown file
+  const isMarkdownFile = useCallback((filePath: string | null): boolean => {
+    if (!filePath) return false;
+    const ext = filePath.split('.').pop()?.toLowerCase() || '';
+    return ['md', 'markdown', 'mdx'].includes(ext);
+  }, []);
 
   // Local function to detect language from file path
   const getLanguageFromPath = (filePath: string): string => {
@@ -560,6 +575,14 @@ export function FileEditor({
     }
   }, [path, languageExtension, isBinary]);
 
+  // Sync editor content when path changes (switching files)
+  useEffect(() => {
+    if (path) {
+      setEditorContent(contentRef.current);
+      setHasChanges(false);
+    }
+  }, [path]);
+
   // Handle save
   const handleSave = async () => {
     if (!path || readOnly) return;
@@ -608,6 +631,64 @@ export function FileEditor({
       <div className="flex flex-col h-full bg-gray-50 overflow-auto">
         <div className="p-4 whitespace-pre font-mono text-sm">
           {editorContent}
+        </div>
+      </div>
+    );
+  }
+
+  // Use Markdown Preview Editor for Markdown files
+  if (isMarkdownFile(path)) {
+    return (
+      <div className="flex flex-col h-full bg-gray-50 text-gray-900">
+        {/* Toolbar */}
+        <div className="flex items-center justify-between px-4 py-2 bg-white border-b border-gray-200 flex-shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Directory breadcrumb */}
+            <div className="flex items-center gap-2 text-sm text-gray-600 min-w-0">
+              <span className="font-mono">{currentDir}</span>
+            </div>
+            <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded">
+              MARKDOWN
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {hasChanges && (
+              <span className="text-xs text-yellow-600 whitespace-nowrap">
+                Unsaved
+              </span>
+            )}
+            <button
+              onClick={handleSave}
+              disabled={!hasChanges || isSaving}
+              className="flex items-center gap-1.5 px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed rounded transition-colors flex-shrink-0 text-white"
+            >
+              <Save className="w-4 h-4" />
+              <span>{isSaving ? 'Saving...' : 'Save'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Save Error */}
+        {saveError && (
+          <div className="px-4 py-2 bg-red-50 border-b border-red-200 text-red-700 text-sm flex-shrink-0">
+            {saveError}
+          </div>
+        )}
+
+        {/* AI Markdown Editor */}
+        <div className="flex-1 min-h-0 p-4 overflow-auto">
+          <AIMarkdownEditor
+            content={editorContent}
+            onChange={(newContent) => {
+              setEditorContent(newContent);
+              setHasChanges(newContent !== content);
+              // Call parent onChange with the new content
+              onSave(path!, newContent, projectRoot);
+            }}
+            placeholder="Start writing your markdown with AI assistance..."
+            className="h-full"
+          />
         </div>
       </div>
     );

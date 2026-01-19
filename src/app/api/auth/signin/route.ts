@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateUser, createSession } from '@/lib/auth/session';
 import { sanitizeEmail } from '@/lib/auth/password-validation';
+import { isDevelopment } from '@/lib/config';
 
 /**
  * POST - Sign in user with email and password
@@ -72,7 +73,7 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         message: '登录失败，请稍后重试',
-        error: process.env.NODE_ENV === 'development' ? String(error) : undefined,
+        error: isDevelopment() ? String(error) : undefined,
       },
       { status: 500 }
     );

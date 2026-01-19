@@ -9,6 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth/session';
+import { workspace } from '@/lib/config';
 import { readFile, stat } from 'fs/promises';
 import { join, relative, resolve, join as pathJoin } from 'path';
 
@@ -16,7 +17,7 @@ import { join, relative, resolve, join as pathJoin } from 'path';
 const WORKSPACE_ROOT = process.cwd();
 
 // Platform workspaces root (for user project workspaces)
-const PLATFORM_WORKSPACE_ROOT = process.env.NEXT_PUBLIC_PLATFORM_WORKSPACE_ROOT ||
+const PLATFORM_WORKSPACE_ROOT = workspace.root ||
   (() => {
     // Determine platform workspace root relative to project root
     const platformRoot = join(WORKSPACE_ROOT, 'workspaces');

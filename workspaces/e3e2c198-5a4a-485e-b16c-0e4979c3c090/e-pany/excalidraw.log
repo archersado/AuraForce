@@ -50,3 +50,166 @@
 2026-01-19 19:57:50.580 [debug] Connecting to transport...
 2026-01-19 19:57:50.581 [info] Excalidraw MCP server running on stdio
 2026-01-19 19:57:50.589 [info] Listing available tools
+2026-01-19 20:28:53.408 [info] Starting Excalidraw MCP server...
+2026-01-19 20:28:53.409 [debug] Connecting to transport...
+2026-01-19 20:28:53.410 [info] Excalidraw MCP server running on stdio
+2026-01-19 20:28:53.417 [info] Listing available tools
+2026-01-19 23:02:34.715 [info] Starting Excalidraw MCP server...
+2026-01-19 23:02:34.716 [debug] Connecting to transport...
+2026-01-19 23:02:34.717 [info] Excalidraw MCP server running on stdio
+2026-01-19 23:02:34.722 [info] Listing available tools
+2026-01-19 23:07:52.709 [info] Starting Excalidraw MCP server...
+2026-01-19 23:07:52.710 [debug] Connecting to transport...
+2026-01-19 23:07:52.711 [info] Excalidraw MCP server running on stdio
+2026-01-19 23:07:52.716 [info] Listing available tools
+2026-01-19 23:14:43.017 [info] Starting Excalidraw MCP server...
+2026-01-19 23:14:43.019 [debug] Connecting to transport...
+2026-01-19 23:14:43.019 [info] Excalidraw MCP server running on stdio
+2026-01-19 23:14:43.027 [info] Listing available tools
+2026-01-19 23:21:29.382 [info] Starting Excalidraw MCP server...
+2026-01-19 23:21:29.383 [debug] Connecting to transport...
+2026-01-19 23:21:29.384 [info] Excalidraw MCP server running on stdio
+2026-01-19 23:21:29.390 [info] Listing available tools
+2026-01-20 13:41:55.654 [info] Starting Excalidraw MCP server...
+2026-01-20 13:41:55.655 [debug] Connecting to transport...
+2026-01-20 13:41:55.655 [info] Excalidraw MCP server running on stdio
+2026-01-20 13:41:55.661 [info] Listing available tools
+2026-01-20 13:45:38.996 [info] Starting Excalidraw MCP server...
+2026-01-20 13:45:38.999 [debug] Connecting to transport...
+2026-01-20 13:45:38.999 [info] Excalidraw MCP server running on stdio
+2026-01-20 13:45:39.036 [info] Listing available tools
+2026-01-20 14:29:04.333 [info] Starting Excalidraw MCP server...
+2026-01-20 14:29:04.334 [debug] Connecting to transport...
+2026-01-20 14:29:04.334 [info] Excalidraw MCP server running on stdio
+2026-01-20 14:29:04.343 [info] Listing available tools
+2026-01-20 14:57:21.534 [info] Starting Excalidraw MCP server...
+2026-01-20 14:57:21.536 [debug] Connecting to transport...
+2026-01-20 14:57:21.536 [info] Excalidraw MCP server running on stdio
+2026-01-20 14:57:21.542 [info] Listing available tools
+2026-01-20 14:58:27.317 [info] Starting Excalidraw MCP server...
+2026-01-20 14:58:27.319 [debug] Connecting to transport...
+2026-01-20 14:58:27.319 [info] Excalidraw MCP server running on stdio
+2026-01-20 14:58:27.325 [info] Listing available tools
+2026-01-20 15:07:26.992 [info] Handling tool call: clear_canvas
+2026-01-20 15:07:26.992 [info] Clear canvas request via MCP
+2026-01-20 15:07:27.169 [error] Canvas clear failed via MCP: Failed to fetch elements: 404 Not Found {"stack":"Error: Failed to fetch elements: 404 Not Found\n    at file:///Users/archersado/workspace/mygit/mcp_excalidraw/dist/index.js:980:31\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async wrappedHandler (file:///Users/archersado/workspace/mygit/mcp_excalidraw/node_modules/.store/@modelcontextprotocol+sdk@1.25.1/node_modules/@modelcontextprotocol/sdk/dist/esm/server/index.js:125:32)"}
+2026-01-20 15:07:27.171 [error] Error handling tool call: Failed to clear canvas: Failed to fetch elements: 404 Not Found {"error":{}}
+2026-01-20 15:07:29.790 [info] Handling tool call: create_element
+2026-01-20 15:07:29.792 [info] Creating element via MCP {"type":"rectangle"}
+2026-01-20 15:07:29.793 [debug] Syncing to canvas: create {"url":"http://localhost:3000/api/elements","data":{"id":"mkm94q68ltxbmjtr4ga","type":"rectangle","x":100,"y":100,"backgroundColor":"#EBEBEB","strokeColor":"#1E1E1E","strokeWidth":2,"roughness":0.8,"opacity":1,"createdAt":"2026-01-20T07:07:29.792Z","updatedAt":"2026-01-20T07:07:29.793Z","version":1}}
+2026-01-20 15:07:29.835 [warn] Canvas sync failed for create:
+2026-01-20 15:07:29.835 [info] Element created via MCP and synced to canvas {"id":"mkm94q68ltxbmjtr4ga","type":"rectangle","synced":true}
+2026-01-20 15:07:53.099 [info] Handling tool call: batch_create_elements
+2026-01-20 15:07:53.103 [error] Error handling tool call: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "number",
+    "path": [
+      "elements",
+      3,
+      "fontFamily"
+    ],
+    "message": "Expected string, received number"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "number",
+    "path": [
+      "elements",
+      6,
+      "fontFamily"
+    ],
+    "message": "Expected string, received number"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "number",
+    "path": [
+      "elements",
+      7,
+      "fontFamily"
+    ],
+    "message": "Expected string, received number"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "number",
+    "path": [
+      "elements",
+      10,
+      "fontFamily"
+    ],
+    "message": "Expected string, received number"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "number",
+    "path": [
+      "elements",
+      12,
+      "fontFamily"
+    ],
+    "message": "Expected string, received number"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "number",
+    "path": [
+      "elements",
+      15,
+      "fontFamily"
+    ],
+    "message": "Expected string, received number"
+  }
+] {"error":{"issues":[{"code":"invalid_type","expected":"string","received":"number","path":["elements",3,"fontFamily"],"message":"Expected string, received number"},{"code":"invalid_type","expected":"string","received":"number","path":["elements",6,"fontFamily"],"message":"Expected string, received number"},{"code":"invalid_type","expected":"string","received":"number","path":["elements",7,"fontFamily"],"message":"Expected string, received number"},{"code":"invalid_type","expected":"string","received":"number","path":["elements",10,"fontFamily"],"message":"Expected string, received number"},{"code":"invalid_type","expected":"string","received":"number","path":["elements",12,"fontFamily"],"message":"Expected string, received number"},{"code":"invalid_type","expected":"string","received":"number","path":["elements",15,"fontFamily"],"message":"Expected string, received number"}],"name":"ZodError"}}
+2026-01-20 15:08:06.483 [info] Handling tool call: batch_create_elements
+2026-01-20 15:08:06.483 [info] Batch creating elements via MCP {"count":8}
+2026-01-20 15:08:06.484 [debug] Syncing to canvas: batch_create {"url":"http://localhost:3000/api/elements/batch","data":[{"id":"mkm95ihgretig7bqk47","type":"rectangle","x":100,"y":100,"width":375,"height":750,"backgroundColor":"#EBEBEB","strokeColor":"#1E1E1E","strokeWidth":2,"roughness":0.8,"opacity":1,"text":"","createdAt":"2026-01-20T07:08:06.484Z","updatedAt":"2026-01-20T07:08:06.484Z","version":1},{"id":"mkm95ihg7lq1zw94om","type":"rectangle","x":100,"y":100,"width":375,"height":80,"backgroundColor":"#FFFFFF","strokeColor":"#1E1E1E","strokeWidth":1,"roughness":0.8,"opacity":1,"text":"","createdAt":"2026-01-20T07:08:06.484Z","updatedAt":"2026-01-20T07:08:06.484Z","version":1},{"id":"mkm95ihgc72ixetczwd","type":"ellipse","x":140,"y":120,"width":40,"height":40,"backgroundColor":"#4A90E2","strokeColor":"#1E1E1E","strokeWidth":2,"roughness":0.8,"opacity":1,"text":"","createdAt":"2026-01-20T07:08:06.484Z","updatedAt":"2026-01-20T07:08:06.484Z","version":1},{"id":"mkm95ihgqb4dt15u0i","type":"text","x":200,"y":130,"strokeColor":"#1E1E1E","strokeWidth":2,"roughness":0.8,"opacity":1,"text":"e-pany","fontSize":18,"fontFamily":"2","createdAt":"2026-01-20T07:08:06.484Z","updatedAt":"2026-01-20T07:08:06.484Z","version":1},{"id":"mkm95ihgtn2vfhsdwqa","type":"rectangle","x":120,"y":200,"width":335,"height":120,"backgroundColor":"#FFFFFF","strokeColor":"#1E1E1E","strokeWidth":1,"roughness":0.8,"opacity":1,"text":"","createdAt":"2026-01-20T07:08:06.484Z","updatedAt":"2026-01-20T07:08:06.484Z","version":1},{"id":"mkm95ihgno12zk8dbp","type":"rectangle","x":140,"y":230,"width":120,"height":40,"backgroundColor":"#4A90E2","strokeColor":"#1E1E1E","strokeWidth":2,"roughness":0.8,"opacity":1,"text":"","createdAt":"2026-01-20T07:08:06.484Z","updatedAt":"2026-01-20T07:08:06.484Z","version":1},{"id":"mkm95ihgx7k2p4wldmm","type":"text","x":155,"y":240,"strokeColor":"#FFFFFF","strokeWidth":2,"roughness":0.8,"opacity":1,"text":"快速预约","fontSize":18,"fontFamily":"2","createdAt":"2026-01-20T07:08:06.484Z","updatedAt":"2026-01-20T07:08:06.484Z","version":1},{"id":"mkm95ihg0shaojzhz08r","type":"text","x":280,"y":235,"strokeColor":"#1E1E1E","strokeWidth":2,"roughness":0.8,"opacity":1,"text":"今天去医院\n需要我帮忙吗?","fontSize":20,"fontFamily":"2","createdAt":"2026-01-20T07:08:06.484Z","updatedAt":"2026-01-20T07:08:06.484Z","version":1}]}
+2026-01-20 15:08:06.534 [warn] Canvas sync failed for batch_create:
+2026-01-20 15:08:06.535 [info] Batch elements created via MCP and synced to canvas {"count":8,"synced":true}
+2026-01-20 15:08:22.432 [info] Handling tool call: batch_create_elements
+2026-01-20 15:08:22.433 [info] Batch creating elements via MCP {"count":8}
+2026-01-20 15:08:22.433 [debug] Syncing to canvas: batch_create {"url":"http://localhost:3000/api/elements/batch","data":[{"id":"mkm95ushrloiizjgeq","type":"rectangle","x":120,"y":340,"width":335,"height":220,"backgroundColor":"#FFFFFF","strokeColor":"#1E1E1E","strokeWidth":1,"roughness":0.8,"opacity":1,"text":"","createdAt":"2026-01-20T07:08:22.433Z","updatedAt":"2026-01-20T07:08:22.433Z","version":1},{"id":"mkm95ush4xdr9f98d2y","type":"ellipse","x":140,"y":370,"width":60,"height":60,"backgroundColor":"#4A90E2","strokeColor":"#1E1E1E","strokeWidth":2,"roughness":0.8,"opacity":1,"text":"","createdAt":"2026-01-20T07:08:22.433Z","updatedAt":"2026-01-20T07:08:22.433Z","version":1},{"id":"mkm95ush8fhadm0anbu","type":"text","x":220,"y":380,"strokeColor":"#1E1E1E","strokeWidth":2,"roughness":0.8,"opacity":1,"text":"您好，我是就医助理小e\n\n今天我陪您看病","fontSize":20,"fontFamily":"2","createdAt":"2026-01-20T07:08:22.433Z","updatedAt":"2026-01-20T07:08:22.433Z","version":1},{"id":"mkm95ushhhb7czkkq5p","type":"ellipse","x":145,"y":490,"width":50,"height":50,"backgroundColor":"#4A90E2","strokeColor":"#1E1E1E","strokeWidth":2,"roughness":0.8,"opacity":1,"text":"","createdAt":"2026-01-20T07:08:22.433Z","updatedAt":"2026-01-20T07:08:22.433Z","version":1},{"id":"mkm95ushqgaozv5pfn","type":"text","x":210,"y":500,"strokeColor":"#1E1E1E","strokeWidth":2,"roughness":0.8,"opacity":1,"text":"点击说话","fontSize":12,"fontFamily":"2","createdAt":"2026-01-20T07:08:22.433Z","updatedAt":"2026-01-20T07:08:22.433Z","version":1},{"id":"mkm95ushgio6znr0art","type":"rectangle","x":125,"y":580,"width":320,"height":80,"backgroundColor":"#F0F0F0","strokeColor":"#1E1E1E","strokeWidth":1,"roughness":0.8,"opacity":1,"text":"","createdAt":"2026-01-20T07:08:22.433Z","updatedAt":"2026-01-20T07:08:22.433Z","version":1},{"id":"mkm95ushjp8rdiikyn","type":"text","x":140,"y":595,"strokeColor":"#1E1E1E","strokeWidth":2,"roughness":0.8,"opacity":1,"text":"小e: 您好呀！请告诉我\n您想去哪家医院?","fontSize":16,"fontFamily":"2","createdAt":"2026-01-20T07:08:22.433Z","updatedAt":"2026-01-20T07:08:22.433Z","version":1},{"id":"mkm95ushl2kdpajyxb","type":"rectangle","x":120,"y":680,"width":335,"height":100,"backgroundColor":"#FFFFFF","strokeColor":"#1E1E1E","strokeWidth":1,"roughness":0.8,"opacity":1,"text":"","createdAt":"2026-01-20T07:08:22.433Z","updatedAt":"2026-01-20T07:08:22.433Z","version":1}]}
+2026-01-20 15:08:22.478 [warn] Canvas sync failed for batch_create:
+2026-01-20 15:08:22.478 [info] Batch elements created via MCP and synced to canvas {"count":8,"synced":true}
+2026-01-20 15:08:33.447 [info] Handling tool call: batch_create_elements
+2026-01-20 15:08:33.448 [info] Batch creating elements via MCP {"count":6}
+2026-01-20 15:08:33.448 [debug] Syncing to canvas: batch_create {"url":"http://localhost:3000/api/elements/batch","data":[{"id":"mkm963agguiluk49w1j","type":"rectangle","x":140,"y":695,"width":300,"height":30,"backgroundColor":"#F5F5F5","strokeColor":"#1E1E1E","strokeWidth":1,"roughness":0.8,"opacity":1,"text":"","createdAt":"2026-01-20T07:08:33.448Z","updatedAt":"2026-01-20T07:08:33.448Z","version":1},{"id":"mkm963agldfp75je9dc","type":"text","x":150,"y":705,"strokeColor":"#1E1E1E","strokeWidth":2,"roughness":0.8,"opacity":1,"text":"说: 市第一人民医院","fontSize":16,"fontFamily":"2","createdAt":"2026-01-20T07:08:33.448Z","updatedAt":"2026-01-20T07:08:33.448Z","version":1},{"id":"mkm963ag3v6811x5t3n","type":"text","x":220,"y":800,"strokeColor":"#666666","strokeWidth":2,"roughness":0.8,"opacity":1,"text":"首页","fontSize":14,"fontFamily":"2","createdAt":"2026-01-20T07:08:33.448Z","updatedAt":"2026-01-20T07:08:33.448Z","version":1},{"id":"mkm963agm1yyzefb6i","type":"text","x":280,"y":800,"strokeColor":"#1E1E1E","strokeWidth":2,"roughness":0.8,"opacity":1,"text":"就医","fontSize":14,"fontFamily":"2","createdAt":"2026-01-20T07:08:33.448Z","updatedAt":"2026-01-20T07:08:33.448Z","version":1},{"id":"mkm963agzm294fi5yqt","type":"text","x":340,"y":800,"strokeColor":"#666666","strokeWidth":2,"roughness":0.8,"opacity":1,"text":"我的","fontSize":14,"fontFamily":"2","createdAt":"2026-01-20T07:08:33.448Z","updatedAt":"2026-01-20T07:08:33.448Z","version":1},{"id":"mkm963ag5y77k802sgv","type":"text","x":550,"y":480,"strokeColor":"#666666","strokeWidth":2,"roughness":0.8,"opacity":1,"text":"首页线框图","fontSize":14,"fontFamily":"2","createdAt":"2026-01-20T07:08:33.448Z","updatedAt":"2026-01-20T07:08:33.448Z","version":1}]}
+2026-01-20 15:08:33.491 [warn] Canvas sync failed for batch_create:
+2026-01-20 15:08:33.491 [info] Batch elements created via MCP and synced to canvas {"count":6,"synced":true}
+2026-01-20 15:08:55.402 [info] Handling tool call: batch_create_elements
+2026-01-20 15:08:55.403 [info] Batch creating elements via MCP {"count":13}
+2026-01-20 15:08:55.403 [debug] Syncing to canvas: batch_create {"url":"http://localhost:3000/api/elements/batch","data":[{"id":"mkm96k8bjml1woatul","type":"rectangle","x":520,"y":100,"width":375,"height":750,"backgroundColor":"#EBEBEB","strokeColor":"#1E1E1E","strokeWidth":2,"roughness":0.8,"opacity":1,"text":"","createdAt":"2026-01-20T07:08:55.403Z","updatedAt":"2026-01-20T07:08:55.403Z","version":1},{"id":"mkm96k8bbe4co8wc4rp","type":"rectangle","x":520,"y":100,"width":375,"height":100,"backgroundColor":"#FFFFFF","strokeColor":"#1E1E1E","strokeWidth":1,"roughness":0.8,"opacity":1,"text":"","createdAt":"2026-01-20T07:08:55.403Z","updatedAt":"2026-01-20T07:08:55.403Z","version":1},{"id":"mkm96k8bbz4sb7sk9","type":"ellipse","x":820,"y":130,"width":40,"height":40,"backgroundColor":"#4A90E2","strokeColor":"#1E1E1E","strokeWidth":2,"roughness":0.8,"opacity":1,"text":"","createdAt":"2026-01-20T07:08:55.403Z","updatedAt":"2026-01-20T07:08:55.403Z","version":1},{"id":"mkm96k8bfl3gnjcd3pl","type":"text","x":540,"y":140,"strokeColor":"#1E1E1E","strokeWidth":2,"roughness":0.8,"opacity":1,"text":"e-pany","fontSize":18,"fontFamily":"2","createdAt":"2026-01-20T07:08:55.403Z","updatedAt":"2026-01-20T07:08:55.403Z","version":1},{"id":"mkm96k8b4edtxymhpxy","type":"text","x":540,"y":170,"strokeColor":"#1E1E1E","strokeWidth":2,"roughness":0.8,"opacity":1,"text":"« 返回","fontSize":16,"fontFamily":"2","createdAt":"2026-01-20T07:08:55.403Z","updatedAt":"2026-01-20T07:08:55.403Z","version":1},{"id":"mkm96k8bcc7rr3jcwc","type":"rectangle","x":540,"y":220,"width":335,"height":200,"backgroundColor":"#FFFFFF","strokeColor":"#1E1E1E","strokeWidth":1,"roughness":0.8,"opacity":1,"text":"","createdAt":"2026-01-20T07:08:55.403Z","updatedAt":"2026-01-20T07:08:55.403Z","version":1},{"id":"mkm96k8b8yzztx9xk3p","type":"text","x":550,"y":235,"strokeColor":"#1E1E1E","strokeWidth":2,"roughness":0.8,"opacity":1,"text":"就医流程","fontSize":18,"fontFamily":"2","createdAt":"2026-01-20T07:08:55.403Z","updatedAt":"2026-01-20T07:08:55.403Z","version":1},{"id":"mkm96k8b8r5lxtnls1","type":"rectangle","x":560,"y":270,"width":300,"height":35,"backgroundColor":"#4CAF50","strokeColor":"#1E1E1E","strokeWidth":1,"roughness":0.8,"opacity":1,"text":"","createdAt":"2026-01-20T07:08:55.403Z","updatedAt":"2026-01-20T07:08:55.403Z","version":1},{"id":"mkm96k8b88f6qfpu4x7","type":"text","x":570,"y":280,"strokeColor":"#FFFFFF","strokeWidth":2,"roughness":0.8,"opacity":1,"text":"1. 挂号签到","fontSize":16,"fontFamily":"2","createdAt":"2026-01-20T07:08:55.403Z","updatedAt":"2026-01-20T07:08:55.403Z","version":1},{"id":"mkm96k8bloto2rrlrxs","type":"rectangle","x":560,"y":315,"width":300,"height":35,"backgroundColor":"#F5F5F5","strokeColor":"#1E1E1E","strokeWidth":1,"roughness":0.8,"opacity":1,"text":"","createdAt":"2026-01-20T07:08:55.403Z","updatedAt":"2026-01-20T07:08:55.403Z","version":1},{"id":"mkm96k8b0nkszqkqmg3","type":"text","x":570,"y":325,"strokeColor":"#1E1E1E","strokeWidth":2,"roughness":0.8,"opacity":1,"text":"2. 等待就诊","fontSize":16,"fontFamily":"2","createdAt":"2026-01-20T07:08:55.403Z","updatedAt":"2026-01-20T07:08:55.403Z","version":1},{"id":"mkm96k8bq293wh5otk","type":"rectangle","x":560,"y":360,"width":300,"height":35,"backgroundColor":"#F5F5F5","strokeColor":"#1E1E1E","strokeWidth":1,"roughness":0.8,"opacity":1,"text":"","createdAt":"2026-01-20T07:08:55.403Z","updatedAt":"2026-01-20T07:08:55.403Z","version":1},{"id":"mkm96k8bzuevhhv8s4e","type":"text","x":570,"y":370,"strokeColor":"#1E1E1E","strokeWidth":2,"roughness":0.8,"opacity":1,"text":"3. 医生问诊","fontSize":16,"fontFamily":"2","createdAt":"2026-01-20T07:08:55.403Z","updatedAt":"2026-01-20T07:08:55.403Z","version":1}]}
+2026-01-20 15:08:55.457 [warn] Canvas sync failed for batch_create:
+2026-01-20 15:08:55.457 [info] Batch elements created via MCP and synced to canvas {"count":13,"synced":true}
+2026-01-20 15:09:13.750 [info] Handling tool call: batch_create_elements
+2026-01-20 15:09:13.751 [info] Batch creating elements via MCP {"count":10}
+2026-01-20 15:09:13.751 [debug] Syncing to canvas: batch_create {"url":"http://localhost:3000/api/elements/batch","data":[{"id":"mkm96ydzsmk03o2oni","type":"rectangle","x":560,"y":405,"width":300,"height":35,"backgroundColor":"#F5F5F5","strokeColor":"#1E1E1E","strokeWidth":1,"roughness":0.8,"opacity":1,"text":"","createdAt":"2026-01-20T07:09:13.751Z","updatedAt":"2026-01-20T07:09:13.751Z","version":1},{"id":"mkm96ydza4p9sk4sasc","type":"text","x":570,"y":415,"strokeColor":"#1E1E1E","strokeWidth":2,"roughness":0.8,"opacity":1,"text":"4. 检查缴费","fontSize":16,"fontFamily":"2","createdAt":"2026-01-20T07:09:13.751Z","updatedAt":"2026-01-20T07:09:13.751Z","version":1},{"id":"mkm96ydzqz8lqg5v46","type":"rectangle","x":560,"y":450,"width":300,"height":35,"backgroundColor":"#F5F5F5","strokeColor":"#1E1E1E","strokeWidth":1,"roughness":0.8,"opacity":1,"text":"","createdAt":"2026-01-20T07:09:13.751Z","updatedAt":"2026-01-20T07:09:13.751Z","version":1},{"id":"mkm96ydzaohrz0cfsoh","type":"text","x":570,"y":460,"strokeColor":"#1E1E1E","strokeWidth":2,"roughness":0.8,"opacity":1,"text":"5. 取药离院","fontSize":16,"fontFamily":"2","createdAt":"2026-01-20T07:09:13.751Z","updatedAt":"2026-01-20T07:09:13.751Z","version":1},{"id":"mkm96ydz2weoe32xyj5","type":"rectangle","x":540,"y":500,"width":335,"height":180,"backgroundColor":"#FFFFFF","strokeColor":"#1E1E1E","strokeWidth":1,"roughness":0.8,"opacity":1,"text":"","createdAt":"2026-01-20T07:09:13.751Z","updatedAt":"2026-01-20T07:09:13.751Z","version":1},{"id":"mkm96ydz72seimtvam","type":"text","x":550,"y":515,"strokeColor":"#4A90E2","strokeWidth":2,"roughness":0.8,"opacity":1,"text":"当前步骤指导","fontSize":16,"fontFamily":"2","createdAt":"2026-01-20T07:09:13.751Z","updatedAt":"2026-01-20T07:09:13.751Z","version":1},{"id":"mkm96ydzkfb2rhxxmm","type":"text","x":550,"y":545,"strokeColor":"#1E1E1E","strokeWidth":2,"roughness":0.8,"opacity":1,"text":"请前往一楼大厅挂号处\n使用身份证或医保卡进行签到\n位置: 从大门进入左转50米","fontSize":14,"fontFamily":"2","createdAt":"2026-01-20T07:09:13.751Z","updatedAt":"2026-01-20T07:09:13.751Z","version":1},{"id":"mkm96ydz79qf3hpgck9","type":"rectangle","x":580,"y":615,"width":200,"height":45,"backgroundColor":"#4A90E2","strokeColor":"#1E1E1E","strokeWidth":2,"roughness":0.8,"opacity":1,"text":"","createdAt":"2026-01-20T07:09:13.751Z","updatedAt":"2026-01-20T07:09:13.751Z","version":1},{"id":"mkm96ydzyspw7ahv5vn","type":"text","x":590,"y":628,"strokeColor":"#FFFFFF","strokeWidth":2,"roughness":0.8,"opacity":1,"text":"📍 导航到医院","fontSize":16,"fontFamily":"2","createdAt":"2026-01-20T07:09:13.751Z","updatedAt":"2026-01-20T07:09:13.751Z","version":1},{"id":"mkm96ydznmhuo6at92","type":"text","x":950,"y":480,"strokeColor":"#666666","strokeWidth":2,"roughness":0.8,"opacity":1,"text":"就医流程页线框图","fontSize":14,"fontFamily":"2","createdAt":"2026-01-20T07:09:13.751Z","updatedAt":"2026-01-20T07:09:13.751Z","version":1}]}
+2026-01-20 15:09:13.790 [warn] Canvas sync failed for batch_create:
+2026-01-20 15:09:13.791 [info] Batch elements created via MCP and synced to canvas {"count":10,"synced":true}
+2026-01-20 15:09:19.026 [info] Handling tool call: export_canvas_image
+2026-01-20 15:09:19.027 [info] Export canvas image request via MCP {"format":"png","background":true,"padding":10,"scale":1,"quality":0.8,"filepath":"/Users/archersado/workspace/mygit/AuraForce/workspaces/e3e2c198-5a4a-485e-b16c-0e4979c3c090/e-pany/_bmad-output/wireframes.png"}
+2026-01-20 15:09:19.063 [error] Canvas export failed via MCP: Unexpected token '<', "<!DOCTYPE "... is not valid JSON {"stack":"SyntaxError: Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON\n    at JSON.parse (<anonymous>)\n    at Response.json (file:///Users/archersado/workspace/mygit/mcp_excalidraw/node_modules/node-fetch/src/body.js:149:15)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async file:///Users/archersado/workspace/mygit/mcp_excalidraw/dist/index.js:909:43\n    at async wrappedHandler (file:///Users/archersado/workspace/mygit/mcp_excalidraw/node_modules/.store/@modelcontextprotocol+sdk@1.25.1/node_modules/@modelcontextprotocol/sdk/dist/esm/server/index.js:125:32)"}
+2026-01-20 15:09:19.063 [error] Error handling tool call: Failed to export canvas: Unexpected token '<', "<!DOCTYPE "... is not valid JSON {"error":{}}
+2026-01-20 15:48:05.388 [info] Starting Excalidraw MCP server...
+2026-01-20 15:48:05.390 [debug] Connecting to transport...
+2026-01-20 15:48:05.390 [info] Excalidraw MCP server running on stdio
+2026-01-20 15:48:05.396 [info] Listing available tools
+2026-01-20 15:53:07.201 [info] Starting Excalidraw MCP server...
+2026-01-20 15:53:07.202 [debug] Connecting to transport...
+2026-01-20 15:53:07.202 [info] Excalidraw MCP server running on stdio
+2026-01-20 15:53:07.209 [info] Listing available tools
+2026-01-20 16:07:01.465 [info] Starting Excalidraw MCP server...
+2026-01-20 16:07:01.467 [debug] Connecting to transport...
+2026-01-20 16:07:01.467 [info] Excalidraw MCP server running on stdio
+2026-01-20 16:07:01.473 [info] Listing available tools
+2026-01-21 16:42:18.366 [info] Starting Excalidraw MCP server...
+2026-01-21 16:42:18.368 [debug] Connecting to transport...
+2026-01-21 16:42:18.368 [info] Excalidraw MCP server running on stdio
+2026-01-21 16:42:18.377 [info] Listing available tools

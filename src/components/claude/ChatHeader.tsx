@@ -10,7 +10,7 @@
 
 import { useClaudeStore, type Session } from '@/lib/store/claude-store';
 import type { SessionStatus } from '@/types/session';
-import { Plus, Settings, Clock, Play, Pause, Square, MessageSquare, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, Settings, Clock, Play, Pause, Square, MessageSquare, CheckCircle, XCircle, History } from 'lucide-react';
 import { ConnectionStatus } from './ConnectionStatus';
 import { useWebSocketControls } from '@/lib/claude/websocket-manager';
 
@@ -18,6 +18,7 @@ interface ChatHeaderProps {
   onNewChat?: () => void;
   onSettings?: () => void;
   onShowSessions?: () => void; // Story 3.6 - Show session list panel
+  onShowClaudeSessions?: () => void; // Show Claude (CLI-only) sessions
   sessionTitle?: string; // Story 3.4 - Session title for display
   onReconnect?: () => void; // Story 3.7 - Manual reconnect callback
 }
@@ -28,7 +29,7 @@ const statusConfig: Record<SessionStatus, { icon: typeof Play; label: string; co
   aborted: { icon: XCircle, label: 'Aborted', color: 'text-red-600' },
 };
 
-export function ChatHeader({ onNewChat, onSettings, onShowSessions, sessionTitle, onReconnect }: ChatHeaderProps) {
+export function ChatHeader({ onNewChat, onSettings, onShowSessions, onShowClaudeSessions, sessionTitle, onReconnect }: ChatHeaderProps) {
   const currentSession = useClaudeStore((state) => state.currentSession);
   const messages = useClaudeStore((state) => state.messages);
   const {
@@ -60,7 +61,7 @@ export function ChatHeader({ onNewChat, onSettings, onShowSessions, sessionTitle
   };
 
   return (
-    <div className="border-b border-gray-200 bg-white px-4 py-3">
+    <div data-testid="chat-header" className="border-b border-gray-200 bg-white px-4 py-3">
       <div className="max-w-4xl mx-auto flex items-center justify-between">
         {/* Session info */}
         <div className="flex-1 min-w-0">
@@ -100,11 +101,24 @@ export function ChatHeader({ onNewChat, onSettings, onShowSessions, sessionTitle
             onReconnect={handleReconnect}
           />
 
+          {/* Claude sessions button (for CLI-only sessions) */}
+          {onShowClaudeSessions && (
+            <button
+              type="button"
+              onClick={onShowClaudeSessions}
+              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              aria-label="Show Claude sessions"
+              title="Show Claude CLI sessions"
+            >
+              <History className="w-5 h-5" />
+            </button>
+          )}
+
           {/* Sessions button (Story 3.6 - Multi-session panel) */}
           <button
             type="button"
             onClick={onShowSessions}
-            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
             aria-label="Show sessions"
             title="Show sessions (⌘+⇧+S)"
           >
@@ -114,7 +128,7 @@ export function ChatHeader({ onNewChat, onSettings, onShowSessions, sessionTitle
           <button
             type="button"
             onClick={onNewChat}
-            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
             aria-label="New chat"
             title="New chat (⌘+N)"
           >
@@ -124,7 +138,7 @@ export function ChatHeader({ onNewChat, onSettings, onShowSessions, sessionTitle
           <button
             type="button"
             onClick={onSettings}
-            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
             aria-label="Settings"
             title="Settings"
           >

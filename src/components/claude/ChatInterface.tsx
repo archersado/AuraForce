@@ -23,6 +23,7 @@ import { SessionControlButtons } from './SessionControlButtons';
 import { TerminateDialog } from './TerminateDialog';
 import { SessionList } from './SessionList';
 import { RunningToolIndicator } from './RunningToolIndicator';
+import { ClaudeSessionList } from './ClaudeSessionList';
 import { useWebSocketManager, useWebSocketControls } from '@/lib/claude/websocket-manager';
 import type { StreamChunk, StreamStart, StreamEnd, StreamError as StreamErrorType } from '@/lib/claude/types';
 import { createStreamManager } from '@/lib/claude/stream-manager';
@@ -79,6 +80,11 @@ export function ChatInterface({ projectPath, projectId, projectName }: ChatInter
     useWebSocket,
     // Project context
     setProjectContext,
+    // File operation notifications
+    setFileOperation,
+    // Claude SDK session ID for multi-turn conversations resumption
+    claudeSessionId,
+    setClaudeSessionId,
   } = useClaudeStore();
 
   const [toasts, setToasts] = useState<Array<{ id: string } & ToastProps>>([]);
@@ -93,6 +99,9 @@ export function ChatInterface({ projectPath, projectId, projectName }: ChatInter
 
   // Session list panel state (Story 3.6 - Multi-session)
   const [showSessionList, setShowSessionList] = useState(false);
+
+  // Claude session list panel state
+  const [showClaudeSessionList, setShowClaudeSessionList] = useState(false);
 
   // Track active tool execution for handling tool_use events
   const [currentToolMap] = useState<Map<string, { toolName: string; input: any; toolId: string; message_id?: string }>>(new Map());
@@ -193,17 +202,38 @@ export function ChatInterface({ projectPath, projectId, projectName }: ChatInter
     };
   }, [updateMessageStreaming, setStreaming, setConnectionState, setStreamError, setSessionControlState, setActiveStreamId]);
 
+  // Sync claudeSessionIdRef with store's claudeSessionId
+  // This ensures ref is always up-to-date with the store value
+  useEffect(() => {
+    if (claudeSessionId !== null) {
+      claudeSessionIdRef.current = claudeSessionId;
+      console.log('[ChatInterface] Synced Claude SDK session ID from store:', claudeSessionId);
+    }
+  }, [claudeSessionId]);
+
   // Initialize session on mount or when URL changes (Story 3.4)
   // Also handles auto-restoring project sessions when entering a workspace
+  const previousProjectIdRef = useRef<string | null>(null);
+
   useEffect(() => {
     async function initializeSession() {
+      // If projectId changed, we need to clear localStorage active session
+      // to prevent loading wrong session
+      if (projectId !== previousProjectIdRef.current) {
+        console.log('[ChatInterface] Project changed, clearing localStorage session:', {
+          previous: previousProjectIdRef.current,
+          current: projectId,
+        });
+        SessionStorage.clearActiveSessionId();
+        previousProjectIdRef.current = projectId || null;
+      }
+
       // Priority order:
       // 1. URL param session
       // 2. Latest project session (if projectId is set)
-      // 3. localStorage active session
-      // 4. Create new session
+      // 3. Create new session (don't use localStorage for project sessions)
 
-      const targetSessionId = sessionIdParam || SessionStorage.getActiveSessionId();
+      const targetSessionId = sessionIdParam;
 
       // If we have a URL session explicitly set, use that
       if (sessionIdParam) {
@@ -235,29 +265,24 @@ export function ChatInterface({ projectPath, projectId, projectName }: ChatInter
         } catch (error) {
           console.error('[ChatInterface] Failed to load project session:', error);
         }
-        // If no project session exists or loading fails, fall through to create new session
+        // If no project session exists or loading fails, create new session
+        console.log('[ChatInterface] Creating new session for project:', projectId);
+        createSession();
+        return;
       }
 
-      // Otherwise, use localStorage or create new
-      if (targetSessionId) {
-        try {
-          await loadSession(targetSessionId);
-          console.log('[ChatInterface] Loaded session from localStorage:', targetSessionId);
-        } catch (error) {
-          console.error('[ChatInterface] Failed to load localStorage session:', error);
-          SessionStorage.clearActiveSessionId();
-          createSession();
-        }
-      } else {
-        createSession();
-      }
+      // Outside of project context (projectId is null), create new session
+      console.log('[ChatInterface] Creating new session (no project)');
+      createSession();
     }
 
     initializeSession();
   }, [sessionIdParam, projectId, loadSession, createSession]);
 
   // Update project context when project changes
+  // This should run BEFORE initializeSession to ensure proper context
   useEffect(() => {
+    console.log('[ChatInterface] Project context changed:', { projectId, projectName, projectPath });
     setProjectContext(projectId || null, projectName || null, projectPath || null);
   }, [projectId, projectName, projectPath, setProjectContext]);
 
@@ -328,6 +353,58 @@ export function ChatInterface({ projectPath, projectId, projectName }: ChatInter
   // Handle show session list panel (Story 3.6)
   const handleShowSessions = () => {
     setShowSessionList(true);
+  };
+
+  // Handle show Claude session list panel
+  const handleShowClaudeSessions = () => {
+    setShowClaudeSessionList(true);
+  };
+
+  // Handle resume Claude session
+  const handleResumeClaudeSession = async (claudeSessionId: string) => {
+    console.log('[ChatInterface] Resuming Claude session:', claudeSessionId);
+
+    try {
+      // Set the Claude SDK session ID for resumption
+      claudeSessionIdRef.current = claudeSessionId;
+      setClaudeSessionId(claudeSessionId);
+
+      showToast('info', 'Claude session resumed. Message history will be maintained.');
+
+      // Optionally load session messages from the JSONL file
+      if (projectPath) {
+        const response = await fetch(
+          `/api/claude/sessions/${claudeSessionId}/messages?projectPath=${encodeURIComponent(projectPath)}`
+        );
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.data) {
+            // Add messages to the store as context
+            console.log('[ChatInterface] Loaded', result.data.messages.length, 'messages from Claude session');
+            // Convert JSONL entries to Message format and add
+            result.data.messages.forEach((entry: any) => {
+              if (entry.message?.role === 'user') {
+                const content = typeof entry.message.content === 'string'
+                  ? entry.message.content
+                  : Array.isArray(entry.message.content)
+                    ? entry.message.content[0]?.text || ''
+                    : '';
+                if (content) {
+                  addMessage({
+                    type: 'user',
+                    content,
+                  });
+                }
+              }
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('[ChatInterface] Failed to resume Claude session:', error);
+      showToast('error', 'Failed to resume Claude session');
+    }
   };
 
   // Keyboard shortcuts (Story 3.6 - Multi-session)
@@ -429,17 +506,91 @@ export function ChatInterface({ projectPath, projectId, projectName }: ChatInter
               console.log('[ChatInterface] Claude SDK session created:', jsonData.sessionId);
               // Store Claude SDK session ID for future multi-turn conversation
               claudeSessionIdRef.current = jsonData.sessionId;
+              setClaudeSessionId(jsonData.sessionId);
             }
             // Handle Claude response (streaming content)
             else if (jsonData.type === 'claude-response') {
               const sdkMessage = jsonData.data;
 
-              // Log the received message for debugging
-              console.log('[ChatInterface] Received claude-response message:', JSON.stringify(sdkMessage, null, 2));
+              // Handle user messages (tool results) - detect file operations
+              if (sdkMessage.type === 'user' && sdkMessage.message) {
+                const content = sdkMessage.message.content;
+                if (Array.isArray(content)) {
+                  for (const item of content) {
+                    if (item.type === 'tool_result') {
+                      const toolUseId = item.tool_use_id;
+                      console.log('[ChatInterface] Tool result received:', {
+                        tool_use_id: toolUseId,
+                        is_error: item.is_error,
+                      });
+
+                      // Check if we tracked this tool operation
+                      const trackedTool = toolUseId ? currentToolMap.get(toolUseId) : null;
+                      if (trackedTool && (trackedTool as any).fileOperation && !item.is_error) {
+                        const fileOperation = (trackedTool as any).fileOperation;
+                        const filePath = (trackedTool as any).filePath;
+                        console.log('[ChatInterface] File operation success:', fileOperation, filePath);
+
+                        // Trigger file operation notification
+                        if (fileOperation === 'create') {
+                          setFileOperation('create', filePath);
+                        } else if (fileOperation === 'update' || fileOperation === 'read') {
+                          setFileOperation('update', filePath);
+                        }
+                      }
+
+                      // Also check the top-level tool_use_result if available
+                      if (jsonData.tool_use_result) {
+                        const result = jsonData.tool_use_result as any;
+                        if (result.type === 'update' && result.filePath) {
+                          console.log('[ChatInterface] File operation detected: UPDATE (top-level)', result.filePath);
+                          setFileOperation('update', result.filePath);
+                        } else if (result.type === 'create' && result.filePath) {
+                          console.log('[ChatInterface] File operation detected: CREATE (top-level)', result.filePath);
+                          setFileOperation('create', result.filePath);
+                        } else if (result.file && result.file.filePath) {
+                          console.log('[ChatInterface] File read detected (top-level):', result.file.filePath);
+                          setFileOperation('update', result.file.filePath);
+                        }
+                      }
+
+                      // Check for file operations in item.tool_use_result
+                      if (item.tool_use_result) {
+                        const result = item.tool_use_result as any;
+                        console.log('[ChatInterface] Checking item.tool_use_result type:', result.type);
+
+                        // Detect file operations based on type
+                        if (result.type === 'update' && result.filePath) {
+                          console.log('[ChatInterface] File operation detected: UPDATE (item)', result.filePath);
+                          setFileOperation('update', result.filePath);
+                        } else if (result.type === 'create' && result.filePath) {
+                          console.log('[ChatInterface] File operation detected: CREATE (item)', result.filePath);
+                          setFileOperation('create', result.filePath);
+                        } else if (result.type === 'delete' && result.filePath) {
+                          console.log('[ChatInterface] File operation detected: DELETE', result.filePath);
+                          setFileOperation('delete', result.filePath);
+                        } else if (result.file && result.file.filePath) {
+                          console.log('[ChatInterface] File read detected (item):', result.file.filePath);
+                          setFileOperation('update', result.file.filePath);
+                        }
+                      }
+                    }
+                  }
+                }
+              }
 
               // Skip system messages
               if (sdkMessage.type === 'system') {
                 console.log('[ChatInterface] Skipping system message');
+                continue;
+              }
+
+              // Skip assistant messages with content - this causes duplicate rendering
+              // Incremental content comes through stream_event → content_block_delta
+              // Complete assistant messages are sent at the end but should be skipped
+              // because we've already accumulated the content through streaming
+              if (sdkMessage.type === 'assistant' && sdkMessage.message) {
+                console.log('[ChatInterface] Skipping complete assistant message (already handled via streaming)');
                 continue;
               }
 
@@ -448,36 +599,7 @@ export function ChatInterface({ projectPath, projectId, projectName }: ChatInter
                 continue;
               }
 
-              // NEW: Handle raw text content from assistant messages
-              // The SDK sends messages with `type: 'assistant'` or as complete messages
-              if (sdkMessage.type === 'assistant' && sdkMessage.message) {
-                const content = sdkMessage.message.content;
-                if (content && Array.isArray(content)) {
-                  // Extract text from content blocks
-                  const textBlocks = content
-                    .filter((block: any) => block.type === 'text')
-                    .map((block: any) => block.text || '');
-
-                  if (textBlocks.length > 0) {
-                    const fullText = textBlocks.join('\n');
-                    console.log('[ChatInterface] Displaying assistant message content, length:', fullText.length);
-                    const chunk: StreamChunk = {
-                      content: fullText,
-                      isComplete: true,
-                    };
-                    streamManagerRef.current?.handleStreamChunk(chunk, assistantMessageId);
-                  }
-                }
-              }
-              // Handle message content (NOTE: this is the COMPLETE final content, NOT incremental)
-              // Skip this for streaming - we only use stream_event for incremental updates
-              else if (sdkMessage.message && sdkMessage.message.content) {
-                console.log('[ChatInterface] Skipping message.content (complete content), will use stream_event for incremental updates');
-                // 跳过 message.content，因为这是完整的最后内容
-                // 如果使用它会导致重复，增量内容已经通过 stream_event 发送了
-                continue;
-              }
-                // Handle streaming text deltas
+              // Handle streaming text deltas
               else if (sdkMessage.type === 'stream_event' && sdkMessage.event) {
                 const event = sdkMessage.event as any;
 
@@ -494,8 +616,25 @@ export function ChatInterface({ projectPath, projectId, projectName }: ChatInter
                     // Set current running tool for UI display (temporary state)
                     setCurrentRunningTool({ toolName, status: 'running' });
 
-                    // Track this tool in the map
+                    // Track this tool in the map with file operation info
                     currentToolMap.set(toolId, { toolName, input: toolInput, toolId });
+
+                    // Detect file operations from tool input BEFORE execution
+                    // We'll verify success from the tool_result
+                    if (toolName === 'Write' && toolInput.file_path) {
+                      console.log('[ChatInterface] Write tool detected for file:', toolInput.file_path);
+                      // Store in the map with operation type, will be verified in tool_result
+                      (currentToolMap.get(toolId) as any).fileOperation = 'create';
+                      (currentToolMap.get(toolId) as any).filePath = toolInput.file_path;
+                    } else if (toolName === 'Read' && toolInput.file_path) {
+                      console.log('[ChatInterface] Read tool detected for file:', toolInput.file_path);
+                      (currentToolMap.get(toolId) as any).fileOperation = 'read';
+                      (currentToolMap.get(toolId) as any).filePath = toolInput.file_path;
+                    } else if (toolName === 'Edit' && toolInput.file_path) {
+                      console.log('[ChatInterface] Edit tool detected for file:', toolInput.file_path);
+                      (currentToolMap.get(toolId) as any).fileOperation = 'update';
+                      (currentToolMap.get(toolId) as any).filePath = toolInput.file_path;
+                    }
                   }
                 }
                 // Handle content_block_delta - incremental updates
@@ -701,6 +840,7 @@ export function ChatInterface({ projectPath, projectId, projectName }: ChatInter
         onNewChat={handleNewChat}
         onSettings={handleSettings}
         onShowSessions={handleShowSessions}
+        onShowClaudeSessions={handleShowClaudeSessions}
         sessionTitle={currentSession?.title}
         onReconnect={handleRetryConnection}
       />
@@ -769,6 +909,14 @@ export function ChatInterface({ projectPath, projectId, projectName }: ChatInter
       <SessionList
         isOpen={showSessionList}
         onClose={() => setShowSessionList(false)}
+      />
+
+      {/* Claude Session List Panel */}
+      <ClaudeSessionList
+        isOpen={showClaudeSessionList}
+        onClose={() => setShowClaudeSessionList(false)}
+        projectPath={projectPath}
+        onResumeSession={handleResumeClaudeSession}
       />
     </motion.div>
   );

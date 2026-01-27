@@ -1,14 +1,68 @@
 /**
- * DELETE /api/workspaces/[id] - Delete a workspace project
+ * Workspace Project API
  *
- * Deletes a project from both database and file system.
- * Projects marked as "missing" can still be deleted from the database.
+ * - GET /api/workspaces/[id] - Get a single project
+ * - DELETE /api/workspaces/[id] - Delete a workspace project
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { rmSync, existsSync } from 'fs';
 import path from 'path';
 import { getSession } from '@/lib/auth/session';
+
+/**
+ * GET /api/workspaces/[id] - Get a single project
+ */
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getSession();
+    if (!session?.userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id: projectId } = await params;
+
+    const prisma = (await import('@/lib/prisma')).prisma;
+
+    // Find the project
+    const project = await prisma.userWorkspaceProject.findFirst({
+      where: {
+        id: projectId,
+        userId: session.userId,
+      },
+    });
+
+    if (!project) {
+      return NextResponse.json(
+        { error: 'Project not found' },
+        { status: 404 }
+      );
+    }
+
+    // Check if project directory exists
+    const directoryExists = existsSync(project.path);
+
+    return NextResponse.json({
+      success: true,
+      project: {
+        ...project,
+        status: directoryExists ? 'active' : 'missing',
+      },
+    });
+  } catch (error) {
+    console.error('[Workspace Get] Error:', error);
+    return NextResponse.json(
+      {
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
+  }
+}
 
 /**
  * DELETE /api/workspaces/[id] - Delete a workspace project

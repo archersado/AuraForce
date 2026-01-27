@@ -67,6 +67,9 @@ interface ClaudeState {
   // New: Track if current session is persisted to database
   isSessionPersisted: boolean;
 
+  // Claude SDK session ID for multi-turn conversations resumption
+  claudeSessionId: string | null;
+
   // Command-related state
   pendingCommand: Command | null;
   showCommandPreview: boolean;
@@ -83,6 +86,14 @@ interface ClaudeState {
   webSocketMaxReconnectAttempts: number;
   webSocketConnectionStats: ConnectionStats | null;
   useWebSocket: boolean; // Toggle between WebSocket and SSE
+
+  // File operation notification state - for workspace auto-navigation
+  fileOperation: {
+    type: 'create' | 'update' | 'delete' | null;
+    filePath: string | null;
+    operationId: string | null;
+    timestamp: number | null;
+  };
 
   // Actions
   addMessage: (message: Omit<Message, 'timestamp' | 'id'> & Pick<Partial<Message>, 'id'>) => void;
@@ -136,6 +147,9 @@ interface ClaudeState {
   // Project context actions
   setProjectContext: (projectId: string | null, projectName: string | null, projectPath: string | null) => void;
 
+  // Claude SDK session actions
+  setClaudeSessionId: (sessionId: string | null) => void;
+
   // Interactive message actions
   setInteractiveMessage: (messageId: string, interactive: InteractiveMessage) => void;
   resolveInteractiveMessage: (messageId: string, response: unknown) => void;
@@ -149,6 +163,10 @@ interface ClaudeState {
   // Clear state
   setStreaming: (isStreaming: boolean) => void;
   clearMessages: () => void;
+
+  // File operation actions
+  setFileOperation: (operation: 'create' | 'update' | 'delete' | null, filePath: string | null) => void;
+  clearFileOperation: () => void;
 }
 
 /**
@@ -238,6 +256,9 @@ export const useClaudeStore = create<ClaudeState>()(
       autoSaveTimer: null,
       isSessionPersisted: false,
 
+      // Claude SDK session ID for multi-turn conversations resumption
+      claudeSessionId: null,
+
       // Command-related initial state
       pendingCommand: null,
       showCommandPreview: false,
@@ -255,18 +276,39 @@ export const useClaudeStore = create<ClaudeState>()(
       webSocketConnectionStats: null,
       useWebSocket: false, // Start with SSE as default, can toggle to WebSocket
 
+      // File operation notification state
+      fileOperation: {
+        type: null,
+        filePath: null,
+        operationId: null,
+        timestamp: null,
+      },
+
       // Add a new message to the chat
       addMessage: (messageData) =>
-        set((state) => ({
-          messages: [
-            ...state.messages,
-            {
-              ...messageData,
-              id: messageData.id || crypto.randomUUID(),
-              timestamp: new Date(),
-            },
-          ],
-        })),
+        set((state) => {
+          // Check if a message with the same ID already exists
+          const existingMessageIndex = state.messages.findIndex(msg => msg.id === messageData.id);
+
+          if (existingMessageIndex !== -1) {
+            // Message already exists, skip adding to avoid duplicates
+            console.log('[ClaudeStore] Message with ID already exists, skipping:', messageData.id);
+            return state;
+          }
+
+          // Add new message
+          console.log('[ClaudeStore] Adding new message:', messageData.id);
+          return {
+            messages: [
+              ...state.messages,
+              {
+                ...messageData,
+                id: messageData.id || crypto.randomUUID(),
+                timestamp: new Date(),
+              },
+            ],
+          };
+        }),
 
       // Update a message's content (for streaming)
       updateMessage: (messageId, content) =>
@@ -323,6 +365,7 @@ export const useClaudeStore = create<ClaudeState>()(
             messages: [],
             saveError: null,
             isSessionPersisted: false, // New session not yet persisted
+            claudeSessionId: null, // Clear Claude SDK session ID for new session
           };
         }),
 
@@ -383,9 +426,10 @@ export const useClaudeStore = create<ClaudeState>()(
             loadSessionsError: null,
             isSessionPersisted: true, // Loaded from database, so persisted
             activeSessionId: sessionDetail.id, // Set active session ID (Story 3.6)
+            claudeSessionId: sessionDetail.sessionId || null, // Load Claude SDK session ID for resumption
           }));
 
-          console.log('[ClaudeStore] Session loaded:', sessionDetail.id, 'with', sessionDetail.messages.length, 'messages');
+          console.log('[ClaudeStore] Session loaded:', sessionDetail.id, 'with', sessionDetail.messages.length, 'messages', 'claudeSessionId:', sessionDetail.sessionId);
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Failed to load session';
           console.error('[ClaudeStore] Error loading session:', error);
@@ -808,6 +852,35 @@ export const useClaudeStore = create<ClaudeState>()(
         }
       },
 
+      // -------- Claude SDK Session Actions --------
+      /**
+       * Set Claude SDK session ID for multi-turn conversations
+       * This ID is used to resume conversations when sending new messages
+       */
+      setClaudeSessionId: (sessionId) => {
+        console.log('[ClaudeStore] Setting Claude SDK session ID:', sessionId);
+        set({ claudeSessionId: sessionId });
+
+        // Also save to database if we have a persisted session
+        if (sessionId && get().isSessionPersisted && get().currentSession) {
+          const { currentSession } = get();
+          fetch(`/api/sessions/${currentSession.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId }),
+          })
+            .then(res => res.json())
+            .then(data => {
+              if (data.success) {
+                console.log('[ClaudeStore] Claude SDK session ID saved to database:', sessionId);
+              }
+            })
+            .catch(err => {
+              console.error('[ClaudeStore] Failed to save Claude SDK session ID to database:', err);
+            });
+        }
+      },
+
       // -------- Interactive Message Actions --------
 
       /**
@@ -948,6 +1021,45 @@ export const useClaudeStore = create<ClaudeState>()(
       setStreaming: (isStreaming) => set({ isStreaming }),
 
       clearMessages: () => set({ messages: [] }),
+
+      // -------- File Operation Actions --------
+
+      /**
+       * Set a file operation notification
+       * This triggers workspace navigation to show the affected file
+       */
+      setFileOperation: (operation, filePath) => {
+        console.log('[ClaudeStore] File operation:', { operation, filePath });
+        set({
+          fileOperation: {
+            type: operation,
+            filePath,
+            operationId: operation ? crypto.randomUUID() : null,
+            timestamp: operation ? Date.now() : null,
+          },
+        });
+
+        // Auto-clear after 10 seconds to avoid stale notifications
+        if (operation && filePath) {
+          setTimeout(() => {
+            get().clearFileOperation();
+          }, 10000);
+        }
+      },
+
+      /**
+       * Clear the current file operation notification
+       */
+      clearFileOperation: () => {
+        set({
+          fileOperation: {
+            type: null,
+            filePath: null,
+            operationId: null,
+            timestamp: null,
+          },
+        });
+      },
     }),
     { name: 'ClaudeStore' }
   )

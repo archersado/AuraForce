@@ -63,6 +63,11 @@ function isSafePath(path: string, root: string): boolean {
  * Check if an item should be excluded from listings
  */
 function isExcluded(name: string): boolean {
+  // Filter items starting with underscore (_) or dot (.)
+  if (name.startsWith('_') || name.startsWith('.')) {
+    return true;
+  }
+
   return EXCLUDED_ITEMS.some(pattern => {
     // Handle wildcards
     if (pattern.includes('*')) {

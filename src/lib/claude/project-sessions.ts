@@ -25,9 +25,9 @@ export function encodeProjectPath(projectPath: string): string {
   return projectPath
     .replace(/[\/\\:\s~_]/g, '-')  // Replace special chars with -
     .replace(/-+/g, '-')           // Collapse multiple dashes
-    .replace(/-+$/)             // Remove trailing dashes only
-    .replace(/\/+$/)             // Remove trailing slashes only
-    .replace(/\\+$/);            // Remove trailing backslashes only
+    .replace(/-+$/, '')            // Remove trailing dashes only
+    .replace(/\/+$/, '')           // Remove trailing slashes only
+    .replace(/\\+$/, '');          // Remove trailing backslashes only
 }
 
 /**

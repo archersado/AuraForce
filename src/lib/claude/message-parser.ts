@@ -227,19 +227,29 @@ function parseToolUse(
  * Parse askuserquestions tool
  */
 function parseAskUserQuestions(toolName: string, input: Record<string, unknown>, toolId: string): AskUserQuestionsMessage {
-  const questions = (input.questions as Array<unknown> || []).map((q, idx) => {
-    const question = q as Record<string, unknown>;
-    return {
-      id: question.id as string || `q${idx}`,
-      question: question.question as string || `Question ${idx + 1}`,
-      type: question.type as UserQuestion['type'] || 'text',
-      options: question.options as string[] | undefined,
-      placeholder: question.placeholder as string | undefined,
-      required: question.required !== undefined ? question.required as boolean : true,
-      defaultValue: question.defaultValue as string | string[] | undefined,
-      currentAnswer: undefined,
-    } as UserQuestion;
-  });
+  const questionsInput: unknown = input.questions;
+  const questions: UserQuestion[] = [];
+
+  if (Array.isArray(questionsInput)) {
+    questionsInput.forEach((q, idx) => {
+      const question = q as Record<string, unknown>;
+
+      // Support both old and new formats
+      const questionType: UserQuestion['type'] = parseQuestionType(question);
+
+      questions.push({
+        id: question.id as string || `q${idx}`,
+        question: question.question as string || question.title as string || `Question ${idx + 1}`,
+        type: questionType,
+        header: question.header as string | undefined, // New format field
+        options: parseOptions(question, questionType),
+        placeholder: question.placeholder as string | undefined,
+        required: question.required !== undefined ? question.required as boolean : true,
+        defaultValue: question.defaultValue as string | string[] | undefined,
+        currentAnswer: undefined,
+      } as UserQuestion);
+    });
+  }
 
   return {
     id: `interactive-${toolId}`,
@@ -253,6 +263,64 @@ function parseAskUserQuestions(toolName: string, input: Record<string, unknown>,
     timestamp: new Date(),
     isResolved: false,
   };
+}
+
+/**
+ * Parse question type from various formats
+ */
+function parseQuestionType(question: Record<string, unknown>): UserQuestion['type'] {
+  // Check for explicit type field
+  if (question.type && typeof question.type === 'string') {
+    const validTypes: UserQuestion['type'][] = ['text', 'select', 'multi_select', 'confirm', 'number', 'textarea'];
+    if (validTypes.includes(question.type as UserQuestion['type'])) {
+      return question.type as UserQuestion['type'];
+    }
+  }
+
+  // Infer from multiSelect field (new format)
+  if (question.multiSelect === true) {
+    return 'multi_select';
+  }
+  if (question.multiSelect === false) {
+    return 'select';
+  }
+
+  // Infer from options presence
+  if (question.options && Array.isArray(question.options)) {
+    return question.multiSelect === true ? 'multi_select' : 'select';
+  }
+
+  // Default to text
+  return 'text';
+}
+
+/**
+ * Parse options from question, supporting both string array and object array formats
+ */
+function parseOptions(question: Record<string, unknown>, questionType: UserQuestion['type']): string[] | undefined {
+  const optionsInput = question.options;
+
+  if (!optionsInput || !Array.isArray(optionsInput)) {
+    return undefined;
+  }
+
+  if (optionsInput.length === 0) {
+    return undefined;
+  }
+
+  // If options are strings
+  if (typeof optionsInput[0] === 'string') {
+    return optionsInput as string[];
+  }
+
+  // If options are objects (new format)
+  if (typeof optionsInput[0] === 'object' && optionsInput[0] !== null) {
+    return (optionsInput as Array<Record<string, unknown>>).map(opt =>
+      opt.label as string || opt.value as string || String(opt)
+    );
+  }
+
+  return undefined;
 }
 
 /**

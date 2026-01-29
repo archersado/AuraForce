@@ -99,8 +99,8 @@ export async function GET(request: NextRequest) {
           dependencies: {
             select: {
               id: true,
-              sourceId: true,
-              targetId: true,
+              sourceWorkflowId: true,
+              targetWorkflowId: true,
               dependencyType: true,
               targetWorkflow: {
                 select: { id: true, name: true, version: true },

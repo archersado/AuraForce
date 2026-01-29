@@ -134,7 +134,7 @@ const CodeBlock = memo(({ language, children, isUser }: { language: string; chil
       <div className="overflow-x-auto">
         <SyntaxHighlighter
           language={language || 'text'}
-          style={vscDarkPlus as React.CSSProperties}
+          style={vscDarkPlus as any}
           PreTag="pre"
           className="!mt-0 !bg-transparent !p-0"
           codeTagProps={{ className: '!bg-transparent !py-0 !px-4' }}

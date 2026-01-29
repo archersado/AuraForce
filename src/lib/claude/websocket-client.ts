@@ -78,6 +78,7 @@ class WebSocketClientImpl {
       'stream-end',
       'stream-error',
       'connection-state-change',
+      'session-update',
     ];
     events.forEach((event) => {
       this.eventCallbacks.set(event, new Set());

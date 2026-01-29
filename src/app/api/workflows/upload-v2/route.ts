@@ -194,7 +194,13 @@ export async function POST(request: NextRequest) {
       const publicUrl = getTemplatePublicUrl(zipFileName);
 
       // Check if README.md exists for metadata extraction
-      const readmeBuffer = Buffer.from((formData.get('folder-README.md') as File | null)?.arrayBuffer ? await ((formData.get('folder-README.md') as File).arrayBuffer()) : Buffer.alloc(0));
+      const readmeFile = formData.get('folder-README.md') as File | null;
+      let readmeBuffer = Buffer.alloc(0);
+
+      if (readmeFile) {
+        const arrayBuffer = await readmeFile.arrayBuffer();
+        readmeBuffer = Buffer.from(arrayBuffer);
+      }
       const readmeContent = readmeBuffer.length > 0 ? readmeBuffer.toString('utf-8') : '';
 
       let metadata: any = {};

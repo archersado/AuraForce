@@ -8,7 +8,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { Upload, FileText, AlertCircle, CheckCircle, X } from 'lucide-react';
+import { Upload, FileText, AlertCircle, CheckCircle, X, Folder } from 'lucide-react';
 
 interface UploadResult {
   fileName: string;
@@ -28,6 +28,8 @@ export default function WorkflowSpecUpload({ onUploadComplete }: WorkflowSpecUpl
   const [isUploading, setIsUploading] = useState(false);
   const [results, setResults] = useState<UploadResult[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [selectedFolders, setSelectedFolders] = useState<Map<string, File[]>>(new Map());
+  const [uploadMode, setUploadMode] = useState<'file' | 'folder'>('file');
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -43,19 +45,90 @@ export default function WorkflowSpecUpload({ onUploadComplete }: WorkflowSpecUpl
     e.preventDefault();
     setIsDragging(false);
 
-    const files = Array.from(e.dataTransfer.files);
-    const validFiles = files.filter(file => {
-      const ext = file.name.toLowerCase();
-      return ext.endsWith('.md') || ext.endsWith('.yaml') || ext.endsWith('.yml');
-    });
+    if (uploadMode === 'file') {
+      const files = Array.from(e.dataTransfer.files);
+      const validFiles = files.filter(file => {
+        const ext = file.name.toLowerCase();
+        return ext.endsWith('.md') || ext.endsWith('.yaml') || ext.endsWith('.yml');
+      });
+      setSelectedFiles(prev => [...prev, ...validFiles]);
+    } else {
+      // Folder mode - handle dropped folders
+      const items = Array.from(e.dataTransfer.items);
+      const foldersMap = new Map<string, File[]>();
 
-    setSelectedFiles(prev => [...prev, ...validFiles]);
-  }, []);
+      const processEntry = async (entry: any, path = '') => {
+        if (entry.isFile) {
+          entry.file((file: File) => {
+            // Filter valid files
+            const ext = file.name.toLowerCase();
+            if (ext.endsWith('.md') || ext.endsWith('.yaml') || ext.endsWith('.yml')) {
+              const folderName = path.split('/')[0] || 'root';
+              if (!foldersMap.has(folderName)) {
+                foldersMap.set(folderName, []);
+              }
+              // Set webkitRelativePath manually for dropped folders
+              (file as any).webkitRelativePath = path ? `${path}/${file.name}` : file.name;
+              foldersMap.get(folderName)!.push(file);
+            }
+          });
+        } else if (entry.isDirectory) {
+          const dirReader = entry.createReader();
+          const entries = await new Promise<any[]>((resolve) => {
+            dirReader.readEntries((entries: any[]) => resolve(entries));
+          });
+          for (const childEntry of entries) {
+            await processEntry(childEntry, path ? `${path}/${entry.name}` : entry.name);
+          }
+        }
+      };
+
+      items.forEach((item: any) => {
+        if (item.kind === 'file') {
+          const entry = item.webkitGetAsEntry();
+          if (entry) processEntry(entry);
+        }
+      });
+
+      // Update state after processing
+      setTimeout(() => {
+        setSelectedFolders(prev => {
+          const newMap = new Map(prev);
+          foldersMap.forEach((files, name) => {
+            newMap.set(name, files);
+          });
+          return newMap;
+        });
+      }, 100);
+    }
+  }, [uploadMode]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files);
-      setSelectedFiles(prev => [...prev, ...files]);
+      if (uploadMode === 'file') {
+        setSelectedFiles(prev => [...prev, ...files]);
+      } else {
+        // Folder mode - organize files by folder
+        const foldersMap = new Map<string, File[]>();
+        files.forEach(file => {
+          const webkitRelativePath = (file as any).webkitRelativePath;
+          if (webkitRelativePath) {
+            const folderName = webkitRelativePath.split('/')[0];
+            if (!foldersMap.has(folderName)) {
+              foldersMap.set(folderName, []);
+            }
+            foldersMap.get(folderName)!.push(file);
+          }
+        });
+        setSelectedFolders(prev => {
+          const newMap = new Map(prev);
+          foldersMap.forEach((files, name) => {
+            newMap.set(name, files);
+          });
+          return newMap;
+        });
+      }
       e.target.value = ''; // Reset input
     }
   };
@@ -64,8 +137,16 @@ export default function WorkflowSpecUpload({ onUploadComplete }: WorkflowSpecUpl
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  const removeFolder = (folderName: string) => {
+    setSelectedFolders(prev => {
+      const newMap = new Map(prev);
+      newMap.delete(folderName);
+      return newMap;
+    });
+  };
+
   const handleUpload = async () => {
-    if (selectedFiles.length === 0) {
+    if (selectedFiles.length === 0 && selectedFolders.size === 0) {
       return;
     }
 
@@ -74,9 +155,20 @@ export default function WorkflowSpecUpload({ onUploadComplete }: WorkflowSpecUpl
 
     try {
       const formData = new FormData();
-      selectedFiles.forEach(file => {
-        formData.append('files', file);
-      });
+
+      if (uploadMode === 'file') {
+        selectedFiles.forEach(file => {
+          formData.append('files', file);
+        });
+      } else {
+        // Upload folders
+        selectedFolders.forEach((files, folderName) => {
+          files.forEach(file => {
+            const relativePath = (file as any).webkitRelativePath;
+            formData.append(`folder-${relativePath}`, file);
+          });
+        });
+      }
 
       const response = await fetch('/api/workflows/upload', {
         method: 'POST',
@@ -92,6 +184,7 @@ export default function WorkflowSpecUpload({ onUploadComplete }: WorkflowSpecUpl
 
       if (data.results?.every((r: UploadResult) => r.success)) {
         setSelectedFiles([]);
+        setSelectedFolders(new Map());
       }
 
       onUploadComplete?.(data.results || []);
@@ -110,11 +203,38 @@ export default function WorkflowSpecUpload({ onUploadComplete }: WorkflowSpecUpl
 
   const reset = () => {
     setSelectedFiles([]);
+    setSelectedFolders(new Map());
     setResults([]);
   };
 
   return (
     <div className="space-y-6">
+      {/* Upload Mode Toggle */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setUploadMode('file')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+            uploadMode === 'file'
+              ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
+              : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400'
+          }`}
+        >
+          <FileText size={18} />
+          <span>文件</span>
+        </button>
+        <button
+          onClick={() => setUploadMode('folder')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+            uploadMode === 'folder'
+              ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
+              : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400'
+          }`}
+        >
+          <Folder size={18} />
+          <span>文件夹</span>
+        </button>
+      </div>
+
       {/* Upload Zone */}
       <div
         className={`relative border-2 border-dashed rounded-lg p-12 text-center transition-colors ${
@@ -130,7 +250,8 @@ export default function WorkflowSpecUpload({ onUploadComplete }: WorkflowSpecUpl
           type="file"
           id="workflow-upload"
           multiple
-          accept=".md,.yaml,.yml"
+          accept={uploadMode === 'file' ? '.md,.yaml,.yml' : undefined}
+          {...(uploadMode === 'folder' ? { webkitdirectory: '', directory: '' } : {})}
           onChange={handleFileSelect}
           className="hidden"
           disabled={isUploading}
@@ -144,17 +265,19 @@ export default function WorkflowSpecUpload({ onUploadComplete }: WorkflowSpecUpl
           </div>
           <div>
             <p className="text-lg font-medium text-gray-900 dark:text-gray-100">
-              拖放文件到这里或点击上传
+              {uploadMode === 'file' ? '拖放文件到这里或点击上传' : '拖放文件夹到这里或点击选择'}
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              支持 .md, .yaml, .yml 格式（最大 5MB/文件，总计 50MB）
+              {uploadMode === 'file'
+                ? '支持 .md, .yaml, .yml 格式（最大 5MB/文件，总计 50MB）'
+                : '支持选择多个文件夹（支持 .md, .yaml, .yml 格式）'}
             </p>
           </div>
         </label>
       </div>
 
       {/* Selected Files */}
-      {selectedFiles.length > 0 && (
+      {uploadMode === 'file' && selectedFiles.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -188,6 +311,69 @@ export default function WorkflowSpecUpload({ onUploadComplete }: WorkflowSpecUpl
                 >
                   <X className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                 </button>
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={handleUpload}
+            disabled={isUploading}
+            className="w-full py-2 px-4 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {isUploading ? '上传中...' : '上传并部署'}
+          </button>
+        </div>
+      )}
+
+      {/* Selected Folders */}
+      {uploadMode === 'folder' && selectedFolders.size > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              已选择文件夹 ({selectedFolders.size})
+            </h3>
+            <button
+              onClick={reset}
+              className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+              清除
+            </button>
+          </div>
+          <div className="space-y-2">
+            {Array.from(selectedFolders.entries()).map(([folderName, files]) => (
+              <div
+                key={folderName}
+                className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <Folder className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      {folderName}
+                    </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      ({files.length} 个文件)
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => removeFolder(folderName)}
+                    className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                  >
+                    <X className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                  </button>
+                </div>
+                <div className="ml-8 space-y-1">
+                  {files.slice(0, 5).map((file, idx) => (
+                    <div key={idx} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                      <FileText className="w-3 h-3" />
+                      <span className="truncate">{file.name}</span>
+                    </div>
+                  ))}
+                  {files.length > 5 && (
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      还有 {files.length - 5} 个文件...
+                    </span>
+                  )}
+                </div>
               </div>
             ))}
           </div>

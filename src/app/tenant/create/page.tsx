@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, ArrowRight, ArrowLeft, Check } from 'lucide-react';
 import { useUserStore } from '@/stores/user-store';
+import { apiFetch } from '@/lib/api-client';
 
 type Step = 1 | 2 | 3;
 
@@ -61,7 +62,7 @@ export default function TenantSetupWizard() {
     setError(null);
 
     try {
-      const response = await fetch('/api/tenant', {
+      const response = await apiFetch('/api/tenant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

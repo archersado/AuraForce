@@ -5,6 +5,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { SubscriptionLevel, BillingCycle, formatPrice } from '@/lib/subscription/plans';
 import { ArrowRight, CheckCircle, AlertCircle } from 'lucide-react';
 import { useSubscriptionStore } from '@/stores/subscription/useSubscriptionStore';
+import { apiFetch } from '@/lib/api-client';
 
 interface PlanChangeFormProps {
   onSuccess?: () => void;
@@ -20,7 +21,7 @@ export function PlanChangeForm({ onSuccess, onCancel }: PlanChangeFormProps) {
   const { data: plansData, isLoading: plansLoading } = useQuery({
     queryKey: ['plans'],
     queryFn: async () => {
-      const res = await fetch('/api/subscription/plans');
+      const res = await apiFetch('/api/subscription/plans');
       if (!res.ok) throw new Error('Failed to fetch plans');
       return res.json();
     },
@@ -32,7 +33,7 @@ export function PlanChangeForm({ onSuccess, onCancel }: PlanChangeFormProps) {
     mutationFn: async () => {
       if (!selectedPlan) throw new Error('Please select a plan');
 
-      const res = await fetch('/api/subscription/change-plan', {
+      const res = await apiFetch('/api/subscription/change-plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

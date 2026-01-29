@@ -10,6 +10,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, X, MessageSquare } from 'lucide-react';
 import { useClaudeStore } from '@/lib/store/claude-store';
+import { apiFetch } from '@/lib/api-client';
 
 export interface EmbeddedChatProps {
   projectId?: string;
@@ -71,7 +72,7 @@ export default function EmbeddedChat({
         workspacePath,
       };
 
-      const response = await fetch('/api/claude/stream', {
+      const response = await apiFetch('/api/claude/stream', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

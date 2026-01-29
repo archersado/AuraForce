@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Mail, Lock, CheckCircle } from 'lucide-react';
 import { useRequireAuth } from '@/hooks/useSession';
+import { apiFetch } from '@/lib/api-client';
 
 interface ChangeEmailFormData {
   newEmail: string;
@@ -53,7 +54,7 @@ export default function ChangeEmailForm() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/user/change-email/request', {
+      const response = await apiFetch('/api/user/change-email/request', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

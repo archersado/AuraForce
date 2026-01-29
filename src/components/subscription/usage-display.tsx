@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useSubscriptionStore } from '@/stores/subscription/useSubscriptionStore';
+import { apiFetch } from '@/lib/api-client';
 
 interface UsageDisplayProps {
   compact?: boolean;
@@ -11,7 +12,7 @@ export function UsageDisplay({ compact = false }: UsageDisplayProps) {
   const { data, isLoading, error } = useQuery({
     queryKey: ['subscription-current'],
     queryFn: async () => {
-      const res = await fetch('/api/subscription/current');
+      const res = await apiFetch('/api/subscription/current');
       if (!res.ok) throw new Error('Failed to fetch subscription');
       return res.json();
     },
@@ -117,7 +118,7 @@ export function CurrentPlanCard({ onChangePlan }: CurrentPlanCardProps) {
   const { data, isLoading, error } = useQuery({
     queryKey: ['subscription-current'],
     queryFn: async () => {
-      const res = await fetch('/api/subscription/current');
+      const res = await apiFetch('/api/subscription/current');
       if (!res.ok) throw new Error('Failed to fetch subscription');
       return res.json();
     },

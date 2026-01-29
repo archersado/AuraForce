@@ -15,6 +15,7 @@ import type { ToolUseData } from '@/types/tool-use';
 import { SessionStorage } from '@/lib/session-storage';
 import type { ToolExecution, ToolStatus } from '@/components/claude/ToolCall';
 import type { ConnectionStats } from '@/lib/claude/websocket-client';
+import { apiFetch } from '@/lib/api-client';
 
 interface Message {
   id: string;
@@ -398,7 +399,7 @@ export const useClaudeStore = create<ClaudeState>()(
         set({ isLoadingSession: true, loadSessionsError: null });
 
         try {
-          const response = await fetch(`/api/sessions/${sessionId}`);
+          const response = await apiFetch(`/api/sessions/${sessionId}`, { credentials: 'include' });
 
           if (!response.ok) {
             const error = await response.json();
@@ -462,9 +463,9 @@ export const useClaudeStore = create<ClaudeState>()(
 
           if (isSessionPersisted) {
             // Update existing session - currentSession.id is the database UUID
-            const updateResponse = await fetch(`/api/sessions/${currentSession.id}`, {
+            const updateResponse = await apiFetch(`/api/sessions/${currentSession.id}`, {
               method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
               body: JSON.stringify({
                 messages: storedMessages,
               }),
@@ -479,7 +480,7 @@ export const useClaudeStore = create<ClaudeState>()(
             console.log('[ClaudeStore] Session updated:', sessionId);
           } else {
             // Create new session with messages and project context
-            const createResponse = await fetch('/api/sessions', {
+            const createResponse = await apiFetch('/api/sessions', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -534,7 +535,7 @@ export const useClaudeStore = create<ClaudeState>()(
             params.append('projectId', currentProjectId);
           }
 
-          const response = await fetch(`/api/sessions?${params.toString()}`);
+          const response = await apiFetch(`/api/sessions?${params.toString()}`, { credentials: 'include' });
 
           if (!response.ok) {
             const error = await response.json();
@@ -635,9 +636,9 @@ export const useClaudeStore = create<ClaudeState>()(
         // If session is persisted, update status in database
         if (currentSession && isSessionPersisted) {
           try {
-            await fetch(`/api/sessions/${currentSession.id}`, {
+            await apiFetch(`/api/sessions/${currentSession.id}`, {
               method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
               body: JSON.stringify({
                 status: 'aborted',
                 metadata: {
@@ -731,9 +732,9 @@ export const useClaudeStore = create<ClaudeState>()(
         }
 
         try {
-          const response = await fetch(`/api/sessions/${sessionId}`, {
+          const response = await apiFetch(`/api/sessions/${sessionId}`, { credentials: 'include', 
             method: 'DELETE',
-          });
+           });
 
           if (!response.ok) {
             const error = await response.json();
@@ -864,9 +865,9 @@ export const useClaudeStore = create<ClaudeState>()(
         // Also save to database if we have a persisted session
         if (sessionId && get().isSessionPersisted && get().currentSession) {
           const { currentSession } = get();
-          fetch(`/api/sessions/${currentSession?.id}`, {
+          apiFetch(`/api/sessions/${currentSession?.id}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({ sessionId }),
           })
             .then(res => res.json())

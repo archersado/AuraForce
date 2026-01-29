@@ -12,6 +12,7 @@ import {
   Brain, Zap, Target, Sparkles, MessageCircle, Eye,
   CheckCircle, ArrowRight, Download, Play, Pause
 } from 'lucide-react';
+import { apiFetch } from '@/lib/api-client';
 
 import ChatInterface from '@/components/SkillExtraction/ChatInterface';
 import SkillRadar from '@/components/Visualization/SkillRadar';
@@ -75,7 +76,7 @@ export default function SkillBuilder() {
 
     try {
       // 调用后端API创建会话
-      const response = await fetch('/api/skill-extraction/start', {
+      const response = await apiFetch('/api/skill-extraction/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -122,7 +123,7 @@ export default function SkillBuilder() {
 
     try {
       // 调用后端API处理消息
-      const response = await fetch('/api/skill-extraction/message', {
+      const response = await apiFetch('/api/skill-extraction/message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -174,7 +175,7 @@ export default function SkillBuilder() {
     setCurrentStage('generation');
 
     try {
-      const response = await fetch('/api/cc-generation/generate', {
+      const response = await apiFetch('/api/cc-generation/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

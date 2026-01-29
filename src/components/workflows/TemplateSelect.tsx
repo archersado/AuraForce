@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Search, Sparkles, Tag, Layers, ChevronRight, Download, Check } from 'lucide-react';
+import { apiFetch } from '@/lib/api-client';
 
 interface WorkflowTemplate {
   id: string;
@@ -40,7 +41,7 @@ export default function TemplateSelect({ onSelectTemplate, onLoadTemplate, selec
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/workflows/templates');
+      const response = await apiFetch('/api/workflows/templates');
 
       if (!response.ok) {
         throw new Error('Failed to fetch templates');
@@ -71,7 +72,7 @@ export default function TemplateSelect({ onSelectTemplate, onLoadTemplate, selec
     setLoadingTemplate(true);
 
     try {
-      const response = await fetch('/api/workflows/load-template', {
+      const response = await apiFetch('/api/workflows/load-template', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

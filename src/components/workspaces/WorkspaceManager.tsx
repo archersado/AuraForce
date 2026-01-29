@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Folder, Trash2, Clock, ArrowRight, Check } from 'lucide-react';
+import { apiFetch } from '@/lib/api-client';
 
 interface WorkspaceProject {
   id: string;
@@ -35,7 +36,7 @@ export default function WorkspaceManager({ onSelectProject, onCreateProject }: W
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/workspaces');
+      const response = await apiFetch('/api/workspaces');
 
       if (!response.ok) {
         throw new Error('Failed to fetch projects');
@@ -63,7 +64,7 @@ export default function WorkspaceManager({ onSelectProject, onCreateProject }: W
     setCreating(true);
 
     try {
-      const response = await fetch('/api/workspaces', {
+      const response = await apiFetch('/api/workspaces', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

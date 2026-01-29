@@ -4,12 +4,13 @@ import { useQuery } from '@tanstack/react-query';
 import { useSubscriptionStore } from '@/stores/subscription/useSubscriptionStore';
 import { formatPrice, formatFeatureValue, getFeatureName } from '@/lib/subscription/plans';
 import { Crown, CheckCircle, XCircle } from 'lucide-react';
+import { apiFetch } from '@/lib/api-client';
 
 export function PlanComparison({ isUpgradeView = false }) {
   const { data, isLoading, error } = useQuery({
     queryKey: ['plans'],
     queryFn: async () => {
-      const res = await fetch('/api/subscription/plans');
+      const res = await apiFetch('/api/subscription/plans');
       if (!res.ok) throw new Error('Failed to fetch plans');
       return res.json();
     },

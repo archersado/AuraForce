@@ -9,6 +9,7 @@
 
 import { useState, useCallback } from 'react';
 import { Upload, FileText, AlertCircle, CheckCircle, X, Folder } from 'lucide-react';
+import { apiFetch } from '@/lib/api-client';
 
 interface UploadResult {
   fileName: string;
@@ -170,7 +171,7 @@ export default function WorkflowSpecUpload({ onUploadComplete }: WorkflowSpecUpl
         });
       }
 
-      const response = await fetch('/api/workflows/upload', {
+      const response = await apiFetch('/api/workflows/upload', {
         method: 'POST',
         body: formData,
       });

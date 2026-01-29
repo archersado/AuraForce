@@ -5,6 +5,7 @@ import { Lock, CheckCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { validatePassword, passwordsMatch } from '@/lib/auth/password-validation';
+import { apiFetch } from '@/lib/api-client';
 
 interface ResetPasswordFormData {
   token: string;
@@ -66,7 +67,7 @@ export default function ResetPasswordForm() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/auth/reset-password/confirm', {
+      const response = await apiFetch('/api/auth/reset-password/confirm', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

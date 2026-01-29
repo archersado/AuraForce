@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Mail, ArrowLeft, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { apiFetch } from '@/lib/api-client';
 
 export default function ForgotPasswordForm() {
   const router = useRouter();
@@ -31,7 +32,7 @@ export default function ForgotPasswordForm() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/auth/reset-password/request', {
+      const response = await apiFetch('/api/auth/reset-password/request', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

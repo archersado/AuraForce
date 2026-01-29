@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { User as UserIcon, Camera, Save } from 'lucide-react';
 import { useRequireAuth } from '@/hooks/useSession';
+import { apiFetch } from '@/lib/api-client';
 
 interface ProfileFormData {
   name: string;
@@ -60,7 +61,7 @@ export default function ProfileForm() {
         formDataToSend.append('avatar', avatarFile);
       }
 
-      const response = await fetch('/api/user/profile', {
+      const response = await apiFetch('/api/user/profile', {
         method: 'PATCH',
         credentials: 'include',
         body: formDataToSend,

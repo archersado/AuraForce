@@ -7,6 +7,7 @@ import { FileEditor } from '@/components/workspace/FileEditor';
 import { FileBrowser } from '@/components/workspace/FileBrowser';
 import { FileOperationNotification } from '@/components/workspace/FileOperationNotification';
 import { readFile, writeFile, type FileMetadata } from '@/lib/workspace/files-service';
+import { apiFetch } from '@/lib/api-client';
 import { useParams, useRouter } from 'next/navigation';
 import { useClaudeStore } from '@/lib/store/claude-store';
 
@@ -46,7 +47,9 @@ export default function ProjectDetailPage() {
     async function fetchProject() {
       try {
         setLoadingProject(true);
-        const response = await fetch(`/api/workspaces/${projectId}`);
+        const response = await apiFetch(`/api/workspaces/${projectId}`, {
+          credentials: 'include',
+        });
 
         if (!response.ok) {
           const error = await response.json();

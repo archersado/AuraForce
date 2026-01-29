@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Lock, Key, CheckCircle } from 'lucide-react';
 import { validatePassword, passwordsMatch } from '@/lib/auth/password-validation';
+import { apiFetch } from '@/lib/api-client';
 
 interface ChangePasswordFormData {
   currentPassword: string;
@@ -64,7 +65,7 @@ export default function ChangePasswordForm() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/user/change-password', {
+      const response = await apiFetch('/api/user/change-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

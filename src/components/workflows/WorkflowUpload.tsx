@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react';
 import { Upload, FileText, Folder, X, Check, AlertCircle } from 'lucide-react';
+import { apiFetch } from '@/lib/api-client';
 
 interface FolderItem {
   name: string;
@@ -114,11 +115,9 @@ export default function WorkflowUpload({ onSuccess, onError }: WorkflowUploadPro
           formData.append('files', file);
         });
 
-        const response = await fetch('/api/workflows/upload-v2', {
+        const response = await apiFetch('/api/workflows/upload-v2', {
           method: 'POST',
-          headers: {
-            'Cookie': document.cookie,
-          },
+          credentials: 'include',
           body: formData,
         });
 
@@ -140,7 +139,8 @@ export default function WorkflowUpload({ onSuccess, onError }: WorkflowUploadPro
         for (const folder of selectedFolders) {
           const formData = new FormData();
           formData.append('uploadType', 'folder');
-          formData.append('workflowName', folder.name);
+          // 使用用户输入的 workflowName，如果没有则使用文件夹名
+          formData.append('workflowName', workflowName || folder.name);
 
           // Upload files for this folder
           folder.files.forEach(file => {
@@ -148,11 +148,9 @@ export default function WorkflowUpload({ onSuccess, onError }: WorkflowUploadPro
             formData.append(`folder-${relativePath}`, file);
           });
 
-          const response = await fetch('/api/workflows/upload-v2', {
+          const response = await apiFetch('/api/workflows/upload-v2', {
             method: 'POST',
-            headers: {
-              'Cookie': document.cookie,
-            },
+            credentials: 'include',
             body: formData,
           });
 

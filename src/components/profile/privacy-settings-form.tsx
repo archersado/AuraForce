@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { apiFetch } from '@/lib/api-client';
 
 interface PrivacySettings {
   profileVisibility: 'public' | 'private' | 'friends';
@@ -38,7 +39,7 @@ export default function PrivacySettingsForm() {
 
   const loadSettings = async () => {
     try {
-      const response = await fetch('/api/user/privacy');
+      const response = await apiFetch('/api/user/privacy');
       const data = await response.json();
 
       if (data.success && data.settings) {
@@ -61,7 +62,7 @@ export default function PrivacySettingsForm() {
     setMessage(null);
 
     try {
-      const response = await fetch('/api/user/privacy', {
+      const response = await apiFetch('/api/user/privacy', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ settings }),

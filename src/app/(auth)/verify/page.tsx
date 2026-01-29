@@ -14,6 +14,7 @@ import { z } from 'zod';
 import { Mail, CheckCircle2, Loader2, AlertCircle, RefreshCw, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { apiFetch } from '@/lib/api-client';
 
 /**
  * Form validation schema
@@ -55,7 +56,7 @@ function VerifyForm({ defaultEmail }: { defaultEmail: string }) {
     setSuccess(null);
 
     try {
-      const response = await fetch('/api/auth/verify-email', {
+      const response = await apiFetch('/api/auth/verify-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -98,7 +99,7 @@ function VerifyForm({ defaultEmail }: { defaultEmail: string }) {
     setError(null);
 
     try {
-      const response = await fetch('/api/auth/resend-verification', {
+      const response = await apiFetch('/api/auth/resend-verification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

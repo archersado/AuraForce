@@ -573,11 +573,13 @@ export function parseSlashCommand(input: string): ParsedSlashCommand | null {
  * Fetch SDK commands from API
  * Returns dynamic commands from project plugins, tools, and skills
  */
+import { buildApiUrl } from '@/lib/api-client';
+
 export async function fetchSDKCommands(
   scanPath?: string
 ): Promise<Array<{ name: string; label: string; description: string; category: 'plugin' | 'sdk-command' | 'mcp-tool' | 'skill'; icon: string; sourceInfo: { source: string; path: string }; riskLevel?: 'safe' | 'moderate' | 'high' }>> {
   try {
-    const url = new URL('/api/sdk/resources/slash-commands', window.location.origin);
+    const url = new URL(buildApiUrl('/api/sdk/resources/slash-commands'), window.location.origin);
 
     if (scanPath) {
       url.searchParams.append('path', scanPath);

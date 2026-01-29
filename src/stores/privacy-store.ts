@@ -6,6 +6,7 @@
 
 import { create } from 'zustand';
 import { PrivacySettings, ShareLink } from '@/lib/privacy/types';
+import { apiFetch } from '@/lib/api-client';
 
 interface PrivacyState {
   // State
@@ -50,7 +51,7 @@ export const usePrivacyStore = create<PrivacyState>((set, get) => ({
   fetchSettings: async () => {
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch('/api/user/privacy');
+      const response = await apiFetch('/api/user/privacy');
       const data = await response.json();
 
       if (data.success) {
@@ -68,7 +69,7 @@ export const usePrivacyStore = create<PrivacyState>((set, get) => ({
   updateSettings: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch('/api/user/privacy', {
+      const response = await apiFetch('/api/user/privacy', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -90,7 +91,7 @@ export const usePrivacyStore = create<PrivacyState>((set, get) => ({
   fetchShareLinks: async () => {
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch('/api/share/my');
+      const response = await apiFetch('/api/share/my');
       const data = await response.json();
 
       if (data.success) {
@@ -108,7 +109,7 @@ export const usePrivacyStore = create<PrivacyState>((set, get) => ({
   generateShareLink: async (contentId, contentType, options) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch('/api/share/generate', {
+      const response = await apiFetch('/api/share/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contentId, contentType, options }),

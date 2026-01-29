@@ -10,6 +10,8 @@
  * - Deleting files
  */
 
+import { apiFetch, buildApiUrl } from '@/lib/api-client';
+
 export interface FileInfo {
   name: string;
   path: string;
@@ -58,7 +60,7 @@ export interface FileDeleteResponse {
  * List directory contents
  */
 export async function listDirectory(path?: string, root?: string): Promise<DirectoryListingResponse> {
-  const url = new URL('/api/files/list', window.location.origin);
+  const url = new URL(buildApiUrl('/api/files/list'), window.location.origin);
 
   if (path) {
     url.searchParams.set('path', path);
@@ -82,7 +84,7 @@ export async function listDirectory(path?: string, root?: string): Promise<Direc
  * Read file content
  */
 export async function readFile(path: string, root?: string): Promise<FileReadResponse> {
-  const url = new URL('/api/files/read', window.location.origin);
+  const url = new URL(buildApiUrl('/api/files/read'), window.location.origin);
   url.searchParams.set('path', path);
 
   if (root) {
@@ -103,7 +105,7 @@ export async function readFile(path: string, root?: string): Promise<FileReadRes
  * Write file content
  */
 export async function writeFile(path: string, content: string, root?: string): Promise<FileWriteResponse> {
-  const response = await fetch('/api/files/write', {
+  const response = await apiFetch('/api/files/write', {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -123,7 +125,7 @@ export async function writeFile(path: string, content: string, root?: string): P
  * Delete file (with optional confirmation)
  */
 export async function deleteFile(path: string, confirmed = false): Promise<FileDeleteResponse> {
-  const url = new URL('/api/files/delete', window.location.origin);
+  const url = new URL(buildApiUrl('/api/files/delete'), window.location.origin);
   url.searchParams.set('path', path);
 
   if (confirmed) {

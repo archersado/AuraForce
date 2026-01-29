@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Building2, Users, Settings, ArrowRight, Shield, Plus } from 'lucide-react';
+import { apiFetch } from '@/lib/api-client';
 
 export default function TenantSection() {
   const router = useRouter();
@@ -24,7 +25,7 @@ export default function TenantSection() {
     if (!user?.id) return;
 
     try {
-      const response = await fetch('/api/tenant');
+      const response = await apiFetch('/api/tenant');
       const data = await response.json();
 
       if (data.success) {

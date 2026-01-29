@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { apiFetch } from '@/lib/api-client';
 
 export interface SessionUser {
   id: string;
@@ -24,7 +25,7 @@ export function useSession() {
     setError(null);
 
     try {
-      const response = await fetch('/api/auth/session', {
+      const response = await apiFetch('/api/auth/session', {
         credentials: 'include',
       });
 

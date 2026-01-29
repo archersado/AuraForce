@@ -30,6 +30,7 @@ import { createStreamManager } from '@/lib/claude/stream-manager';
 import { SessionStorage } from '@/lib/session-storage';
 import type { SlashCommand } from '@/types/slash-commands';
 import type { ToastProps } from '@/components/ui/Toast';
+import { apiFetch } from '@/lib/api-client';
 
 interface ChatInterfaceProps {
   projectPath?: string;
@@ -252,7 +253,9 @@ export function ChatInterface({ projectPath, projectId, projectName }: ChatInter
       // If we have a projectId, try to load the latest session for that project
       if (projectId) {
         try {
-          const response = await fetch(`/api/sessions/project/${projectId}/latest`);
+          const response = await apiFetch(`/api/sessions/project/${projectId}/latest`, {
+            credentials: 'include',
+          });
           if (response.ok) {
             const data = await response.json();
             if (data.success && data.data) {
@@ -373,8 +376,9 @@ export function ChatInterface({ projectPath, projectId, projectName }: ChatInter
 
       // Optionally load session messages from the JSONL file
       if (projectPath) {
-        const response = await fetch(
-          `/api/claude/sessions/${claudeSessionId}/messages?projectPath=${encodeURIComponent(projectPath)}`
+        const response = await apiFetch(
+          `/api/claude/sessions/${claudeSessionId}/messages?projectPath=${encodeURIComponent(projectPath)}`,
+          { credentials: 'include' }
         );
 
         if (response.ok) {
@@ -445,7 +449,7 @@ export function ChatInterface({ projectPath, projectId, projectName }: ChatInter
       // Get the current Claude SDK session ID for multi-turn conversation
       const claudeSessionId = claudeSessionIdRef.current;
 
-      const response = await fetch('/api/claude/stream', {
+      const response = await apiFetch('/api/claude/stream', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

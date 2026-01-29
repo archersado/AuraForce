@@ -864,7 +864,7 @@ export const useClaudeStore = create<ClaudeState>()(
         // Also save to database if we have a persisted session
         if (sessionId && get().isSessionPersisted && get().currentSession) {
           const { currentSession } = get();
-          fetch(`/api/sessions/${currentSession.id}`, {
+          fetch(`/api/sessions/${currentSession?.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ sessionId }),

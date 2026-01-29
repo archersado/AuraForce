@@ -3,13 +3,9 @@
 import { useState, useRef, useCallback } from 'react';
 import { Upload, FileText, Folder, X, Check, AlertCircle } from 'lucide-react';
 
-interface FileItem {
-  id: string;
+interface FolderItem {
   name: string;
-  size: number;
-  type: 'file' | 'folder';
-  content?: string;
-  file?: File;
+  files: File[];
 }
 
 interface WorkflowUploadProps {
@@ -18,46 +14,88 @@ interface WorkflowUploadProps {
 }
 
 export default function WorkflowUpload({ onSuccess, onError }: WorkflowUploadProps) {
-  const [uploadType, setUploadType] = useState<'file' | 'folder'>('file');
+  const [uploadType, setUploadType] = useState<'file' | 'folder'>('folder');
   const [uploading, setUploading] = useState(false);
   const [results, setResults] = useState<any[]>([]);
   const [workflowName, setWorkflowName] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [selectedFolders, setSelectedFolders] = useState<FolderItem[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
-
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
-  };
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    const file = files[0];
-    setWorkflowName(file.name.replace(/\.(md|markdown)$/i, ''));
-  }, []);
+    // Add selected files
+    const newFiles = Array.from(files);
+    setSelectedFiles(prev => [...prev, ...newFiles]);
+
+    // Use the first file's name as default workflow name if not set
+    if (!workflowName && newFiles.length > 0) {
+      setWorkflowName(newFiles[0].name.replace(/\.(md|markdown)$/i, ''));
+    }
+
+    // Reset input
+    e.target.value = '';
+  }, [workflowName]);
 
   const handleFolderSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    // Get folder name from first file
-    const firstFile = files[0];
+    // Group files by folder name
+    const filesArray = Array.from(files);
+    const firstFile = filesArray[0];
     const webkitRelativePath = (firstFile as any).webkitRelativePath;
     if (webkitRelativePath) {
       const folderName = webkitRelativePath.split('/')[0];
-      setWorkflowName(folderName);
+
+      const newFolder: FolderItem = {
+        name: folderName,
+        files: filesArray
+      };
+
+      setSelectedFolders(prev => {
+        // Check if folder already exists
+        const existingIndex = prev.findIndex(f => f.name === folderName);
+        if (existingIndex >= 0) {
+          // Replace existing folder
+          const newFolders = [...prev];
+          newFolders[existingIndex] = newFolder;
+          return newFolders;
+        }
+        // Add new folder
+        return [...prev, newFolder];
+      });
+
+      // Use folder name as default workflow name if not set
+      if (!workflowName) {
+        setWorkflowName(folderName);
+      }
     }
-  }, []);
+
+    // Reset input
+    e.target.value = '';
+  }, [workflowName]);
+
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const removeFolder = (index: number) => {
+    setSelectedFolders(prev => prev.filter((_, i) => i !== index));
+  };
 
   const handleUpload = async () => {
-    if (!workflowName) {
-      onError?.('Please enter a workflow name');
+    if (uploadType === 'file' && selectedFiles.length === 0) {
+      onError?.('Please select files to upload');
+      return;
+    }
+
+    if (uploadType === 'folder' && selectedFolders.length === 0) {
+      onError?.('Please select folders to upload');
       return;
     }
 
@@ -65,53 +103,83 @@ export default function WorkflowUpload({ onSuccess, onError }: WorkflowUploadPro
     setResults([]);
 
     try {
-      const formData = new FormData();
-      formData.append('uploadType', uploadType);
-      formData.append('workflowName', workflowName);
-
       if (uploadType === 'file') {
-        const fileInput = fileInputRef.current;
-        if (!fileInput?.files?.[0]) {
-          onError?.('Please select a file to upload');
-          return;
+        // Upload all selected files
+        const formData = new FormData();
+        formData.append('uploadType', 'file');
+        if (workflowName) {
+          formData.append('workflowName', workflowName);
         }
+        selectedFiles.forEach(file => {
+          formData.append('files', file);
+        });
 
-        const file = fileInput.files[0];
-        formData.append('files', file);
-      } else {
-        const folderInput = folderInputRef.current;
-        if (!folderInput?.files || folderInput.files.length === 0) {
-          onError?.('Please select a folder to upload');
-          return;
-        }
+        const response = await fetch('/api/workflows/upload-v2', {
+          method: 'POST',
+          headers: {
+            'Cookie': document.cookie,
+          },
+          body: formData,
+        });
 
-        // Upload entire folder
-        for (let i = 0; i < folderInput.files.length; i++) {
-          const file = folderInput.files[i];
-          const relativePath = (file as any).webkitRelativePath;
-          formData.append(`folder-${relativePath}`, file);
-        }
-      }
-
-      const response = await fetch('/api/workflows/upload-v2', {
-        method: 'POST',
-        headers: {
-          'Cookie': document.cookie,
-        },
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Upload failed');
-      }
-
-      if (data.success) {
+        const data = await response.json();
         setResults(data.results || [data]);
-        onSuccess?.(data);
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Upload failed');
+        }
+
+        if (data.success) {
+          onSuccess?.(data);
+          setSelectedFiles([]);
+        }
       } else {
-        onError?.(data.message || 'Upload failed');
+        // Upload each folder separately
+        const uploadResults = [];
+
+        for (const folder of selectedFolders) {
+          const formData = new FormData();
+          formData.append('uploadType', 'folder');
+          formData.append('workflowName', folder.name);
+
+          // Upload files for this folder
+          folder.files.forEach(file => {
+            const relativePath = (file as any).webkitRelativePath;
+            formData.append(`folder-${relativePath}`, file);
+          });
+
+          const response = await fetch('/api/workflows/upload-v2', {
+            method: 'POST',
+            headers: {
+              'Cookie': document.cookie,
+            },
+            body: formData,
+          });
+
+          const data = await response.json();
+
+          uploadResults.push({
+            fileName: folder.name,
+            success: response.ok && data.success,
+            workflowId: data.workflowId,
+            error: data.error,
+            message: data.message,
+          });
+        }
+
+        setResults(uploadResults);
+
+        const successCount = uploadResults.filter(r => r.success).length;
+        if (successCount === uploadResults.length) {
+          onSuccess?.({ results: uploadResults });
+          setSelectedFolders([]);
+        } else {
+          const errorMessages = uploadResults
+            .filter(r => !r.success)
+            .map(r => `${r.fileName}: ${r.error}`)
+            .join('; ');
+          onError?.(`Some uploads failed: ${errorMessages}`);
+        }
       }
     } catch (error) {
       onError?.(error instanceof Error ? error.message : 'Upload failed');
@@ -181,16 +249,17 @@ export default function WorkflowUpload({ onSuccess, onError }: WorkflowUploadPro
           <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg hover:border-gray-400 dark:hover:border-gray-500 transition-colors">
             <div className="space-y-1 text-center">
               <FileText className="mx-auto h-12 w-12 text-gray-400" />
-              <div className="flex text-sm text-gray-600 dark:text-gray-400 justify-center">
+              <div className="flex gap-2">
                 <label
                   htmlFor="file-upload"
                   className="relative cursor-pointer rounded-md font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 focus-within:outline-none"
                 >
-                  <span>Upload a file</span>
+                  <span>Upload files</span>
                   <input
                     ref={fileInputRef}
                     id="file-upload"
                     type="file"
+                    multiple
                     accept=".md,.markdown"
                     className="sr-only"
                     onChange={handleFileSelect}
@@ -198,10 +267,43 @@ export default function WorkflowUpload({ onSuccess, onError }: WorkflowUploadPro
                 </label>
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Supports .md and .markdown files up to 5MB
+                Supports .md and .markdown files (multiple files allowed)
               </p>
             </div>
           </div>
+
+          {/* Selected Files List */}
+          {selectedFiles.length > 0 && (
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Selected Files ({selectedFiles.length})
+                </span>
+                <button
+                  onClick={() => setSelectedFiles([])}
+                  className="text-xs text-red-600 hover:text-red-700 dark:text-red-400"
+                >
+                  Clear All
+                </button>
+              </div>
+              <div className="max-h-40 overflow-y-auto space-y-1">
+                {selectedFiles.map((file, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded text-sm"
+                  >
+                    <span className="truncate text-gray-700 dark:text-gray-300">{file.name}</span>
+                    <button
+                      onClick={() => removeFile(index)}
+                      className="text-red-500 hover:text-red-600 ml-2"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div>
@@ -211,28 +313,68 @@ export default function WorkflowUpload({ onSuccess, onError }: WorkflowUploadPro
           <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg hover:border-gray-400 dark:hover:border-gray-500 transition-colors">
             <div className="space-y-1 text-center">
               <Folder className="mx-auto h-12 w-12 text-gray-400" />
-              <div className="flex text-sm text-gray-600 dark:text-gray-400 justify-center">
+              <div className="flex gap-2">
                 <label
                   htmlFor="folder-upload"
                   className="relative cursor-pointer rounded-md font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 focus-within:outline-none"
                 >
-                  <span>Upload a folder</span>
+                  <span>Upload folder</span>
                   <input
                     ref={folderInputRef}
                     id="folder-upload"
                     type="file"
-                    webkitdirectory=""
-                    directory=""
+                    {...({ webkitdirectory: '', directory: '' } as any)}
+                    multiple
                     className="sr-only"
                     onChange={handleFolderSelect}
                   />
                 </label>
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Upload entire workflow folder
+                Upload workflow folders (multiple folders allowed)
               </p>
             </div>
           </div>
+
+          {/* Selected Folders List */}
+          {selectedFolders.length > 0 && (
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Selected Folders ({selectedFolders.length})
+                </span>
+                <button
+                  onClick={() => setSelectedFolders([])}
+                  className="text-xs text-red-600 hover:text-red-700 dark:text-red-400"
+                >
+                  Clear All
+                </button>
+              </div>
+              <div className="max-h-40 overflow-y-auto space-y-2">
+                {selectedFolders.map((folder, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded text-sm"
+                  >
+                    <div>
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        📁 {folder.name}
+                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
+                        ({folder.files.length} files)
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => removeFolder(index)}
+                      className="text-red-500 hover:text-red-600 ml-2"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

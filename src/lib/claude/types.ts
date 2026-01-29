@@ -101,7 +101,8 @@ export type StreamEvent =
   | 'stream-chunk'
   | 'stream-end'
   | 'stream-error'
-  | 'connection-state-change';
+  | 'connection-state-change'
+  | 'session-update';
 
 /**
  * Stream chunk data from server

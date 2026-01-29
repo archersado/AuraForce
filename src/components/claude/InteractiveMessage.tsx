@@ -236,114 +236,206 @@ function AskUserQuestionsForm({
     onResponse(answers);
   };
 
+  // Helper to normalize options to { value, label, description } format
+  const normalizeOptions = (options?: string[] | Array<{ label: string; description?: string; value: string }>) => {
+    if (!options) return [];
+    return options.map(opt => {
+      if (typeof opt === 'string') {
+        return { value: opt, label: opt, description: undefined };
+      }
+      return opt;
+    });
+  };
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {message.instruction && (
-        <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-          <p className="text-sm text-blue-900">{message.instruction}</p>
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3">
+          <p className="text-sm text-blue-900 dark:text-blue-100">{message.instruction}</p>
         </div>
       )}
-      {message.questions.map((question) => (
-        <div key={question.id} className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">
-            {question.question}
-            {question.required && <span className="text-red-500 ml-1">*</span>}
-          </label>
-          {question.type === 'text' && (
-            <input
-              type="text"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-              placeholder={question.placeholder}
-              defaultValue={question.defaultValue as string}
-              onChange={(e) => handleAnswerChange(question.id, e.target.value)}
-              disabled={disabled}
-            />
-          )}
-          {question.type === 'textarea' && (
-            <textarea
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-              placeholder={question.placeholder}
-              defaultValue={question.defaultValue as string}
-              onChange={(e) => handleAnswerChange(question.id, e.target.value)}
-              disabled={disabled}
-              rows={3}
-            />
-          )}
-          {question.type === 'select' && question.options && (
-            <select
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-              onChange={(e) => handleAnswerChange(question.id, e.target.value)}
-              disabled={disabled}
-            >
-              <option value="">Select an option...</option>
-              {question.options.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
-          )}
-          {question.type === 'multi_select' && question.options && (
-            <div className="space-y-1">
-              {question.options.map((opt) => (
-                <label key={opt} className="flex items-center gap-2 cursor-pointer">
+      {message.questions.map((question) => {
+        const normalizedOptions = normalizeOptions(question.options);
+        const isMulti = question.type === 'multi_select';
+        const currentAnswer = answers[question.id] || (isMulti ? [] : '');
+
+        return (
+          <div key={question.id} className="space-y-3">
+            {question.header && (
+              <span className="inline-block px-2 py-0.5 text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 rounded">
+                {question.header}
+              </span>
+            )}
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              {question.question}
+              {question.required && <span className="text-red-500 ml-1">*</span>}
+            </label>
+
+            {/* Text input */}
+            {question.type === 'text' && (
+              <input
+                type="text"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white disabled:bg-gray-100 dark:disabled:bg-gray-700 disabled:cursor-not-allowed"
+                placeholder={question.placeholder}
+                defaultValue={question.defaultValue as string}
+                onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+                disabled={disabled}
+              />
+            )}
+
+            {/* Textarea input */}
+            {question.type === 'textarea' && (
+              <textarea
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white disabled:bg-gray-100 dark:disabled:bg-gray-700 disabled:cursor-not-allowed"
+                placeholder={question.placeholder}
+                defaultValue={question.defaultValue as string}
+                onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+                disabled={disabled}
+                rows={3}
+              />
+            )}
+
+            {/* Single select - Radio buttons with cards */}
+            {question.type === 'select' && normalizedOptions.length > 0 && (
+              <div className="grid grid-cols-1 gap-2">
+                {normalizedOptions.map((opt) => (
+                  <label
+                    key={opt.value}
+                    className={`relative flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      currentAnswer === opt.value
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                        : 'border-gray-300 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-700 bg-white dark:bg-gray-800'
+                    } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <input
+                      type="radio"
+                      name={question.id}
+                      value={opt.value}
+                      checked={currentAnswer === opt.value}
+                      onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+                      disabled={disabled}
+                      className="w-5 h-5 mt-0.5 text-blue-600 border-gray-300 focus:ring-blue-500 disabled:opacity-50"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <span className="block text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {opt.label}
+                      </span>
+                      {opt.description && (
+                        <span className="block text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {opt.description}
+                        </span>
+                      )}
+                    </div>
+                  </label>
+                ))}
+              </div>
+            )}
+
+            {/* Multi select - Checkboxes with cards */}
+            {question.type === 'multi_select' && normalizedOptions.length > 0 && (
+              <div className="grid grid-cols-1 gap-2">
+                {normalizedOptions.map((opt) => {
+                  const isChecked = Array.isArray(currentAnswer) && currentAnswer.includes(opt.value);
+                  return (
+                    <label
+                      key={opt.value}
+                      className={`relative flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                        isChecked
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                          : 'border-gray-300 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-700 bg-white dark:bg-gray-800'
+                      } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      <input
+                        type="checkbox"
+                        value={opt.value}
+                        checked={isChecked}
+                        onChange={(e) => {
+                          const current = Array.isArray(currentAnswer) ? currentAnswer : [];
+                          if (e.target.checked) {
+                            handleAnswerChange(question.id, [...current, opt.value]);
+                          } else {
+                            handleAnswerChange(question.id, current.filter((o) => o !== opt.value));
+                          }
+                        }}
+                        disabled={disabled}
+                        className="w-5 h-5 mt-0.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500 disabled:opacity-50"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <span className="block text-sm font-medium text-gray-900 dark:text-gray-100">
+                          {opt.label}
+                        </span>
+                        {opt.description && (
+                          <span className="block text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            {opt.description}
+                          </span>
+                        )}
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Confirm - Radio buttons */}
+            {question.type === 'confirm' && (
+              <div className="flex gap-4">
+                <label
+                  className={`flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                    currentAnswer === 'true'
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                      : 'border-gray-300 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-700 bg-white dark:bg-gray-800'
+                  } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
                   <input
-                    type="checkbox"
-                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 disabled:opacity-50"
-                    defaultChecked={Array.isArray(question.defaultValue) ? question.defaultValue.includes(opt) : false}
-                    onChange={(e) => {
-                      const current = Array.isArray(answers[question.id]) ? answers[question.id] as string[] : [];
-                      if (e.target.checked) {
-                        handleAnswerChange(question.id, [...current, opt]);
-                      } else {
-                        handleAnswerChange(question.id, current.filter((o) => o !== opt));
-                      }
-                    }}
+                    type="radio"
+                    name={question.id}
+                    value="true"
+                    checked={currentAnswer === 'true'}
+                    onChange={(e) => handleAnswerChange(question.id, e.target.value)}
                     disabled={disabled}
+                    className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500 disabled:opacity-50"
                   />
-                  <span className="text-sm text-gray-700">{opt}</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Yes</span>
                 </label>
-              ))}
-            </div>
-          )}
-          {question.type === 'confirm' && (
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name={question.id}
-                  className="w-4 h-4 text-blue-600 focus:ring-blue-500"
-                  onChange={(e) => handleAnswerChange(question.id, e.target.checked ? 'true' : 'false')}
-                  disabled={disabled}
-                />
-                <span className="text-sm text-gray-700">Yes</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name={question.id}
-                  className="w-4 h-4 text-blue-600 focus:ring-blue-500"
-                  onChange={(e) => handleAnswerChange(question.id, e.target.checked ? 'true' : 'false')}
-                  disabled={disabled}
-                />
-                <span className="text-sm text-gray-700">No</span>
-              </label>
-            </div>
-          )}
-          {question.type === 'number' && (
-            <input
-              type="number"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-              placeholder={question.placeholder || 'Enter a number'}
-              defaultValue={question.defaultValue as string}
-              onChange={(e) => handleAnswerChange(question.id, e.target.value)}
-              disabled={disabled}
-            />
-          )}
-        </div>
-      ))}
+                <label
+                  className={`flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                    currentAnswer === 'false'
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                      : 'border-gray-300 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-700 bg-white dark:bg-gray-800'
+                  } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <input
+                    type="radio"
+                    name={question.id}
+                    value="false"
+                    checked={currentAnswer === 'false'}
+                    onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+                    disabled={disabled}
+                    className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500 disabled:opacity-50"
+                  />
+                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">No</span>
+                </label>
+              </div>
+            )}
+
+            {/* Number input */}
+            {question.type === 'number' && (
+              <input
+                type="number"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white disabled:bg-gray-100 dark:disabled:bg-gray-700 disabled:cursor-not-allowed"
+                placeholder={question.placeholder || 'Enter a number'}
+                defaultValue={question.defaultValue as string}
+                onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+                disabled={disabled}
+              />
+            )}
+          </div>
+        );
+      })}
+
+      {/* Submit button */}
       <button
-        className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+        className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed transition-colors"
         onClick={handleSubmit}
         disabled={disabled}
       >

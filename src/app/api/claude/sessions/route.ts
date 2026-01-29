@@ -79,8 +79,7 @@ export async function GET(request: NextRequest) {
               lastUserMessage: latestSession.lastUserMessage,
               lastAssistantMessage: latestSession.lastAssistantMessage,
             }
-          : null,
-        latest: true,
+          : null
       };
 
       return NextResponse.json(response);

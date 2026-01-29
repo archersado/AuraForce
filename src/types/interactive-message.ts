@@ -46,7 +46,8 @@ export interface UserQuestion {
   id: string;
   question: string;
   type: 'text' | 'select' | 'multi_select' | 'confirm' | 'number' | 'textarea';
-  options?: string[];
+  header?: string;  // Optional header/chip for grouping questions
+  options?: string[] | Array<{ label: string; description?: string; value: string }>;
   placeholder?: string;
   required: boolean;
   defaultValue?: string | string[];

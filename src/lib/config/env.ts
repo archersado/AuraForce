@@ -103,7 +103,7 @@ const envSchema = z.object({
   ANTHROPIC_MODEL: z
     .string()
     .optional()
-    .default('claude-3-5-sonnet-20241022')
+    .default('claude-sonnet-4-20250514')
     .describe('Default Claude model to use'),
 
   // ============================================

@@ -255,7 +255,7 @@ export interface RetryConfig {
  */
 export const DEFAULT_CLAUDE_CONFIG: Required<ClaudeClientConfig> = {
   apiKey: claude.apiKey,
-  model: 'claude-3-5-sonnet-20241022',
+  model: 'claude-sonnet-4-20250514',
   maxTokens: 4096,
   timeout: 30000,
   maxRetries: 3,

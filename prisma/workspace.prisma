@@ -1,0 +1,51 @@
+
+// Workspace Folder Model - 工作区文件夹模型（使用文件系统路径）
+model WorkspaceFolder {
+  id         String   @id @default(uuid())
+  name        String
+  path        String   @db.Text    // 文件夹路径（相对于 workspace 根目录）
+  description String?  @db.Text    // 文件夹描述
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  @@unique([workspaceId, name, path])
+  @@map("workspace_folders")
+}
+
+// Workspace File Model - 工作区文件模型
+model WorkspaceFile {
+  id      String   @id @default(uuid())
+  folderId String   @map("folder_id")  // 所属文件夹
+  name     String   // 文件名
+  path     String   @db.Text    // 文件路径（相对于 folder）
+  type     String   // 类型：file, folder
+  size     BigInt?  @db.BigInt    // 文件大小（字节）
+  lastModified DateTime?  @map("last_modified")
+  content String?  @db.LongText    // 文件内容预览（仅小文本）
+  metadata Json?  @db.Json    // 扩展信息
+  
+  folder           WorkspaceFolder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  createdByUserId String?  @map("created_by_user_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@unique([folderId, name, path])
+  @@map("workspace_files")
+}
+
+// Workspace Session Model - 编辑会话状态模型
+model WorkspaceSession {
+  id            String   @id @default(uuid())
+  workspaceType  String   @default("user")  // user | organization | shared
+  folderPath    String   @db.Text    // 当前打开的文件夹路径
+  filePaths     Json              // 打开的文件标签页
+  scrollPosition Json              // 滚动位置
+  editorState   Json              // 编辑器状态（保存、光标位置等）
+  
+  createdByUserId String   @map("created_by_user_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([workspaceType, path])
+  @@map("workspace_sessions")
+}

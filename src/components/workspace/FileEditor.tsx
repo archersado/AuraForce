@@ -36,6 +36,8 @@ import type { FileMetadata } from '@/lib/workspace/files-service';
 import { formatFileSize, formatDate } from '@/lib/workspace/files-service';
 import { listDirectory } from '@/lib/workspace/files-service';
 import type { FileInfo } from '@/lib/workspace/files-service';
+import { isImageFile, isPresentationFile } from '@/lib/workspace/files-service';
+import { MediaPreview } from './MediaPreview';
 
 interface FileEditorProps {
   path: string | null;
@@ -692,6 +694,11 @@ export function FileEditor({
         </div>
       </div>
     );
+  }
+
+  // Use Media Preview for images and presentations
+  if (path && (isImageFile(path) || isPresentationFile(path))) {
+    return <MediaPreview path={path} metadata={metadata!} projectRoot={projectRoot} onClose={onClose} />;
   }
 
   return (

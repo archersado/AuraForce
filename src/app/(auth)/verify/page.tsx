@@ -130,7 +130,7 @@ function VerifyForm({ defaultEmail }: { defaultEmail: string }) {
           {/* Header */}
           <div className="mb-6">
             <Link
-              href="/login"
+              href="/auraforce/login"
               className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors mb-6"
             >
               <ArrowLeft className="w-4 h-4 mr-1" />

@@ -306,3 +306,38 @@ export function getLanguageFromExtension(filename: string): string {
 
   return langMap[ext] || 'text';
 }
+
+/**
+ * Check if a file is an image
+ */
+export function isImageFile(filename: string): boolean {
+  const ext = filename.split('.').pop()?.toLowerCase() || '';
+  const imageExtensions = [
+    'png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp', 'ico',
+    'tiff', 'tif', 'avif', 'heic', 'heif'
+  ];
+  return imageExtensions.includes(ext);
+}
+
+/**
+ * Check if a file is a presentation (PPT/PPTX)
+ */
+export function isPresentationFile(filename: string): boolean {
+  const ext = filename.split('.').pop()?.toLowerCase() || '';
+  const presentationExtensions = ['ppt', 'pptx', 'odp'];
+  return presentationExtensions.includes(ext);
+}
+
+/**
+ * Get the preview URL for a file
+ */
+export function getFilePreviewUrl(path: string, root?: string): string {
+  const url = new URL(buildApiUrl('/api/files/read'), window.location.origin);
+  url.searchParams.set('path', path);
+
+  if (root) {
+    url.searchParams.set('root', root);
+  }
+
+  return url.toString();
+}

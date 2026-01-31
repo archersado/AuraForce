@@ -68,7 +68,7 @@ export function useRequireAuth() {
   useEffect(() => {
     if (!result.loading && !result.session) {
       // Redirect to login if not authenticated
-      window.location.href = '/login';
+      window.location.href = '/auraforce/login';
     }
   }, [result.session, result.loading]);
 

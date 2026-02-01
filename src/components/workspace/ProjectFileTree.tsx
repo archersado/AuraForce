@@ -98,15 +98,18 @@ export default function ProjectFileTree({ projectRoot, onFileSelect, className =
     for (const file of files) {
       if (file.type === 'directory') {
         try {
-          const subDirPath = file.path.startsWith('/') ? file.path : `/${file.path}`;
-          const subResponse = await listDirectory(subDirPath, projectRoot);
+          // file.path is relative from root, use it directly
+          const subResponse = await listDirectory(file.path, projectRoot);
           const children: FileNode[] = [];
 
           for (const child of subResponse.files) {
             if (child.type === 'directory') {
-              children.push({ ...child, children: [], isOpen: false });
+              // Children should have full path (parent.path + child.name)
+              const childPath = file.path ? `${file.path}/${child.name}` : child.name;
+              children.push({ ...child, path: childPath, children: [], isOpen: false });
             } else {
-              children.push({ ...child, isOpen: false });
+              const childPath = file.path ? `${file.path}/${child.name}` : child.name;
+              children.push({ ...child, path: childPath, isOpen: false });
             }
           }
 
@@ -172,15 +175,17 @@ export default function ProjectFileTree({ projectRoot, onFileSelect, className =
     if (node.type !== 'directory' || (node.children && !forceRefresh)) return;
 
     try {
-      const subDirPath = node.path.startsWith('/') ? node.path : `/${node.path}`;
-      const subResponse = await listDirectory(subDirPath, projectRoot);
+      const subResponse = await listDirectory(node.path, projectRoot);
       const children: FileNode[] = [];
 
       for (const child of subResponse.files) {
         if (child.type === 'directory') {
-          children.push({ ...child, children: [], isOpen: false });
+          // Children should have full path (parent.path + child.name)
+          const childPath = node.path ? `${node.path}/${child.name}` : child.name;
+          children.push({ ...child, path: childPath, children: [], isOpen: false });
         } else {
-          children.push({ ...child, isOpen: false });
+          const childPath = node.path ? `${node.path}/${child.name}` : child.name;
+          children.push({ ...child, path: childPath, isOpen: false });
         }
       }
 

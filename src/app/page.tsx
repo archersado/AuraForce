@@ -1,7 +1,7 @@
 /**
  * AuraForce MVP 主页
  *
- * 功能：欢迎页面，引导用户进入技能提取流程
+ * 功能：欢迎页面,引导用户进入技能提取流程
  */
 
 'use client';
@@ -10,7 +10,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Zap, ArrowRight, Sparkles, Target, User, UserPlus, LogOut } from 'lucide-react';
+import { Zap, ArrowRight, MessageCircle, Eye, User, UserPlus, LogOut } from 'lucide-react';
 import { useUserStore } from '@/stores/user-store';
 
 export default function Home() {
@@ -31,15 +31,10 @@ export default function Home() {
   }
 
   const handleStartJourney = () => {
-    if (!user) {
-      router.push('/login?redirect=/skill-builder');
-      return;
-    }
-    router.push('/skill-builder');
+    router.push('/workspace');
   };
 
   const handleLogout = () => {
-    // Clear user store
     useUserStore.getState().reset();
     router.push('/login');
   };
@@ -61,7 +56,7 @@ export default function Home() {
           {!user ? (
             <div className="flex items-center space-x-3">
               <Link
-                href="/auraforce/login"
+                href="/login"
                 className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 <User className="w-4 h-4 mr-2" />
@@ -85,10 +80,11 @@ export default function Home() {
               </div>
               <button
                 onClick={handleLogout}
-                className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-red-600 dark:text-red-400"
+                title="退出登录"
               >
-                <LogOut className="w-4 h-4 mr-2" />
-                退出
+                <LogOut className="w-4 h-4" />
+                <span className="text-sm font-medium hidden sm:inline">退出</span>
               </button>
             </div>
           )}
@@ -99,18 +95,17 @@ export default function Home() {
       <div className="flex-1 flex items-center justify-center px-4 py-16">
         <div className="container mx-auto">
           <div className="max-w-4xl mx-auto text-center">
-
             {/* Logo 和标题 */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="mb-8"
+              className="mb-12"
             >
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full mb-6">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full mb-8">
                 <Zap className="w-10 h-10 text-white" />
               </div>
-              <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-4">
+              <h1 className="text-6xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-4">
                 AuraForce
               </h1>
               <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
@@ -130,29 +125,21 @@ export default function Home() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12"
             >
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4 mx-auto">
-                  <Sparkles className="w-6 h-6 text-purple-600" />
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-2">情景式对话</h3>
-                <p className="text-sm text-gray-600">通过自然对话提取你的专业技能</p>
-              </div>
-
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4 mx-auto">
-                  <Target className="w-6 h-6 text-blue-600" />
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-2">实时可视化</h3>
-                <p className="text-sm text-gray-600">实时展示技能提取和分析过程</p>
-              </div>
-
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4 mx-auto">
-                  <Zap className="w-6 h-6 text-green-600" />
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-2">一键生成</h3>
-                <p className="text-sm text-gray-600">自动生成 Claude Code 扩展资产</p>
-              </div>
+              <FeatureCard
+                icon={<MessageCircle className="w-6 h-6" />}
+                title="情景式对话"
+                description="像聊天一样轻松分享你的工作经验"
+              />
+              <FeatureCard
+                icon={<Eye className="w-6 h-6" />}
+                title="实时可视化"
+                description="边聊边看你的技能雷达图生成"
+              />
+              <FeatureCard
+                icon={<Zap className="w-6 h-6" />}
+                title="一键生成"
+                description="自动生成可用的 CC 扩展资产包"
+              />
             </motion.div>
 
             {/* 开始按钮 */}
@@ -174,23 +161,38 @@ export default function Home() {
                   <Link href="/register" className="text-purple-600 hover:text-purple-700 font-medium">
                     免费注册
                   </Link>
+                  {' '}
+                  <Link href="/login" className="text-gray-600 hover:text-gray-700">
+                    已有账号？登录
+                  </Link>
                 </p>
               )}
             </motion.div>
 
             {/* 版本信息 */}
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.6 }}
               className="mt-12 text-sm text-gray-500"
             >
               AuraForce MVP v0.1.0 - 技能经济时代的开创者
             </motion.div>
-
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
+  return (
+    <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex flex-col items-center h-full">
+      <div className="flex items-center justify-center w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg mb-4 flex-shrink-0">
+        {icon}
+      </div>
+      <h3 className="font-semibold text-gray-900 dark:text-white mb-2 text-center">{title}</h3>
+      <p className="text-sm text-gray-600 dark:text-gray-400 text-center flex-grow-0">{description}</p>
     </div>
   );
 }

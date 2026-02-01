@@ -90,6 +90,51 @@ function MarkdownPreview({ content }: { content: string }) {
     // Wrap list items
     html = html.replace(/(<li[^>]*>[\s\S]*?<\/li>\n?)+/g, '<ul class="my-4 space-y-1">$&</ul>');
 
+    // Tables - parse markdown tables BEFORE other processing
+    // Move to happen after escaping HTML but before inline formatting
+    // We use placeholders to avoid interference
+    const tables: { id: string; html: string }[] = [];
+    html = html.replace(/(\n)(\|[^|\n]+\|\n(?:\|[-:\s|]+\n)?(?:\|[^|\n]+\|\n)+)(\n)/g, (match: string, prefix: string, tableContent: string, suffix: string) => {
+      const lines = tableContent.trim().split('\n').filter((line: string) => line.trim());
+      if (lines.length < 3) return match;
+
+      const isTable = lines.every((line: string) => line.startsWith('|') && line.endsWith('|'));
+      if (!isTable) return match;
+
+      const hasSeparator = lines.some((line: string) => line.includes('---') || line.includes('---:'));
+      if (!hasSeparator) return match;
+
+      // Find separator line index
+      const separatorIndex = lines.findIndex((line: string) => line.includes('---') || line.includes('---:'));
+      if (separatorIndex === -1 || separatorIndex !== 1) return match;
+
+      // Parse header
+      const headerCells = lines[0]
+        .slice(1, -1)
+        .split('|')
+        .map((cell: string) => `<th class="border border-gray-300 dark:border-gray-600 px-4 py-2 bg-gray-100 dark:bg-gray-800 font-semibold text-left">${cell.trim()}</th>`);
+
+      // Parse data rows (skip header and separator)
+      const dataRows: string[] = [];
+      for (let i = separatorIndex + 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line.startsWith('|') && line.endsWith('|')) {
+          const cells = line
+            .slice(1, -1)
+            .split('|')
+            .map((cell: string) => `<td class="border border-gray-300 dark:border-gray-600 px-4 py-2 text-left">${cell.trim()}</td>`);
+          dataRows.push(`<tr>${cells.join('')}</tr>`);
+        }
+      }
+
+      if (dataRows.length === 0) return match;
+
+      const tableHtml = `<table class="w-full border-collapse my-4 border border-gray-300 dark:border-gray-600"><thead><tr>${headerCells.join('')}</tr></thead><tbody>${dataRows.join('')}</tbody></table>`;
+      const tableId = `__TABLE_${tables.length}__`;
+      tables.push({ id: tableId, html: tableHtml });
+      return `${prefix}${tableId}${suffix}\n`;
+    });
+
     // Links
     html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-purple-600 hover:text-purple-700 underline decoration-purple-300 hover:decoration-purple-500 underline-offset-2" target="_blank" rel="noopener noreferrer">$1</a>');
 
@@ -106,17 +151,26 @@ function MarkdownPreview({ content }: { content: string }) {
     html = html.split('\n\n').map(para => {
       if (!para.trim()) return '';
       const trimmed = para.trim();
-      // Skip if already starts with HTML tag
-      if (trimmed.startsWith('<') && trimmed.includes('</')) return para;
+      // Skip if already starts with HTML block element
+      if (trimmed.startsWith('<table') || trimmed.startsWith('<pre') || trimmed.startsWith('<blockquote') || trimmed.startsWith('<ul')) return para;
+      // Skip if starts with heading, hr, etc.
+      if (trimmed.startsWith('<h1') || trimmed.startsWith('<h2') || trimmed.startsWith('<h3') || trimmed.startsWith('<h4') || trimmed.startsWith('<h5') || trimmed.startsWith('<h6') || trimmed.startsWith('<hr')) return para;
+      // Skip table placeholders
+      if (trimmed.includes('__TABLE_')) return para;
       return `<p class="mb-4 leading-relaxed text-gray-700">${para}</p>`;
     }).join('\n\n');
+
+    // Put back tables
+    for (const table of tables) {
+      html = html.replace(table.id, table.html);
+    }
 
     return html;
   }, [content]);
 
   return (
     <div
-      className="prose prose-sm md:prose-base min-h-full p-6"
+      className="prose prose-sm md:prose-base prose-headings:font-bold prose-a:text-purple-600 hover:prose-a:text-purple-700 dark:prose-invert dark:prose-headings:text-gray-100 min-h-full p-6"
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );
@@ -173,7 +227,7 @@ export function AIMarkdownEditor({
     editable: !readOnly,
     editorProps: {
       attributes: {
-        class: 'prose prose-sm md:prose-base max-w-none focus:outline-none min-h-[300px] p-4',
+        class: 'prose prose-sm md:prose-base max-w-none focus:outline-none min-h-[300px] p-4 dark:prose-invert',
       },
     },
     onUpdate: ({ editor }) => {

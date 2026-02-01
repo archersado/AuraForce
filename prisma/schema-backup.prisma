@@ -1,0 +1,211 @@
+// Prisma schema update to fix workspaces API errors
+
+generator client {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+
+generator client {
+  provider   = "postgresql"
+  url       = env("DATABASE_URL")
+}
+
+// Workspaces model - EXISTS based on actual schema
+model UserWorkspace {
+  id               String              @id @default(uuid())
+  userId            String    @map("user_id")
+  name              String
+  path              String
+  description        String?   @db.Text
+  workflowTemplateId String?   @map("workflow_template_id")
+  lastOpenedAt     DateTime?     @map("last_opened_at")
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map("user_workspace_projects_user_id"))
+}
+
+// Invoice model (keep for compatibility)
+model Invoice {
+  id               String              @id @default(uuid())
+  userId            String    @map("user_id")
+  name               String
+  description String?    @db.Text
+  invoiceNumber     String?
+  invoiceDate      DateTime?
+  dueDate         DateTime?   @map("due_date")
+  amount           Decimal   @db.Decimal(10, 2)
+  currency        String    @default("CNY")
+  status           String    @default("pending")
+  paidAt          DateTime?   @map("paid_at")
+  paymentMethod     String?   @map("payment_method")
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map([userId], map("invoices_user_id"))
+}
+
+// InvoiceItem model
+model InvoiceItem {
+  id         String     @id @default(uuid())
+  invoiceId   String     @map("invoice_id")
+  name       String
+  quantity   Decimal   @db.Decimal(10, 2)
+  unitPrice  Decimal   @db.Decimal(10, 2)
+  total       Decimal   @db.Decimal(10, 2)
+  createdAt  DateTime @default(now())
+}
+
+// Subscription model
+model Subscription {
+  id              String              @id @default(uuid())
+  userId           String    @map("user_id")
+  name            String      @map("name")
+  status          String      @default("active")
+  amount           Decimal   @db.Decimal(10, 2)
+  currency String    @default("CNY")
+  interval         String    // 'monthly', 'yearly'
+  nextBillingDate  DateTime?   @map("next_billing_date")
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map([userId], map("subscriptions_user_id"))
+}
+
+model User {
+  id                 String    @id @default(uuid())
+  email              String    @unique
+  name               String?
+  username          String?   @unique @optional
+  picture            String?    @default('/default-avatar.png')
+  emailVerified      Boolean  @default(false)
+  passwordHash String?   @unique
+  bio               String?   @db.Text
+  skills             Skill[]
+  lastSeenAt        DateTime?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  invoices           Invoice[]
+  subscriptions      Subscription[]
+  workspaces        UserWorkspaceProject[]
+  projects           Project[]
+}
+
+model TenantAuditLog {
+  id           String    @id @default(uuid())
+  userId        String
+  timestamp    DateTime @default(now())
+  type         String
+  details      String?   @db.Text
+  metadata     Json?
+  tenantName  String
+}
+
+model TenantInvitation {
+  id         String    @id @default(uuid())
+  userId     String
+  tenant    Tenant  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map([userId], map("tenant_invitations_user_id"))
+}
+
+/* 
+ * Relations
+ */
+model InvoiceItem {
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map([invoiceId], map("invoice_items_invoice_id"))
+}
+
+model Subscription {
+  user User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map([userId], map("subscriptions_user_id"))
+}
+
+// Skill types
+enum Skill {
+  APTITUDE_ARCHITECTURE_DESIGN = 'aptitude_architecture_design',
+  BRANDING_MARKETING        = 'branding_marketing',
+  COPYWRITING            = 'copywriting',
+  CONTENT_CREATION       = 'content_creation',
+  VIDEO_EDITING         = 'video_editing',
+  GRAPHIC_DESIGN        = 'graphic_design',
+  SEO                  = 'seo',
+  COPYDITING          = 'copyediting',
+  CONTENT_STRATEGY      = 'content_strategy',
+  SOCIAL_MEDIA         = 'social_media',
+  EMAIL_MARKETING        = 'email_marketing',
+  PAID_CAMPAIGNING      = 'paid_advertising',
+  AFFILIATE_MARKETING    = 'affiliate_marketing',
+  VIDEO_MARKETING      = 'video_marketing',
+  EMAIL_DELIVERABILITY   = 'email_deliverability',
+  ANALYTICS             = 'analytics',
+  LEAD_GENERATION       = 'lead_generation',
+  CUSTOMER_SERVICE     = 'customer_service',
+  PERFORMANCEMarketing     = 'performance_marketing',
+  AUTOMATION_SYSTEM   = 'automation_system',
+  CRM                  = 'customer_relationship_management',
+  }
+
+// Skill levels
+enum SkillLevel {
+    BEGINNER      = 'beginner',
+  INTERMEDIATE = 'intermediate',
+  ADVANCED       = 'advanced',
+  EXPERT         = 'expert',
+  MASTER         = 'master',
+}
+
+/* 
+ * UserSkill model
+ */
+model UserSkill {
+  id          String    @id @default(uuid())
+ userId      String
+  skillId     String
+  skillLevel  SkillLevel
+  proficiency Int      @default(5)
+  endorsedBy  String[]
+
+  user        User        @relation([id], references: [id], onDelete: Cascade)
+
+  @@map([userId], map("user_skills_user_id"))
+}
+
+/* 
+ * Skills configuration
+ */
+model Skill {
+  id           String              @id @default(uuid())
+  name         String
+  displayName  String
+  description  String?
+
+  tier         SkillLevel  SkillLevel     @default('BEGINNER')
+
+  // Skills in this tier
+  skills      Skill[]
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+/* 
+ * Skills relations
+ */
+model SkillTier {
+  skills          Skill[]        @relation(fields: [skills])
+}

@@ -8,6 +8,10 @@
  * - Reading file contents
  * - Writing file contents
  * - Deleting files
+ * - Renaming files
+ * - Creating directories
+ * - Moving files/directories
+ * - Uploading multiple files
  */
 
 import { apiFetch, buildApiUrl } from '@/lib/api-client';
@@ -56,10 +60,57 @@ export interface FileDeleteResponse {
   requiresConfirmation?: boolean;
 }
 
+export interface FileRenameResponse {
+  success: boolean;
+  message: string;
+  oldPath: string;
+  newPath: string;
+  filename: string;
+}
+
+export interface DirectoryCreateResponse {
+  success: boolean;
+  message: string;
+  path: string;
+  dirname: string;
+  directoryName: string;
+}
+
+export interface FileMoveResponse {
+  success: boolean;
+  message: string;
+  oldPath: string;
+  newPath: string;
+  filename: string;
+}
+
+export interface FileUploadResponse {
+  success: boolean;
+  uploaded: number;
+  results: any[];
+  errors: any[];
+  targetPath: string;
+}
+
+/**
+   * Get file preview URL for a file
+   */
+export function getFilePreviewUrl(path: string, root?: string): string {
+  const url = new URL(buildApiUrl('/api/files/read'), window.location.origin);
+  url.searchParams.set('path', path);
+  if (root) {
+    url.searchParams.set('root', root);
+  }
+  return url.toString();
+}
+
 /**
  * List directory contents
  */
-export async function listDirectory(path?: string, root?: string): Promise<DirectoryListingResponse> {
+export async function listDirectory(
+  path?: string,
+  root?: string
+): Promise<DirectoryListingResponse> {
   const url = new URL(buildApiUrl('/api/files/list'), window.location.origin);
 
   if (path) {
@@ -83,7 +134,10 @@ export async function listDirectory(path?: string, root?: string): Promise<Direc
 /**
  * Read file content
  */
-export async function readFile(path: string, root?: string): Promise<FileReadResponse> {
+export async function readFile(
+  path: string,
+  root?: string
+): Promise<FileReadResponse> {
   const url = new URL(buildApiUrl('/api/files/read'), window.location.origin);
   url.searchParams.set('path', path);
 
@@ -104,9 +158,13 @@ export async function readFile(path: string, root?: string): Promise<FileReadRes
 /**
  * Write file content
  */
-export async function writeFile(path: string, content: string, root?: string): Promise<FileWriteResponse> {
+export async function writeFile(
+  path: string,
+  content: string,
+  root?: string
+): Promise<FileWriteResponse> {
   const response = await apiFetch('/api/files/write', {
-    method: 'PUT',
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
@@ -124,7 +182,10 @@ export async function writeFile(path: string, content: string, root?: string): P
 /**
  * Delete file (with optional confirmation)
  */
-export async function deleteFile(path: string, confirmed = false): Promise<FileDeleteResponse> {
+export async function deleteFile(
+  path: string,
+  confirmed = false
+): Promise<FileDeleteResponse> {
   const url = new URL(buildApiUrl('/api/files/delete'), window.location.origin);
   url.searchParams.set('path', path);
 
@@ -139,6 +200,106 @@ export async function deleteFile(path: string, confirmed = false): Promise<FileD
   if (!response.ok && response.status !== 202) {
     const error = await response.json();
     throw new Error(error.error || 'Failed to delete file');
+  }
+
+  return response.json();
+}
+
+/**
+ * Rename a file or directory
+ */
+export async function renameFile(
+  currentPath: string,
+  newName: string,
+  workspaceRoot?: string
+): Promise<FileRenameResponse> {
+  const response = await apiFetch('/api/files/rename', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ currentPath, newName, workspaceRoot }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to rename file');
+  }
+
+  return response.json();
+}
+
+/**
+ * Create a new directory
+ */
+export async function createDirectory(
+  directoryName: string,
+  parentPath: string = '/',
+  workspaceRoot?: string
+): Promise<DirectoryCreateResponse> {
+  const response = await apiFetch('/api/files/mkdir', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ directoryName, parentPath, root: workspaceRoot }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to create directory');
+  }
+
+  return response.json();
+}
+
+/**
+ * Move a file or directory
+ */
+export async function moveFile(
+  sourcePath: string,
+  destinationPath: string,
+  workspaceRoot?: string
+): Promise<FileMoveResponse> {
+  const response = await apiFetch('/api/files/move', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ sourcePath, destinationPath, root: workspaceRoot }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to move file');
+  }
+
+  return response.json();
+}
+
+/**
+ * Upload files
+ */
+export async function uploadFiles(
+  files: File[],
+  targetPath: string
+): Promise<FileUploadResponse> {
+  const formData = new FormData();
+
+  files.forEach((file) => {
+    formData.append('files', file);
+  });
+
+  formData.append('path', targetPath);
+
+  const response = await apiFetch('/api/files/upload', {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to upload files');
   }
 
   return response.json();
@@ -201,25 +362,18 @@ export function getLanguageFromExtension(filename: string): string {
     cts: 'typescript',
     // Markup & Data
     json: 'json',
-    jsonc: 'json',
-    md: 'markdown',
-    mdx: 'markdown',
-    markdown: 'markdown',
-    rst: 'markdown',
-    txt: 'text',
     yaml: 'yaml',
-    yml: 'yaml',
-    toml: 'toml',
     xml: 'xml',
-    svg: 'xml',
     html: 'html',
     htm: 'html',
     xhtml: 'html',
-    xht: 'html',
-    // Styles
+    md: 'markdown',
+    markdown: 'markdown',
+    mdx: 'markdown',
+    // CSS
     css: 'css',
     scss: 'scss',
-    sass: 'scss',
+    sass: 'sass',
     less: 'less',
     styl: 'css',
     // Python
@@ -228,7 +382,6 @@ export function getLanguageFromExtension(filename: string): string {
     pyw: 'python',
     // Java
     java: 'java',
-    jar: 'java',
     // C/C++
     c: 'cpp',
     h: 'cpp',
@@ -237,19 +390,15 @@ export function getLanguageFromExtension(filename: string): string {
     hpp: 'cpp',
     cxx: 'cpp',
     hxx: 'cpp',
+    cxx: 'cpp',
     // PHP
     php: 'php',
-    phtml: 'php',
-    php3: 'php',
-    php4: 'php',
-    php5: 'php',
     // Rust
     rs: 'rust',
     // Go
     go: 'go',
     // Database
-    sql: 'sql',
-    sqlite: 'sql',
+    sql: 'sqlite',
     db: 'sql',
     // Shell/Bash
     sh: 'bash',
@@ -260,48 +409,17 @@ export function getLanguageFromExtension(filename: string): string {
     conf: 'text',
     ini: 'text',
     cfg: 'text',
-    env: 'text',
     dotenv: 'text',
     gitignore: 'text',
-    gitattributes: 'text',
-    // Scripts
-    rb: 'ruby',
-    pl: 'perl',
-    pm: 'perl',
-    tcl: 'tcl',
-    vue: 'vue',
-    svelte: 'svelte',
+    gitattributes: 'gitattr',
   };
 
   // Check full filename for special cases
-  if (name === 'makefile' || name === 'gnumakefile') {
-    return 'make';
-  }
-  if (name === 'dockerfile') {
-    return 'dockerfile';
-  }
-  if (name === 'docker-compose.yml' || name === 'docker-compose.yaml') {
-    return 'yaml';
-  }
-  if (name === 'requirements.txt') {
-    return 'python';
-  }
   if (name === 'package.json' || name === 'package-lock.json') {
     return 'json';
   }
   if (name === 'tsconfig.json') {
     return 'json';
-  }
-
-  // Match exact extension first
-  if (name.endsWith('.d.ts') || name.endsWith('.d.tsx')) {
-    return 'typescript';
-  }
-  if (name.endsWith('.test.ts') || name.endsWith('.test.tsx')) {
-    return 'typescript';
-  }
-  if (name.endsWith('.spec.ts') || name.endsWith('.spec.tsx')) {
-    return 'typescript';
   }
 
   return langMap[ext] || 'text';
@@ -326,18 +444,4 @@ export function isPresentationFile(filename: string): boolean {
   const ext = filename.split('.').pop()?.toLowerCase() || '';
   const presentationExtensions = ['ppt', 'pptx', 'odp'];
   return presentationExtensions.includes(ext);
-}
-
-/**
- * Get the preview URL for a file
- */
-export function getFilePreviewUrl(path: string, root?: string): string {
-  const url = new URL(buildApiUrl('/api/files/read'), window.location.origin);
-  url.searchParams.set('path', path);
-
-  if (root) {
-    url.searchParams.set('root', root);
-  }
-
-  return url.toString();
 }

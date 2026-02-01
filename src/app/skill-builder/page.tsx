@@ -7,6 +7,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Brain, Zap, Target, Sparkles, MessageCircle, Eye,
@@ -230,7 +231,10 @@ export default function SkillBuilder() {
       <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
+            <Link
+              href="/workspace"
+              className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
+            >
               <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
                 <Brain className="w-6 h-6 text-white" />
               </div>
@@ -240,7 +244,7 @@ export default function SkillBuilder() {
                 </h1>
                 <p className="text-sm text-gray-600">技能沉淀平台</p>
               </div>
-            </div>
+            </Link>
 
             <ProgressIndicator progress={progress} stage={currentStage} />
           </div>

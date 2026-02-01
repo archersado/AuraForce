@@ -15,17 +15,17 @@ import type { FileMetadata } from '@/lib/workspace/files-service';
 interface MediaPreviewProps {
   path: string;
   metadata: FileMetadata;
-  projectRoot?: string;
+  workspaceRoot?: string;
   onClose?: () => void;
 }
 
-export function MediaPreview({ path, metadata, projectRoot, onClose }: MediaPreviewProps) {
+export function MediaPreview({ path, metadata, workspaceRoot, onClose }: MediaPreviewProps) {
   const [zoom, setZoom] = useState(100);
   const [rotation, setRotation] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const previewUrl = getFilePreviewUrl(path, projectRoot);
+  const previewUrl = getFilePreviewUrl(path, workspaceRoot);
 
   // Determine file type
   const isPowerpoint = path.toLowerCase().endsWith('.pptx') ||

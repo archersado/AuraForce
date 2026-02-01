@@ -3,7 +3,7 @@
 import { useRequireAuth } from '@/hooks/useSession';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LogOut, User, LayoutDashboard, FolderOpen, FileText, Sparkles } from 'lucide-react';
+import { LogOut, User, LayoutDashboard, FolderOpen, FileText, Sparkles, Brain } from 'lucide-react';
 import { apiFetch } from '@/lib/api-client';
 
 export default function ProtectedLayout({
@@ -57,26 +57,15 @@ export default function ProtectedLayout({
                   <span>Dashboard</span>
                 </Link>
                 <Link
-                  href="/workspace/templates"
+                  href="/skill-builder"
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                    pathname === '/workspace/templates'
+                    pathname?.startsWith('/skill-builder')
                       ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow'
                       : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                   }`}
                 >
-                  <Sparkles className="w-4 h-4" />
-                  <span>Templates</span>
-                </Link>
-                <Link
-                  href="/workspace/upload"
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                    pathname === '/workspace/upload'
-                      ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                  }`}
-                >
-                  <FileText className="w-4 h-4" />
-                  <span>Upload</span>
+                  <Brain className="w-4 h-4" />
+                  <span>技能提取</span>
                 </Link>
               </nav>
             </div>

@@ -10,10 +10,19 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { X, Download, Copy, Trash2 } from 'lucide-react';
+import { X, Download, Copy, Trash2, Upload, Search } from 'lucide-react';
 import { FileBrowser } from './FileBrowser';
 import { FileEditor } from './FileEditor';
-import { readFile, writeFile, deleteFile, type FileMetadata } from '@/lib/workspace/files-service';
+import { TabBar } from './TabBar';
+import { FileUpload } from './FileUpload';
+import { FileSearch } from './FileSearch';
+import {
+  readFile,
+  writeFile,
+  deleteFile,
+  type FileMetadata,
+} from '@/lib/workspace/files-service';
+import { useTabsStore } from '@/stores/workspace-tabs-store';
 
 interface WorkspacePanelProps {
   isOpen: boolean;
@@ -36,6 +45,8 @@ export function WorkspacePanel({
   const [error, setError] = useState<string | null>(null);
   const [sidebarWidth, setSidebarWidth] = useState(300);
   const [deleteSuccess, setDeleteSuccess] = useState<string | null>(null);
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
 
   // Store FileBrowser ref for refreshing
   const fileBrowserRef = useRef<{ refresh: () => void; forceRefresh: () => void }>(null);
@@ -151,6 +162,19 @@ export function WorkspacePanel({
     }
   }, [selectedPath, fileMetadata]);
 
+  // Handle search result selection
+  const handleSearchResultSelect = useCallback((file: any) => {
+    if (file.type === 'directory') {
+      // For directories, just select the path (could open in browser)
+      setSelectedPath(file.path);
+    } else {
+      // For files, load and display in editor
+      loadFile(file.path);
+    }
+    // Close search dialog
+    setIsSearchDialogOpen(false);
+  }, [loadFile]);
+
   // Handle drag resize
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -179,11 +203,38 @@ export function WorkspacePanel({
       if (e.key === 'Escape') {
         onClose();
       }
+      // Ctrl+Shift+U to open upload dialog
+      if (e.ctrlKey && e.shiftKey && e.key === 'U') {
+        setIsUploadDialogOpen(!isUploadDialogOpen);
+      }
+      // Ctrl+K to open search dialog
+      if (e.ctrlKey && e.key === 'k') {
+        setIsSearchDialogOpen((prev) => !prev);
+        e.preventDefault();
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  }, [onClose, isUploadDialogOpen]);
+
+  // Handle file upload complete
+  const handleUploadComplete = useCallback(async (files: any[]) => {
+    if (files.length > 0 && fileBrowserRef.current) {
+      // Refresh file browser to show uploaded files
+      fileBrowserRef.current.forceRefresh();
+
+      // Show success message
+      setDeleteSuccess(`Successfully uploaded ${files.length} file${files.length === 1 ? '' : 's'}`);
+
+      // Dismiss success message after 3 seconds
+      setTimeout(() => {
+        setDeleteSuccess(null);
+      }, 3000);
+
+      setIsUploadDialogOpen(false);
+    }
+  }, []);
 
   if (!isOpen) return null;
 
@@ -210,6 +261,13 @@ export function WorkspacePanel({
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsUploadDialogOpen(true)}
+              className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+              title="Upload Files (Ctrl+Shift+U)"
+            >
+              <Upload className="w-4 h-4" />
+            </button>
             {selectedPath && (
               <>
                 <button
@@ -334,6 +392,22 @@ export function WorkspacePanel({
             )}
           </div>
         </div>
+
+        {/* Search Dialog */}
+        <FileSearch
+          visible={isSearchDialogOpen}
+          onClose={() => setIsSearchDialogOpen(false)}
+          onResultSelect={handleSearchResultSelect}
+          workspaceRoot={workspaceRoot}
+        />
+
+        {/* File Upload Dialog */}
+        <FileUpload
+          visible={isUploadDialogOpen}
+          onClose={() => setIsUploadDialogOpen(false)}
+          onUploadComplete={handleUploadComplete}
+          targetPath={workspaceRoot || '/'}
+        />
       </div>
     </div>
   );

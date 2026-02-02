@@ -8,7 +8,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Trash2, Search, ChevronDown, ChevronUp, FolderOpen } from 'lucide-react';
+import { Trash2, Search, ChevronDown, ChevronUp, FolderOpen, Eye, EyeOff, Loader2 } from 'lucide-react';
 
 interface WorkflowMetadata {
   tags?: string[];
@@ -26,6 +26,7 @@ interface WorkflowSpec {
   author?: string | null;
   ccPath: string;
   status: string;
+  visibility?: string;
   metadata?: WorkflowMetadata;
   deployedAt: string;
   updatedAt: string;
@@ -46,6 +47,7 @@ export default function WorkflowSpecList({ onDelete, refreshKey }: WorkflowSpecL
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedWorkflow, setExpandedWorkflow] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [togglingVisibilityId, setTogglingVisibilityId] = useState<string | null>(null);
 
   const fetchWorkflows = async () => {
     setLoading(true);
@@ -120,6 +122,36 @@ export default function WorkflowSpecList({ onDelete, refreshKey }: WorkflowSpecL
     }
   };
 
+  const handleToggleVisibility = async (workflowId: string, currentVisibility: string) => {
+    setTogglingVisibilityId(workflowId);
+
+    try {
+      const newVisibility = currentVisibility === 'public' ? 'private' : 'public';
+
+      const response = await fetch(`/api/workflows/${workflowId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ visibility: newVisibility }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update visibility');
+      }
+
+      setWorkflows(prev =>
+        prev.map(w =>
+          w.id === workflowId ? { ...w, visibility: newVisibility } : w
+        )
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update visibility');
+    } finally {
+      setTogglingVisibilityId(null);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; className: string }> = {
       deployed: {
@@ -139,6 +171,31 @@ export default function WorkflowSpecList({ onDelete, refreshKey }: WorkflowSpecL
     const config = statusConfig[status] || statusConfig.deployed;
     return (
       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${config.className}`}>
+        {config.label}
+      </span>
+    );
+  };
+
+  const getVisibilityBadge = (visibility?: string) => {
+    const visibilityConfig: Record<string, { label: string; className: string; icon: any }> = {
+      public: {
+        label: '公开',
+        className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+        icon: Eye,
+      },
+      private: {
+        label: '私有',
+        className: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
+        icon: EyeOff,
+      },
+    };
+
+    const config = visibilityConfig[visibility || 'private'];
+    const Icon = config.icon;
+
+    return (
+      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${config.className}`}>
+        <Icon className="w-3 h-3" />
         {config.label}
       </span>
     );
@@ -215,11 +272,12 @@ export default function WorkflowSpecList({ onDelete, refreshKey }: WorkflowSpecL
             {/* Main Row */}
             <div className="p-4 flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">
                     {workflow.name}
                   </h3>
                   {getStatusBadge(workflow.status)}
+                  {getVisibilityBadge(workflow.visibility)}
                 </div>
                 {workflow.description && (
                   <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
@@ -235,6 +293,20 @@ export default function WorkflowSpecList({ onDelete, refreshKey }: WorkflowSpecL
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleToggleVisibility(workflow.id, workflow.visibility || 'private')}
+                  disabled={togglingVisibilityId === workflow.id}
+                  title={workflow.visibility === 'public' ? '设为私有' : '设为公开'}
+                  className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {togglingVisibilityId === workflow.id ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : workflow.visibility === 'public' ? (
+                    <Eye className="w-5 h-5" />
+                  ) : (
+                    <EyeOff className="w-5 h-5" />
+                  )}
+                </button>
                 <button
                   onClick={() => setExpandedWorkflow(
                     expandedWorkflow === workflow.id ? null : workflow.id

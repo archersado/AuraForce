@@ -53,7 +53,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (template.userId !== session.userId) {
+    // Allow loading public templates or own templates
+    if (template.userId !== session.userId && template.visibility !== 'public') {
       return NextResponse.json(
         { error: 'Access denied' },
         { status: 403 }

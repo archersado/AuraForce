@@ -315,6 +315,7 @@ model WorkflowSpec {
   ccPath        String               @unique @map("cc_path")
   ccPathVersion Int                  @default(1) @map("cc_path_version")
   userId        String               @map("user_id")
+  visibility    String               @default("private") @map("visibility") // private | public
   status        String               @default("deployed")
   syncStatus    String               @default("synced") @map("sync_status")
   metadata      Json?
@@ -332,6 +333,7 @@ model WorkflowSpec {
   @@index([syncStatus])
   @@index([status, userId])
   @@index([contentHash])
+  @@index([visibility])
   @@map("workflow_specs")
 }
 

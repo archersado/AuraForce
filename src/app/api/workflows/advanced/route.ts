@@ -45,7 +45,10 @@ export async function GET(request: NextRequest) {
 
     // Build where clause
     const where: any = {
-      userId: session.userId,
+      OR: [
+        { userId: session.userId },
+        { visibility: 'public' },
+      ],
     };
 
     if (query) {

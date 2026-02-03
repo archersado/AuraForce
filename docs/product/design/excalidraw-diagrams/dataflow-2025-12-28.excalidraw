@@ -1,0 +1,559 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "https://excalidraw.com",
+  "elements": [
+    {
+      "id": "bg",
+      "type": "rectangle",
+      "x": 0,
+      "y": 0,
+      "width": 1600,
+      "height": 1000,
+      "backgroundColor": "#0F172A",
+      "strokeColor": "#475569",
+      "strokeWidth": 3
+    },
+    {
+      "id": "title",
+      "type": "text",
+      "x": 700,
+      "y": 30,
+      "strokeColor": "#E4E4E7",
+      "text": "AuraForce 数据流图 (Level 1 DFD)",
+      "fontSize": 28
+    },
+    {
+      "id": "user-entity",
+      "type": "rectangle",
+      "x": 50,
+      "y": 400,
+      "width": 150,
+      "height": 100,
+      "backgroundColor": "#1E293B",
+      "strokeColor": "#3B82F6",
+      "strokeWidth": 3
+    },
+    {
+      "id": "user-text",
+      "type": "text",
+      "x": 125,
+      "y": 450,
+      "strokeColor": "#E4E4E7",
+      "text": "用户\n(创作者/开发者\n顾问/自由职业者)",
+      "fontSize": 14
+    },
+    {
+      "id": "claude-entity",
+      "type": "rectangle",
+      "x": 1400,
+      "y": 200,
+      "width": 150,
+      "height": 80,
+      "backgroundColor": "#1E293B",
+      "strokeColor": "#3B82F6",
+      "strokeWidth": 3
+    },
+    {
+      "id": "claude-text",
+      "type": "text",
+      "x": 1475,
+      "y": 240,
+      "strokeColor": "#E4E4E7",
+      "text": "Claude AI\n系统",
+      "fontSize": 14
+    },
+    {
+      "id": "market-entity",
+      "type": "rectangle",
+      "x": 1400,
+      "y": 400,
+      "width": 150,
+      "height": 80,
+      "backgroundColor": "#1E293B",
+      "strokeColor": "#3B82F6",
+      "strokeWidth": 3
+    },
+    {
+      "id": "market-text",
+      "type": "text",
+      "x": 1475,
+      "y": 440,
+      "strokeColor": "#E4E4E7",
+      "text": "技能包\n市场",
+      "fontSize": 14
+    },
+    {
+      "id": "external-entity",
+      "type": "rectangle",
+      "x": 1400,
+      "y": 600,
+      "width": 150,
+      "height": 80,
+      "backgroundColor": "#1E293B",
+      "strokeColor": "#3B82F6",
+      "strokeWidth": 3
+    },
+    {
+      "id": "external-text",
+      "type": "text",
+      "x": 1475,
+      "y": 640,
+      "strokeColor": "#E4E4E7",
+      "text": "外部知识源\n(互联网API)",
+      "fontSize": 14
+    },
+    {
+      "id": "p0",
+      "type": "ellipse",
+      "x": 300,
+      "y": 380,
+      "width": 160,
+      "height": 100,
+      "backgroundColor": "#2563EB",
+      "strokeColor": "#3B82F6",
+      "strokeWidth": 2
+    },
+    {
+      "id": "p0-text",
+      "type": "text",
+      "x": 380,
+      "y": 430,
+      "strokeColor": "#E4E4E7",
+      "text": "0.0\n用户领域识别",
+      "fontSize": 14
+    },
+    {
+      "id": "p1",
+      "type": "ellipse",
+      "x": 550,
+      "y": 380,
+      "width": 160,
+      "height": 100,
+      "backgroundColor": "#2563EB",
+      "strokeColor": "#3B82F6",
+      "strokeWidth": 2
+    },
+    {
+      "id": "p1-text",
+      "type": "text",
+      "x": 630,
+      "y": 420,
+      "strokeColor": "#E4E4E7",
+      "text": "1.0\n成功案例\n体验中心",
+      "fontSize": 14
+    },
+    {
+      "id": "p2",
+      "type": "ellipse",
+      "x": 800,
+      "y": 380,
+      "width": 160,
+      "height": 100,
+      "backgroundColor": "#2563EB",
+      "strokeColor": "#3B82F6",
+      "strokeWidth": 2
+    },
+    {
+      "id": "p2-text",
+      "type": "text",
+      "x": 880,
+      "y": 420,
+      "strokeColor": "#E4E4E7",
+      "text": "2.0\n方法论\n学习系统",
+      "fontSize": 14
+    },
+    {
+      "id": "p3",
+      "type": "ellipse",
+      "x": 1050,
+      "y": 380,
+      "width": 160,
+      "height": 100,
+      "backgroundColor": "#2563EB",
+      "strokeColor": "#3B82F6",
+      "strokeWidth": 2
+    },
+    {
+      "id": "p3-text",
+      "type": "text",
+      "x": 1130,
+      "y": 420,
+      "strokeColor": "#E4E4E7",
+      "text": "3.0\n技能沉淀\n引擎",
+      "fontSize": 14
+    },
+    {
+      "id": "p4",
+      "type": "ellipse",
+      "x": 1050,
+      "y": 600,
+      "width": 160,
+      "height": 100,
+      "backgroundColor": "#2563EB",
+      "strokeColor": "#3B82F6",
+      "strokeWidth": 2
+    },
+    {
+      "id": "p4-text",
+      "type": "text",
+      "x": 1130,
+      "y": 640,
+      "strokeColor": "#E4E4E7",
+      "text": "4.0\n自动化\n运营中心",
+      "fontSize": 14
+    },
+    {
+      "id": "d1",
+      "type": "rectangle",
+      "x": 300,
+      "y": 800,
+      "width": 150,
+      "height": 60,
+      "backgroundColor": "#334155",
+      "strokeColor": "#A1A1AA",
+      "strokeWidth": 2
+    },
+    {
+      "id": "d1-text",
+      "type": "text",
+      "x": 375,
+      "y": 830,
+      "strokeColor": "#E4E4E7",
+      "text": "D1 用户档案库",
+      "fontSize": 14
+    },
+    {
+      "id": "d2",
+      "type": "rectangle",
+      "x": 500,
+      "y": 800,
+      "width": 150,
+      "height": 60,
+      "backgroundColor": "#334155",
+      "strokeColor": "#A1A1AA",
+      "strokeWidth": 2
+    },
+    {
+      "id": "d2-text",
+      "type": "text",
+      "x": 575,
+      "y": 830,
+      "strokeColor": "#E4E4E7",
+      "text": "D2 技能知识库",
+      "fontSize": 14
+    },
+    {
+      "id": "d3",
+      "type": "rectangle",
+      "x": 700,
+      "y": 800,
+      "width": 150,
+      "height": 60,
+      "backgroundColor": "#334155",
+      "strokeColor": "#A1A1AA",
+      "strokeWidth": 2
+    },
+    {
+      "id": "d3-text",
+      "type": "text",
+      "x": 775,
+      "y": 830,
+      "strokeColor": "#E4E4E7",
+      "text": "D3 成功案例库",
+      "fontSize": 14
+    },
+    {
+      "id": "d4",
+      "type": "rectangle",
+      "x": 900,
+      "y": 800,
+      "width": 150,
+      "height": 60,
+      "backgroundColor": "#334155",
+      "strokeColor": "#A1A1AA",
+      "strokeWidth": 2
+    },
+    {
+      "id": "d4-text",
+      "type": "text",
+      "x": 975,
+      "y": 830,
+      "strokeColor": "#E4E4E7",
+      "text": "D4 商业模型库",
+      "fontSize": 14
+    },
+    {
+      "id": "d5",
+      "type": "rectangle",
+      "x": 1100,
+      "y": 800,
+      "width": 150,
+      "height": 60,
+      "backgroundColor": "#334155",
+      "strokeColor": "#A1A1AA",
+      "strokeWidth": 2
+    },
+    {
+      "id": "d5-text",
+      "type": "text",
+      "x": 1175,
+      "y": 830,
+      "strokeColor": "#E4E4E7",
+      "text": "D5 领域配置库",
+      "fontSize": 14
+    },
+    {
+      "id": "flow1",
+      "type": "arrow",
+      "x": 200,
+      "y": 450,
+      "width": 100,
+      "height": 0,
+      "strokeColor": "#3B82F6",
+      "strokeWidth": 2
+    },
+    {
+      "id": "flow1-label",
+      "type": "text",
+      "x": 220,
+      "y": 430,
+      "strokeColor": "#E4E4E7",
+      "text": "用户请求",
+      "fontSize": 12
+    },
+    {
+      "id": "flow2",
+      "type": "arrow",
+      "x": 460,
+      "y": 430,
+      "width": 90,
+      "height": 0,
+      "strokeColor": "#3B82F6",
+      "strokeWidth": 2
+    },
+    {
+      "id": "flow2-label",
+      "type": "text",
+      "x": 480,
+      "y": 410,
+      "strokeColor": "#E4E4E7",
+      "text": "领域确认",
+      "fontSize": 12
+    },
+    {
+      "id": "flow3",
+      "type": "arrow",
+      "x": 710,
+      "y": 430,
+      "width": 90,
+      "height": 0,
+      "strokeColor": "#3B82F6",
+      "strokeWidth": 2
+    },
+    {
+      "id": "flow3-label",
+      "type": "text",
+      "x": 730,
+      "y": 410,
+      "strokeColor": "#E4E4E7",
+      "text": "匹配案例",
+      "fontSize": 12
+    },
+    {
+      "id": "flow4",
+      "type": "arrow",
+      "x": 960,
+      "y": 430,
+      "width": 90,
+      "height": 0,
+      "strokeColor": "#3B82F6",
+      "strokeWidth": 2
+    },
+    {
+      "id": "flow4-label",
+      "type": "text",
+      "x": 980,
+      "y": 410,
+      "strokeColor": "#E4E4E7",
+      "text": "学习方法",
+      "fontSize": 12
+    },
+    {
+      "id": "flow5",
+      "type": "arrow",
+      "x": 1130,
+      "y": 480,
+      "width": 0,
+      "height": 120,
+      "strokeColor": "#3B82F6",
+      "strokeWidth": 2
+    },
+    {
+      "id": "flow5-label",
+      "type": "text",
+      "x": 1140,
+      "y": 530,
+      "strokeColor": "#E4E4E7",
+      "text": "提取技能",
+      "fontSize": 12
+    },
+    {
+      "id": "flow6",
+      "type": "arrow",
+      "x": 380,
+      "y": 480,
+      "width": 0,
+      "height": 320,
+      "strokeColor": "#A1A1AA",
+      "strokeWidth": 2
+    },
+    {
+      "id": "flow6-label",
+      "type": "text",
+      "x": 390,
+      "y": 630,
+      "strokeColor": "#E4E4E7",
+      "text": "档案",
+      "fontSize": 12
+    },
+    {
+      "id": "flow7",
+      "type": "arrow",
+      "x": 630,
+      "y": 480,
+      "width": 0,
+      "height": 320,
+      "strokeColor": "#A1A1AA",
+      "strokeWidth": 2
+    },
+    {
+      "id": "flow7-label",
+      "type": "text",
+      "x": 640,
+      "y": 630,
+      "strokeColor": "#E4E4E7",
+      "text": "案例",
+      "fontSize": 12
+    },
+    {
+      "id": "flow8",
+      "type": "arrow",
+      "x": 880,
+      "y": 480,
+      "width": 0,
+      "height": 320,
+      "strokeColor": "#A1A1AA",
+      "strokeWidth": 2
+    },
+    {
+      "id": "flow8-label",
+      "type": "text",
+      "x": 890,
+      "y": 630,
+      "strokeColor": "#E4E4E7",
+      "text": "模型",
+      "fontSize": 12
+    },
+    {
+      "id": "flow9",
+      "type": "arrow",
+      "x": 1130,
+      "y": 480,
+      "width": 0,
+      "height": 320,
+      "strokeColor": "#A1A1AA",
+      "strokeWidth": 2
+    },
+    {
+      "id": "flow9-label",
+      "type": "text",
+      "x": 1140,
+      "y": 630,
+      "strokeColor": "#E4E4E7",
+      "text": "知识",
+      "fontSize": 12
+    },
+    {
+      "id": "flow10",
+      "type": "arrow",
+      "x": 1210,
+      "y": 430,
+      "width": 190,
+      "height": 0,
+      "strokeColor": "#10B981",
+      "strokeWidth": 2
+    },
+    {
+      "id": "flow10-label",
+      "type": "text",
+      "x": 1280,
+      "y": 410,
+      "strokeColor": "#10B981",
+      "text": "AI协作",
+      "fontSize": 12
+    },
+    {
+      "id": "flow11",
+      "type": "arrow",
+      "x": 1210,
+      "y": 650,
+      "width": 190,
+      "height": 0,
+      "strokeColor": "#10B981",
+      "strokeWidth": 2
+    },
+    {
+      "id": "flow11-label",
+      "type": "text",
+      "x": 1280,
+      "y": 630,
+      "strokeColor": "#10B981",
+      "text": "技能交易",
+      "fontSize": 12
+    },
+    {
+      "id": "flow12",
+      "type": "arrow",
+      "x": 960,
+      "y": 430,
+      "width": 440,
+      "height": 210,
+      "strokeColor": "#06B6D4",
+      "strokeWidth": 2
+    },
+    {
+      "id": "flow12-label",
+      "type": "text",
+      "x": 1150,
+      "y": 520,
+      "strokeColor": "#06B6D4",
+      "text": "外部知识",
+      "fontSize": 12
+    }
+  ],
+  "appState": {
+    "theme": "dark",
+    "viewBackgroundColor": "#0F172A",
+    "currentItemStrokeColor": "#3B82F6",
+    "currentItemBackgroundColor": "#2563EB",
+    "currentItemFillStyle": "solid",
+    "currentItemStrokeWidth": 2,
+    "currentItemStrokeStyle": "solid",
+    "currentItemRoughness": 1,
+    "currentItemOpacity": 100,
+    "currentItemFontFamily": 1,
+    "currentItemFontSize": 14,
+    "currentItemTextAlign": "center",
+    "currentItemStartArrowhead": null,
+    "currentItemEndArrowhead": "arrow",
+    "scrollX": 0,
+    "scrollY": 0,
+    "zoom": {
+      "value": 1
+    },
+    "currentItemLinearStrokeSharpness": "round",
+    "gridSize": null,
+    "colorPalette": {}
+  }
+}

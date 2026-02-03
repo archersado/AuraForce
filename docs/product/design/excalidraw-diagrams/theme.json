@@ -1,0 +1,69 @@
+{
+  "name": "WolfGaze科技风格",
+  "description": "基于AuraForce UX设计规范的科技感线框主题",
+  "colors": {
+    "background": "#0F172A",
+    "container": "#1E293B",
+    "containerLight": "#334155",
+    "primary": "#2563EB",
+    "primaryLight": "#3B82F6",
+    "accent": "#A1A1AA",
+    "accentLight": "#D4D4D8",
+    "text": "#E4E4E7",
+    "textSecondary": "#A1A1AA",
+    "border": "#475569",
+    "success": "#10B981",
+    "warning": "#06B6D4",
+    "error": "#EF4444"
+  },
+  "fonts": {
+    "primary": "Inter",
+    "secondary": "JetBrains Mono",
+    "heading": "Orbitron"
+  },
+  "wireframe": {
+    "elements": {
+      "container": {
+        "backgroundColor": "#1E293B",
+        "strokeColor": "#475569",
+        "strokeWidth": 2
+      },
+      "header": {
+        "backgroundColor": "#334155",
+        "strokeColor": "#2563EB",
+        "strokeWidth": 1
+      },
+      "button": {
+        "backgroundColor": "#2563EB",
+        "strokeColor": "#3B82F6",
+        "strokeWidth": 1,
+        "textColor": "#E4E4E7"
+      },
+      "input": {
+        "backgroundColor": "#334155",
+        "strokeColor": "#A1A1AA",
+        "strokeWidth": 1,
+        "textColor": "#E4E4E7"
+      },
+      "text": {
+        "strokeColor": "#E4E4E7",
+        "fontSize": 16
+      },
+      "navigation": {
+        "backgroundColor": "#0F172A",
+        "strokeColor": "#2563EB",
+        "strokeWidth": 2
+      },
+      "ai_element": {
+        "backgroundColor": "#1E40AF",
+        "strokeColor": "#60A5FA",
+        "strokeWidth": 2,
+        "textColor": "#E4E4E7"
+      }
+    }
+  },
+  "brand": {
+    "wolfgaze_gradient": "linear-gradient(135deg, #2563EB 0%, #A1A1AA 100%)",
+    "ai_neural_gradient": "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+  }
+}

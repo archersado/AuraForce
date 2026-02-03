@@ -1,0 +1,476 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "https://excalidraw.com",
+  "elements": [
+    {
+      "id": "mjp1miez4vfaq1gd6e3",
+      "type": "rectangle",
+      "x": 20,
+      "y": 20,
+      "width": 1400,
+      "height": 900,
+      "backgroundColor": "#0F172A",
+      "strokeColor": "#475569",
+      "strokeWidth": 3
+    },
+    {
+      "id": "mjp1mieznnmq29r63g8",
+      "type": "text",
+      "x": 700,
+      "y": 50,
+      "strokeColor": "#E4E4E7",
+      "text": "AuraForce - 首页与品牌体验",
+      "fontSize": 24
+    },
+    {
+      "id": "mjp1miez93posaus9eh",
+      "type": "rectangle",
+      "x": 40,
+      "y": 80,
+      "width": 1360,
+      "height": 80,
+      "backgroundColor": "#1E293B",
+      "strokeColor": "#2563EB",
+      "strokeWidth": 2
+    },
+    {
+      "id": "mjp1miezx2nqtno1zv",
+      "type": "text",
+      "x": 60,
+      "y": 110,
+      "strokeColor": "#E4E4E7",
+      "text": "导航栏: [AuraForce Logo] [成功体验] [方法论] [技能沉淀] [自动化] [市场] [登录]",
+      "fontSize": 18
+    },
+    {
+      "id": "mjp1mif0faww8pocxr6",
+      "type": "rectangle",
+      "x": 40,
+      "y": 180,
+      "width": 800,
+      "height": 400,
+      "backgroundColor": "#1E293B",
+      "strokeColor": "#2563EB",
+      "strokeWidth": 2
+    },
+    {
+      "id": "mjp1mif02bn6zem06xn",
+      "type": "text",
+      "x": 60,
+      "y": 200,
+      "strokeColor": "#3B82F6",
+      "text": "全球首个AI驱动的一人企业孵化平台",
+      "fontSize": 32
+    },
+    {
+      "id": "mjp1mif0w8m1f3kdpmq",
+      "type": "text",
+      "x": 60,
+      "y": 250,
+      "strokeColor": "#A1A1AA",
+      "text": "30分钟沉浸式成功案例体验\n建立对一人公司商业模式的信心和验证\n\n• 体验式成功案例 + AI驱动三位一体闭环\n• 从质疑到信任的完整转化解决方案\n• 四大产品板块构建完整生态",
+      "fontSize": 18
+    },
+    {
+      "id": "mjp1mif0jqayytzwg7q",
+      "type": "rectangle",
+      "x": 80,
+      "y": 450,
+      "width": 300,
+      "height": 60,
+      "backgroundColor": "#2563EB",
+      "strokeColor": "#3B82F6",
+      "strokeWidth": 2
+    },
+    {
+      "id": "mjp1mif09kj08oxwy3m",
+      "type": "text",
+      "x": 230,
+      "y": 480,
+      "strokeColor": "#E4E4E7",
+      "text": "开始30分钟体验",
+      "fontSize": 20
+    },
+    {
+      "id": "mjp1mif0wucdhpeplgn",
+      "type": "rectangle",
+      "x": 420,
+      "y": 450,
+      "width": 200,
+      "height": 60,
+      "backgroundColor": "#334155",
+      "strokeColor": "#A1A1AA",
+      "strokeWidth": 2
+    },
+    {
+      "id": "mjp1mif086hq6pm0pcc",
+      "type": "text",
+      "x": 520,
+      "y": 480,
+      "strokeColor": "#E4E4E7",
+      "text": "了解更多",
+      "fontSize": 18
+    },
+    {
+      "id": "mjp1mif0x54rvnz6ufn",
+      "type": "rectangle",
+      "x": 860,
+      "y": 180,
+      "width": 540,
+      "height": 400,
+      "backgroundColor": "#334155",
+      "strokeColor": "#475569",
+      "strokeWidth": 2
+    },
+    {
+      "id": "mjp1mif021c2rrw6c8d",
+      "type": "text",
+      "x": 880,
+      "y": 210,
+      "strokeColor": "#3B82F6",
+      "text": "30分钟体验预览",
+      "fontSize": 20
+    },
+    {
+      "id": "mjp1mif01ucecxr0f4e",
+      "type": "rectangle",
+      "x": 880,
+      "y": 240,
+      "width": 500,
+      "height": 40,
+      "backgroundColor": "#1E293B",
+      "strokeColor": "#2563EB",
+      "strokeWidth": 1
+    },
+    {
+      "id": "mjp1mif01k98fs4999b",
+      "type": "text",
+      "x": 890,
+      "y": 260,
+      "strokeColor": "#A1A1AA",
+      "text": "• 代入时尚博主角色 - 感受AI分析市场趋势",
+      "fontSize": 16
+    },
+    {
+      "id": "mjp1mif0jpn2erbv588",
+      "type": "rectangle",
+      "x": 880,
+      "y": 300,
+      "width": 500,
+      "height": 40,
+      "backgroundColor": "#1E293B",
+      "strokeColor": "#2563EB",
+      "strokeWidth": 1
+    },
+    {
+      "id": "mjp1mif0ja80kqgm9vr",
+      "type": "text",
+      "x": 890,
+      "y": 320,
+      "strokeColor": "#A1A1AA",
+      "text": "• 与AI一起制定创意工作室策略",
+      "fontSize": 16
+    },
+    {
+      "id": "mjp1mif0s6dkpcn3ijf",
+      "type": "rectangle",
+      "x": 880,
+      "y": 360,
+      "width": 500,
+      "height": 40,
+      "backgroundColor": "#1E293B",
+      "strokeColor": "#2563EB",
+      "strokeWidth": 1
+    },
+    {
+      "id": "mjp1mif0dfd7kor9ro",
+      "type": "text",
+      "x": 890,
+      "y": 380,
+      "strokeColor": "#A1A1AA",
+      "text": "• 体验月入8万的商业模式实现路径",
+      "fontSize": 16
+    },
+    {
+      "id": "mjp1mif0spxm01r7oi",
+      "type": "rectangle",
+      "x": 880,
+      "y": 420,
+      "width": 500,
+      "height": 40,
+      "backgroundColor": "#1E293B",
+      "strokeColor": "#2563EB",
+      "strokeWidth": 1
+    },
+    {
+      "id": "mjp1mif0c3kju971nr",
+      "type": "text",
+      "x": 890,
+      "y": 440,
+      "strokeColor": "#A1A1AA",
+      "text": "• 获得个性化3步行动计划",
+      "fontSize": 16
+    },
+    {
+      "id": "mjp1mif0zbbkloufl8",
+      "type": "rectangle",
+      "x": 40,
+      "y": 600,
+      "width": 1360,
+      "height": 280,
+      "backgroundColor": "#1E293B",
+      "strokeColor": "#475569",
+      "strokeWidth": 2
+    },
+    {
+      "id": "mjp1mif0tw381n738c",
+      "type": "text",
+      "x": 60,
+      "y": 630,
+      "strokeColor": "#3B82F6",
+      "text": "四大产品板块 - AI驱动的完整生态",
+      "fontSize": 24
+    },
+    {
+      "id": "mjp1mif05sbdwne3nlp",
+      "type": "rectangle",
+      "x": 60,
+      "y": 680,
+      "width": 320,
+      "height": 180,
+      "backgroundColor": "#334155",
+      "strokeColor": "#2563EB",
+      "strokeWidth": 1
+    },
+    {
+      "id": "mjp1mif0gqmvsq54enb",
+      "type": "text",
+      "x": 80,
+      "y": 710,
+      "strokeColor": "#3B82F6",
+      "text": "成功案例体验中心",
+      "fontSize": 18
+    },
+    {
+      "id": "mjp1mif00djpob0h14m",
+      "type": "text",
+      "x": 80,
+      "y": 740,
+      "strokeColor": "#A1A1AA",
+      "text": "30分钟沉浸式体验\n建立AI协作信任\n认知突破实现",
+      "fontSize": 14
+    },
+    {
+      "id": "mjp1mif0r5fshocb79i",
+      "type": "rectangle",
+      "x": 400,
+      "y": 680,
+      "width": 320,
+      "height": 180,
+      "backgroundColor": "#334155",
+      "strokeColor": "#2563EB",
+      "strokeWidth": 1
+    },
+    {
+      "id": "mjp1mif07n299brrfwo",
+      "type": "text",
+      "x": 420,
+      "y": 710,
+      "strokeColor": "#3B82F6",
+      "text": "方法论学习系统",
+      "fontSize": 18
+    },
+    {
+      "id": "mjp1mif0h2x5cwc3kza",
+      "type": "text",
+      "x": 420,
+      "y": 740,
+      "strokeColor": "#A1A1AA",
+      "text": "OPB画布数字化\nAI智能填充\n商业模式设计",
+      "fontSize": 14
+    },
+    {
+      "id": "mjp1mif023jqa5o2s52i",
+      "type": "rectangle",
+      "x": 740,
+      "y": 680,
+      "width": 320,
+      "height": 180,
+      "backgroundColor": "#334155",
+      "strokeColor": "#2563EB",
+      "strokeWidth": 1
+    },
+    {
+      "id": "mjp1mif0eso41j3mmnp",
+      "type": "text",
+      "x": 760,
+      "y": 710,
+      "strokeColor": "#3B82F6",
+      "text": "技能沉淀引擎",
+      "fontSize": 18
+    },
+    {
+      "id": "mjp1mif0rciw8jmmyyq",
+      "type": "text",
+      "x": 760,
+      "y": 740,
+      "strokeColor": "#A1A1AA",
+      "text": "AI技能DNA提取\n价值发现确认\n技能资产化",
+      "fontSize": 14
+    },
+    {
+      "id": "mjp1mif0ehhug0bw0z8",
+      "type": "rectangle",
+      "x": 1080,
+      "y": 680,
+      "width": 320,
+      "height": 180,
+      "backgroundColor": "#334155",
+      "strokeColor": "#2563EB",
+      "strokeWidth": 1
+    },
+    {
+      "id": "mjp1mif0rxa8xiu30xr",
+      "type": "text",
+      "x": 1100,
+      "y": 710,
+      "strokeColor": "#3B82F6",
+      "text": "自动化运营中心",
+      "fontSize": 18
+    },
+    {
+      "id": "mjp1mif0hyurp6odv47",
+      "type": "text",
+      "x": 1100,
+      "y": 740,
+      "strokeColor": "#A1A1AA",
+      "text": "Claude Code驱动\nAI协作工作台\n完整基础设施",
+      "fontSize": 14
+    },
+    {
+      "id": "mjp1nfkdlb1s964jyh",
+      "type": "rectangle",
+      "x": 1500,
+      "y": 20,
+      "width": 1400,
+      "height": 900,
+      "backgroundColor": "#0F172A",
+      "strokeColor": "#475569",
+      "strokeWidth": 3
+    },
+    {
+      "id": "mjp1nfkd05kvc6iinvl5",
+      "type": "text",
+      "x": 2200,
+      "y": 50,
+      "strokeColor": "#E4E4E7",
+      "text": "30分钟沉浸式成功案例体验 - AI协作决策界面",
+      "fontSize": 24
+    },
+    {
+      "id": "mjp1plyiwx4wigez8e",
+      "type": "rectangle",
+      "x": 3000,
+      "y": 20,
+      "width": 1400,
+      "height": 900,
+      "backgroundColor": "#0F172A",
+      "strokeColor": "#475569",
+      "strokeWidth": 3
+    },
+    {
+      "id": "mjp1plyigv1lwdadfys",
+      "type": "text",
+      "x": 3700,
+      "y": 50,
+      "strokeColor": "#E4E4E7",
+      "text": "OPB画布数字化 - AI智能商业模式设计",
+      "fontSize": 24
+    },
+    {
+      "id": "mjp1rapfysl018ka2sp",
+      "type": "rectangle",
+      "x": 4500,
+      "y": 20,
+      "width": 1400,
+      "height": 900,
+      "backgroundColor": "#0F172A",
+      "strokeColor": "#475569",
+      "strokeWidth": 3
+    },
+    {
+      "id": "mjp1rapf3tw6iojha3f",
+      "type": "text",
+      "x": 5200,
+      "y": 50,
+      "strokeColor": "#E4E4E7",
+      "text": "技能DNA可视化 - AI智能技能提取与价值确认",
+      "fontSize": 24
+    },
+    {
+      "id": "mjp1szj6k22iyvstkeg",
+      "type": "rectangle",
+      "x": 6000,
+      "y": 20,
+      "width": 1400,
+      "height": 900,
+      "backgroundColor": "#0F172A",
+      "strokeColor": "#475569",
+      "strokeWidth": 3
+    },
+    {
+      "id": "mjp1szj6qq0bo3gtj6p",
+      "type": "text",
+      "x": 6700,
+      "y": 50,
+      "strokeColor": "#E4E4E7",
+      "text": "AI协作主仪表板 - Claude Code驱动的智能运营中心",
+      "fontSize": 24
+    },
+    {
+      "id": "mjp1v7h23ilr8i2cm2k",
+      "type": "rectangle",
+      "x": 7500,
+      "y": 20,
+      "width": 1400,
+      "height": 900,
+      "backgroundColor": "#0F172A",
+      "strokeColor": "#475569",
+      "strokeWidth": 3
+    },
+    {
+      "id": "mjp1v7h2gj8pxd213ag",
+      "type": "text",
+      "x": 8200,
+      "y": 50,
+      "strokeColor": "#E4E4E7",
+      "text": "技能包市场 - App Store风格的技能交易平台",
+      "fontSize": 24
+    }
+  ],
+  "appState": {
+    "theme": "dark",
+    "viewBackgroundColor": "#0F172A",
+    "currentItemStrokeColor": "#1971c2",
+    "currentItemBackgroundColor": "transparent",
+    "currentItemFillStyle": "hachure",
+    "currentItemStrokeWidth": 1,
+    "currentItemStrokeStyle": "solid",
+    "currentItemRoughness": 1,
+    "currentItemOpacity": 100,
+    "currentItemFontFamily": 1,
+    "currentItemFontSize": 20,
+    "currentItemTextAlign": "left",
+    "currentItemStartArrowhead": null,
+    "currentItemEndArrowhead": "arrow",
+    "scrollX": 0,
+    "scrollY": 0,
+    "zoom": {
+      "value": 0.8
+    },
+    "currentItemLinearStrokeSharpness": "round",
+    "gridSize": null,
+    "colorPalette": {}
+  }
+}

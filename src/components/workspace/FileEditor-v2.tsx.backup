@@ -1,0 +1,369 @@
+/**
+ * File Editor Component (Enhanced with STORY-14-2)
+ *
+ * Displays file content with enhanced syntax highlighting and features.
+ * Supports 20+ programming languages through CodeMirror 6.
+ */
+
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import {
+  File,
+  AlertCircle,
+  Image as ImageIcon,
+  FileText,
+  Code,
+  Download,
+  Copy,
+  Trash2,
+  Save,
+  FileCode,
+  FileJson,
+  Settings,
+  Maximize2,
+  Minimize2,
+} from 'lucide-react';
+
+import { CodeEditor } from './CodeEditor-v2';
+import { CherryMarkdownEditor } from './CherryMarkdownEditor';
+import { MediaPreview } from './MediaPreview';
+import { LargeFileHandler } from './LargeFileHandler';
+import {
+  detectLanguageFromFileName,
+  getFileIcon,
+  isLanguageSupported,
+} from './CodeEditor.utils';
+
+interface FileEditorProps {
+  content?: string;
+  metadata?: {
+    path: string;
+    size: number;
+    lastModified?: Date | string;
+    filename: string;
+  } | null;
+  path: string;
+  language?: string;
+  readOnly?: boolean;
+  onSave?: (content: string) => void;
+  workspaceRoot?: string;
+}
+
+export function FileEditor({
+  content = '',
+  metadata,
+  path,
+  language: propLanguage,
+  readOnly = false,
+  onSave,
+  workspaceRoot,
+}: FileEditorProps) {
+  const [editorContent, setEditorContent] = useState(content);
+  const [copied, setCopied] = useState(false);
+  const [language, setLanguage] = useState(propLanguage || 'text');
+  const [showSettings, setShowSettings] = useState(false);
+  const [cursorPosition, setCursorPosition] = useState({ line: 1, col: 1 });
+
+  // Update editor content when file changes
+  useEffect(() => {
+    setEditorContent(content);
+  }, [content]);
+
+  // Auto-detect language from filename if not provided
+  useEffect(() => {
+    if (!propLanguage && metadata?.filename) {
+      const detectedLanguage = detectLanguageFromFileName(metadata.filename);
+      setLanguage(detectedLanguage);
+    }
+  }, [propLanguage, metadata?.filename]);
+
+  const fileType = metadata?.filename?.split('.').pop()?.toLowerCase() || '';
+
+  // Determine file type
+  const isImage = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'bmp', 'webp', 'ico'].includes(fileType);
+  const isMarkdown = ['md', 'markdown', 'mdx'].includes(fileType);
+  const isCode = isLanguageSupported(language);
+
+  // Handle change from editor
+  const handleChange = useCallback((value: string) => {
+    setEditorContent(value);
+  }, []);
+
+  // Handle save
+  const handleSave = useCallback(async () => {
+    if (onSave) {
+      await onSave(editorContent);
+    }
+  }, [editorContent, onSave]);
+
+  // Handle copy
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(editorContent);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  // Handle download
+  const handleDownload = () => {
+    const blob = new Blob([editorContent], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = metadata?.filename || 'file.txt';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  };
+
+  // Format file size
+  const formatSize = (bytes: number) => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
+  };
+
+  // Format line number
+  const formatLineNumber = (num: number) => num.toLocaleString();
+
+  // Get file icon
+  const fileIcon = getFileIcon(fileType);
+
+  // Render content based on file type
+  const renderContent = () => {
+    if (isImage && metadata) {
+      return <MediaPreview path={path} metadata={metadata} workspaceRoot={workspaceRoot} />;
+    }
+
+    if (isMarkdown) {
+      return (
+        <CherryMarkdownEditor
+          content={editorContent}
+          onChange={handleChange}
+          onSave={handleSave}
+          readOnly={readOnly}
+          showPreviewToggles={true}
+          showToolbar={true}
+        />
+      );
+    }
+
+    if (isCode) {
+      // Check file size - use LargeFileHandler for files > 1MB
+      const fileSize = metadata?.size || 0;
+      const isLargeFile = fileSize > 1 * 1024 * 1024;
+
+      if (isLargeFile) {
+        return (
+          <LargeFileHandler
+            content={editorContent}
+            onChange={handleChange}
+            readOnly={readOnly}
+            fileName={metadata?.filename || 'file'}
+            language={language}
+          />
+        );
+      }
+
+      return (
+        <CodeEditor
+          value={editorContent}
+          onChange={handleChange}
+          language={language}
+          readOnly={readOnly}
+          theme="dark"
+          height="calc(100vh - 200px)"
+          fontSize={14}
+          lineNumbers={true}
+          wrapLines={false}
+          codeFolding={true}
+          minimap={true}
+          bracketMatching={true}
+          onCursorPositionChange={setCursorPosition}
+          onSave={handleSave}
+        />
+      );
+    }
+
+    // Plain text - also check for large files
+    const fileSize = metadata?.size || 0;
+    const isLargeTextFile = fileSize > 1 * 1024 * 1024;
+
+    if (isLargeTextFile) {
+      return (
+        <LargeFileHandler
+          content={editorContent}
+          onChange={handleChange}
+          readOnly={readOnly}
+          fileName={metadata?.filename || 'file'}
+          language="text"
+        />
+      );
+    }
+
+    // Normal text
+    return (
+      <textarea
+        value={editorContent}
+        onChange={(e) => handleChange(e.target.value)}
+        readOnly={readOnly}
+        className="w-full h-[calc(100vh-200px)] p-4 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-mono text-sm resize-none focus:outline-none"
+        spellCheck={false}
+        style={{
+          fontFamily: "'Fira Code', 'JetBrains Mono', 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace",
+        }}
+      />
+    );
+  };
+
+  return (
+    <div className="flex-1 flex flex-col min-w-0 h-full">
+      {/* File Header */}
+      <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          {/* File Icon */}
+          <div className="flex items-center justify-center w-8 h-8 rounded bg-gray-100 dark:bg-gray-700">
+            {isImage ? (
+              <ImageIcon className="w-5 h-5 text-purple-500" />
+            ) : isCode ? (
+              <FileCode className="w-5 h-5 text-blue-500" />
+            ) : fileType === 'json' ? (
+              <FileJson className="w-5 h-5 text-yellow-500" />
+            ) : (
+              <FileText className="w-5 h-5 text-gray-500" />
+            )}
+          </div>
+
+          {/* File Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <div className="font-medium text-gray-900 dark:text-gray-100 truncate">
+                {metadata?.filename || 'Untitled'}
+              </div>
+
+              {language && language !== 'text' && (
+                <span className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded font-medium">
+                  {language}
+                </span>
+              )}
+
+              {readOnly && (
+                <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">
+                  Read-only
+                </span>
+              )}
+            </div>
+
+            {metadata && (
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-3">
+                <span>{formatSize(metadata.size)}</span>
+                {metadata.lastModified && (
+                  <>
+                    <span>•</span>
+                    <span>
+                      {typeof metadata.lastModified === 'string'
+                        ? new Date(metadata.lastModified).toLocaleString()
+                        : metadata.lastModified.toLocaleString()}
+                    </span>
+                  </>
+                )}
+                {isCode && (
+                  <>
+                    <span>•</span>
+                    <span>Line {cursorPosition.line}, Col {cursorPosition.col}</span>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2">
+          {!readOnly && onSave && (
+            <button
+              onClick={handleSave}
+              className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              title="Save (Ctrl+S)"
+            >
+              <Save className="w-4 h-4" />
+            </button>
+          )}
+
+          <button
+            onClick={handleCopy}
+            className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            title="Copy content"
+          >
+            <Copy className="w-4 h-4" />
+          </button>
+
+          <button
+            onClick={handleDownload}
+            className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            title="Download file"
+          >
+            <Download className="w-4 h-4" />
+          </button>
+
+          {!readOnly && (
+            <button
+              onClick={() => {
+                if (window.confirm(`Are you sure you want to delete ${metadata?.filename || 'this file'}?`)) {
+                  // Handle delete - this would need to be implemented
+                }
+              }}
+              className="p-2 text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+              title="Delete file"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-hidden bg-white dark:bg-gray-900">
+        {renderContent()}
+      </div>
+
+      {/* Footer Status Bar */}
+      <div className="flex items-center justify-between px-4 py-2 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1">
+            <FileText className="w-3 h-3" />
+            <span>{formatLineNumber(editorContent.split('\n').length)} lines</span>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <Code className="w-3 h-3" />
+            <span>{formatLineNumber(editorContent.length)} characters</span>
+          </div>
+
+          {editorContent.length > 100000 && editorContent.length <= 1000000 && (
+            <div className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400">
+              <AlertCircle className="w-3 h-3" />
+              <span>Large file - editing may be slow</span>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span>{language}</span>
+          {copied && (
+            <span className="text-green-600 dark:text-green-400 font-medium">✓ Copied</span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default FileEditor;

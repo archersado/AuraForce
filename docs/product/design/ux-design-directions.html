@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AuraForce - UX Design Directions | WolfGaze</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* WolfGaze Premium Tech Color System */
+            --deep-space: #0F172A;
+            --deep-space-light: #1E293B;
+            --deep-space-medium: #334155;
+            --deep-space-soft: #475569;
+
+            --steel-blue: #2563EB;
+            --steel-blue-light: #3B82F6;
+            --steel-blue-soft: #60A5FA;
+
+            --titanium-silver: #A1A1AA;
+            --titanium-dark: #71717A;
+            --titanium-light: #D4D4D8;
+            --titanium-soft: #E4E4E7;
+
+            --algo-green: #10B981;
+            --neon-cyan: #06B6D4;
+            --system-red: #EF4444;
+            --data-blue: #06B6D4;
+
+            /* Premium gradients */
+            --ai-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --titanium-gradient: linear-gradient(135deg, #A1A1AA 0%, #71717A 100%);
+            --space-gradient: linear-gradient(180deg, #0F172A 0%, #1E293B 100%);
+
+            /* Typography */
+            --font-title: 'Orbitron', monospace;
+            --font-body: 'Inter', sans-serif;
+            --font-code: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--space-gradient);
+            color: #ffffff;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem 0;
+        }
+
+        .header h1 {
+            font-family: var(--font-title);
+            font-size: 3rem;
+            background: var(--titanium-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { filter: drop-shadow(0 0 10px var(--titanium-silver)); }
+            to { filter: drop-shadow(0 0 20px var(--titanium-silver)); }
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #94A3B8;
+            margin-bottom: 2rem;
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 3rem;
+        }
+
+        .nav-btn {
+            background: var(--deep-space-medium);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: 1px solid var(--steel-blue);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: var(--font-code);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-btn:hover, .nav-btn.active {
+            background: var(--steel-blue);
+            box-shadow: 0 0 20px var(--steel-blue);
+            transform: translateY(-2px);
+        }
+
+        .design-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .design-card {
+            background: var(--deep-space-light);
+            border: 1px solid var(--deep-space-soft);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .design-card:hover {
+            border-color: var(--steel-blue);
+            box-shadow: 0 8px 32px rgba(37, 99, 235, 0.2);
+            transform: translateY(-4px);
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--deep-space-soft);
+        }
+
+        .card-title {
+            font-family: var(--font-title);
+            font-size: 1.4rem;
+            color: var(--titanium-silver);
+            margin-bottom: 0.5rem;
+        }
+
+        .card-description {
+            color: #94A3B8;
+            font-size: 0.9rem;
+        }
+
+        .mockup-area {
+            height: 400px;
+            background: var(--deep-space);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Design Direction Specific Styles */
+        .direction-1 .mockup-area {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .direction-1 .hero-title {
+            font-family: var(--font-title);
+            font-size: 2.5rem;
+            background: var(--titanium-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+        }
+
+        .direction-1 .cta-button {
+            background: var(--titanium-gradient);
+            color: var(--deep-space);
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .direction-1 .cta-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px var(--titanium-silver);
+        }
+
+        .direction-2 .mockup-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        .dashboard-widget {
+            background: var(--deep-space-medium);
+            border: 1px solid var(--steel-blue);
+            border-radius: 8px;
+            padding: 1rem;
+            position: relative;
+        }
+
+        .widget-chart {
+            width: 100%;
+            height: 60px;
+            background: var(--ai-gradient);
+            border-radius: 4px;
+            margin-top: 0.5rem;
+            opacity: 0.7;
+        }
+
+        .direction-3 .mockup-area {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+            padding: 1rem;
+        }
+
+        .module-card {
+            background: var(--deep-space-medium);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .module-card:nth-child(1) { border-color: var(--titanium-silver); }
+        .module-card:nth-child(2) { border-color: var(--steel-blue); }
+        .module-card:nth-child(3) { border-color: var(--algo-green); }
+        .module-card:nth-child(4) { border-color: var(--data-blue); }
+
+        .module-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 16px rgba(255, 255, 255, 0.1);
+        }
+
+        .direction-4 .mockup-area {
+            padding: 1rem;
+        }
+
+        .timeline {
+            display: flex;
+            align-items: center;
+            height: 100%;
+        }
+
+        .timeline-step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+
+        .timeline-step::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: 0;
+            width: 2px;
+            height: 60%;
+            background: var(--steel-blue);
+            transform: translateY(-50%);
+        }
+
+        .timeline-step:last-child::after {
+            display: none;
+        }
+
+        .timeline-dot {
+            width: 20px;
+            height: 20px;
+            background: var(--titanium-silver);
+            border-radius: 50%;
+            margin: 0 auto 0.5rem;
+            border: 3px solid var(--deep-space);
+        }
+
+        .direction-5 .mockup-area {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        .sidebar {
+            background: var(--deep-space-medium);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .main-workspace {
+            background: var(--deep-space-light);
+            border: 1px solid var(--steel-blue);
+            border-radius: 8px;
+            padding: 1rem;
+            position: relative;
+        }
+
+        .direction-6 .mockup-area {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            padding: 1rem;
+        }
+
+        .community-card {
+            background: var(--deep-space-medium);
+            border-radius: 8px;
+            padding: 0.75rem;
+            border-left: 3px solid var(--titanium-silver);
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: var(--ai-gradient);
+            border-radius: 50%;
+            margin-bottom: 0.5rem;
+        }
+
+        .direction-7 .mockup-area {
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .mobile-header {
+            background: var(--deep-space-medium);
+            padding: 1rem;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .mobile-content {
+            flex: 1;
+            background: var(--deep-space-light);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .direction-8 .mockup-area {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .ai-assistant {
+            background: var(--deep-space-medium);
+            border: 2px solid var(--steel-blue);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .ai-assistant::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: var(--ai-gradient);
+            border-radius: 16px;
+            z-index: -1;
+            opacity: 0.5;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 0.8; }
+        }
+
+        .comparison-mode {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: var(--deep-space);
+            z-index: 1000;
+            display: none;
+            padding: 2rem;
+        }
+
+        .comparison-mode.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .comparison-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .close-comparison {
+            background: var(--system-red);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: var(--font-code);
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            flex: 1;
+        }
+
+        .comparison-item {
+            background: var(--deep-space-light);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .features-list {
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: #94A3B8;
+        }
+
+        .feature-icon {
+            width: 16px;
+            height: 16px;
+            background: var(--titanium-silver);
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: var(--steel-blue);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px) rotate(0deg);
+                opacity: 0.4;
+            }
+            50% {
+                transform: translateY(-20px) rotate(180deg);
+                opacity: 1;
+            }
+        }
+
+        .tooltip {
+            position: absolute;
+            background: var(--deep-space);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            border: 1px solid var(--steel-blue);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 100;
+        }
+
+        @media (max-width: 768px) {
+            .design-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .navigation {
+                flex-direction: column;
+            }
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--deep-space-soft);
+            border-top: 3px solid var(--steel-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>AuraForce UX Design Directions</h1>
+            <p>探索WolfGaze科技品牌驱动的8种视觉设计方向</p>
+            <p style="font-size: 1rem; color: var(--titanium-silver);">智能狼顾，钛金明灯 - 为AI时代的独立创作者打造高质感科技体验</p>
+        </header>
+
+        <nav class="navigation">
+            <button class="nav-btn active" data-filter="all">所有方向</button>
+            <button class="nav-btn" data-filter="layout">布局重点</button>
+            <button class="nav-btn" data-filter="interaction">交互重点</button>
+            <button class="nav-btn" data-filter="density">密度重点</button>
+            <button class="nav-btn" onclick="startComparison()">对比模式</button>
+        </nav>
+
+        <div class="design-grid" id="designGrid">
+            <!-- Direction 1: Minimal Tech -->
+            <div class="design-card direction-1" data-category="layout" data-direction="1">
+                <div class="card-header">
+                    <h3 class="card-title">1. 极简科技主义</h3>
+                    <p class="card-description">大量深空蓝负空间，突出核心30分钟体验，钛金银仅用于最重要的转化点</p>
+                </div>
+                <div class="mockup-area">
+                    <div class="particles"></div>
+                    <h2 class="hero-title">AuraForce</h2>
+                    <p style="color: #94A3B8; margin-bottom: 2rem;">30分钟体验AI创业的魅力</p>
+                    <button class="cta-button">开始体验</button>
+                </div>
+                <div class="features-list">
+                    <div class="feature-item"><div class="feature-icon"></div>极简布局，聚焦核心体验</div>
+                    <div class="feature-item"><div class="feature-icon"></div>深空蓝为主，钛金银点缀</div>
+                    <div class="feature-item"><div class="feature-icon"></div>清晰的信息层次</div>
+                    <div class="feature-item"><div class="feature-icon"></div>科技感粒子背景</div>
+                </div>
+            </div>
+
+            <!-- Direction 2: Data Dashboard -->
+            <div class="design-card direction-2" data-category="interaction" data-direction="2">
+                <div class="card-header">
+                    <h3 class="card-title">2. 沉浸式数据仪表盘</h3>
+                    <p class="card-description">全屏数据可视化风格，强调AI分析能力，丰富的图表和实时数据流动效果</p>
+                </div>
+                <div class="mockup-area">
+                    <div class="dashboard-widget">
+                        <h4 style="color: var(--titanium-silver); font-size: 0.9rem;">技能DNA分析</h4>
+                        <div class="widget-chart"></div>
+                    </div>
+                    <div class="dashboard-widget">
+                        <h4 style="color: var(--steel-blue); font-size: 0.9rem;">市场洞察</h4>
+                        <div class="widget-chart"></div>
+                    </div>
+                    <div class="dashboard-widget">
+                        <h4 style="color: var(--algo-green); font-size: 0.9rem;">收益预测</h4>
+                        <div class="widget-chart"></div>
+                    </div>
+                    <div class="dashboard-widget">
+                        <h4 style="color: var(--data-blue); font-size: 0.9rem;">用户进展</h4>
+                        <div class="widget-chart"></div>
+                    </div>
+                </div>
+                <div class="features-list">
+                    <div class="feature-item"><div class="feature-icon"></div>实时数据可视化</div>
+                    <div class="feature-item"><div class="feature-icon"></div>AI分析结果展示</div>
+                    <div class="feature-item"><div class="feature-icon"></div>多维度数据对比</div>
+                    <div class="feature-item"><div class="feature-icon"></div>专业仪表盘界面</div>
+                </div>
+            </div>
+
+            <!-- Direction 3: Modular Cards -->
+            <div class="design-card direction-3" data-category="layout" data-direction="3">
+                <div class="card-header">
+                    <h3 class="card-title">3. 卡片化模块组织</h3>
+                    <p class="card-description">四大产品模块采用独立卡片设计，每个模块有独特的视觉识别和进度指示</p>
+                </div>
+                <div class="mockup-area">
+                    <div class="module-card">
+                        <h4 style="color: var(--titanium-silver); font-size: 0.9rem;">成功案例体验</h4>
+                        <p style="font-size: 0.8rem; color: #94A3B8;">30分钟沉浸体验</p>
+                    </div>
+                    <div class="module-card">
+                        <h4 style="color: var(--steel-blue); font-size: 0.9rem;">方法论学习</h4>
+                        <p style="font-size: 0.8rem; color: #94A3B8;">OPB画布设计</p>
+                    </div>
+                    <div class="module-card">
+                        <h4 style="color: var(--algo-green); font-size: 0.9rem;">技能沉淀</h4>
+                        <p style="font-size: 0.8rem; color: #94A3B8;">AI技能DNA提取</p>
+                    </div>
+                    <div class="module-card">
+                        <h4 style="color: var(--data-blue); font-size: 0.9rem;">自动化运营</h4>
+                        <p style="font-size: 0.8rem; color: #94A3B8;">智能商业工具</p>
+                    </div>
+                </div>
+                <div class="features-list">
+                    <div class="feature-item"><div class="feature-icon"></div>模块化设计</div>
+                    <div class="feature-item"><div class="feature-icon"></div>独特视觉识别</div>
+                    <div class="feature-item"><div class="feature-icon"></div>清晰的进度指示</div>
+                    <div class="feature-item"><div class="feature-icon"></div>模块间导航</div>
+                </div>
+            </div>
+
+            <!-- Direction 4: Timeline Story -->
+            <div class="design-card direction-4" data-category="interaction" data-direction="4">
+                <div class="card-header">
+                    <h3 class="card-title">4. 时间轴故事叙述</h3>
+                    <p class="card-description">用户旅程的时间轴可视化，30分钟体验的分阶段展示，成功案例的故事化呈现</p>
+                </div>
+                <div class="mockup-area">
+                    <div class="timeline">
+                        <div class="timeline-step">
+                            <div class="timeline-dot"></div>
+                            <h5 style="color: var(--titanium-silver); font-size: 0.8rem;">发现问题</h5>
+                        </div>
+                        <div class="timeline-step">
+                            <div class="timeline-dot"></div>
+                            <h5 style="color: var(--steel-blue); font-size: 0.8rem;">AI分析</h5>
+                        </div>
+                        <div class="timeline-step">
+                            <div class="timeline-dot"></div>
+                            <h5 style="color: var(--algo-green); font-size: 0.8rem;">策略制定</h5>
+                        </div>
+                        <div class="timeline-step">
+                            <div class="timeline-dot"></div>
+                            <h5 style="color: var(--data-blue); font-size: 0.8rem;">成果展示</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="features-list">
+                    <div class="feature-item"><div class="feature-icon"></div>故事化用户旅程</div>
+                    <div class="feature-item"><div class="feature-icon"></div>时间轴可视化</div>
+                    <div class="feature-item"><div class="feature-icon"></div>分阶段体验展示</div>
+                    <div class="feature-item"><div class="feature-icon"></div>成功案例叙述</div>
+                </div>
+            </div>
+
+            <!-- Direction 5: Workspace -->
+            <div class="design-card direction-5" data-category="layout" data-direction="5">
+                <div class="card-header">
+                    <h3 class="card-title">5. 智能工作台</h3>
+                    <p class="card-description">专业工具感的多面板布局，AI协作区域的突出设计，工作流状态的实时可视化</p>
+                </div>
+                <div class="mockup-area">
+                    <div class="sidebar">
+                        <h4 style="color: var(--titanium-silver); font-size: 0.9rem; margin-bottom: 1rem;">导航</h4>
+                        <div style="color: #94A3B8; font-size: 0.8rem; margin-bottom: 0.5rem;">• 仪表盘</div>
+                        <div style="color: #94A3B8; font-size: 0.8rem; margin-bottom: 0.5rem;">• 技能分析</div>
+                        <div style="color: #94A3B8; font-size: 0.8rem; margin-bottom: 0.5rem;">• OPB画布</div>
+                        <div style="color: #94A3B8; font-size: 0.8rem;">• 运营中心</div>
+                    </div>
+                    <div class="main-workspace">
+                        <h4 style="color: var(--steel-blue); margin-bottom: 1rem;">AI协作工作区</h4>
+                        <div style="background: var(--deep-space-medium); padding: 1rem; border-radius: 6px; border-left: 3px solid var(--titanium-silver);">
+                            <p style="font-size: 0.8rem; color: #94A3B8;">正在分析您的技能数据...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="features-list">
+                    <div class="feature-item"><div class="feature-icon"></div>多面板专业布局</div>
+                    <div class="feature-item"><div class="feature-icon"></div>AI协作区域突出</div>
+                    <div class="feature-item"><div class="feature-icon"></div>实时工作流状态</div>
+                    <div class="feature-item"><div class="feature-icon"></div>工具感界面设计</div>
+                </div>
+            </div>
+
+            <!-- Direction 6: Community Hub -->
+            <div class="design-card direction-6" data-category="interaction" data-direction="6">
+                <div class="card-header">
+                    <h3 class="card-title">6. 社区驱动中心</h3>
+                    <p class="card-description">突出社区市场和用户成功案例，社交证明和用户生成内容的展示，技能包交易的电商化界面</p>
+                </div>
+                <div class="mockup-area">
+                    <div class="community-card">
+                        <div class="user-avatar"></div>
+                        <h5 style="color: var(--titanium-silver); font-size: 0.8rem;">张小雅</h5>
+                        <p style="font-size: 0.7rem; color: #94A3B8;">月入8万创意工作室</p>
+                    </div>
+                    <div class="community-card">
+                        <div class="user-avatar"></div>
+                        <h5 style="color: var(--steel-blue); font-size: 0.8rem;">李志明</h5>
+                        <p style="font-size: 0.7rem; color: #94A3B8;">技术产品企业家</p>
+                    </div>
+                    <div class="community-card">
+                        <div class="user-avatar"></div>
+                        <h5 style="color: var(--algo-green); font-size: 0.8rem;">陈晓慧</h5>
+                        <p style="font-size: 0.7rem; color: #94A3B8;">品牌策略专家</p>
+                    </div>
+                    <div class="community-card">
+                        <div class="user-avatar"></div>
+                        <h5 style="color: var(--data-blue); font-size: 0.8rem;">王瑞芳</h5>
+                        <p style="font-size: 0.7rem; color: #94A3B8;">运营专家</p>
+                    </div>
+                    <div class="community-card">
+                        <h5 style="color: var(--titanium-silver); font-size: 0.8rem;">热门技能包</h5>
+                        <p style="font-size: 0.7rem; color: #94A3B8;">创意策略分析</p>
+                    </div>
+                    <div class="community-card">
+                        <h5 style="color: var(--steel-blue); font-size: 0.8rem;">新增案例</h5>
+                        <p style="font-size: 0.7rem; color: #94A3B8;">SaaS产品开发</p>
+                    </div>
+                </div>
+                <div class="features-list">
+                    <div class="feature-item"><div class="feature-icon"></div>用户成功案例展示</div>
+                    <div class="feature-item"><div class="feature-icon"></div>技能包交易市场</div>
+                    <div class="feature-item"><div class="feature-icon"></div>社交证明机制</div>
+                    <div class="feature-item"><div class="feature-icon"></div>用户生成内容</div>
+                </div>
+            </div>
+
+            <!-- Direction 7: Mobile First -->
+            <div class="design-card direction-7" data-category="density" data-direction="7">
+                <div class="card-header">
+                    <h3 class="card-title">7. 移动优先响应式</h3>
+                    <p class="card-description">移动端体验优化的布局，渐进式信息披露，触控友好的交互设计</p>
+                </div>
+                <div class="mockup-area">
+                    <div class="mobile-header">
+                        <h4 style="color: var(--titanium-silver); font-size: 1rem;">AuraForce</h4>
+                        <div style="width: 24px; height: 24px; background: var(--steel-blue); border-radius: 4px;"></div>
+                    </div>
+                    <div class="mobile-content">
+                        <h4 style="color: var(--steel-blue); margin-bottom: 1rem;">30分钟体验</h4>
+                        <div style="background: var(--deep-space-medium); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                            <h5 style="color: var(--titanium-silver); font-size: 0.9rem;">张小雅的故事</h5>
+                            <p style="font-size: 0.8rem; color: #94A3B8;">时尚博主的AI转型...</p>
+                        </div>
+                        <button style="background: var(--titanium-gradient); color: var(--deep-space); border: none; padding: 0.75rem 1.5rem; border-radius: 8px; width: 100%; font-weight: 600;">开始体验</button>
+                    </div>
+                </div>
+                <div class="features-list">
+                    <div class="feature-item"><div class="feature-icon"></div>移动端优化布局</div>
+                    <div class="feature-item"><div class="feature-icon"></div>渐进式信息披露</div>
+                    <div class="feature-item"><div class="feature-icon"></div>触控友好交互</div>
+                    <div class="feature-item"><div class="feature-icon"></div>响应式适配</div>
+                </div>
+            </div>
+
+            <!-- Direction 8: AI Partner -->
+            <div class="design-card direction-8" data-category="interaction" data-direction="8">
+                <div class="card-header">
+                    <h3 class="card-title">8. AI协作伙伴</h3>
+                    <p class="card-description">AI助手角色的拟人化设计，对话式界面的突出，协作过程的可视化</p>
+                </div>
+                <div class="mockup-area">
+                    <div class="ai-assistant">
+                        <h4 style="color: var(--titanium-silver); margin-bottom: 1rem;">AI 助手</h4>
+                        <div style="background: var(--deep-space); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid var(--steel-blue);">
+                            <p style="font-size: 0.9rem; color: #94A3B8;">我来帮您分析技能并制定商业策略</p>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; justify-content: center;">
+                            <div style="width: 8px; height: 8px; background: var(--titanium-silver); border-radius: 50%; animation: pulse 1.5s ease-in-out infinite;"></div>
+                            <div style="width: 8px; height: 8px; background: var(--steel-blue); border-radius: 50%; animation: pulse 1.5s ease-in-out infinite 0.2s;"></div>
+                            <div style="width: 8px; height: 8px; background: var(--algo-green); border-radius: 50%; animation: pulse 1.5s ease-in-out infinite 0.4s;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="features-list">
+                    <div class="feature-item"><div class="feature-icon"></div>AI助手拟人化</div>
+                    <div class="feature-item"><div class="feature-icon"></div>对话式界面突出</div>
+                    <div class="feature-item"><div class="feature-icon"></div>协作过程可视化</div>
+                    <div class="feature-item"><div class="feature-icon"></div>智能伙伴体验</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="comparison-mode" id="comparisonMode">
+            <div class="comparison-header">
+                <h2 style="color: var(--titanium-silver); font-family: var(--font-title);">设计方向对比</h2>
+                <button class="close-comparison" onclick="closeComparison()">关闭对比</button>
+            </div>
+            <div class="comparison-grid" id="comparisonGrid">
+                <!-- Comparison items will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        // Initialize particles
+        function createParticles() {
+            document.querySelectorAll('.direction-1 .particles').forEach(container => {
+                for (let i = 0; i < 20; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.style.left = Math.random() * 100 + '%';
+                    particle.style.top = Math.random() * 100 + '%';
+                    particle.style.animationDelay = Math.random() * 6 + 's';
+                    container.appendChild(particle);
+                }
+            });
+        }
+
+        // Filter functionality
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (btn.onclick) return; // Skip comparison button
+
+                // Update active state
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                const filter = btn.dataset.filter;
+                const cards = document.querySelectorAll('.design-card');
+
+                cards.forEach(card => {
+                    if (filter === 'all' || card.dataset.category === filter) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+
+        // Comparison mode
+        function startComparison() {
+            document.getElementById('comparisonMode').classList.add('active');
+            populateComparison();
+        }
+
+        function closeComparison() {
+            document.getElementById('comparisonMode').classList.remove('active');
+        }
+
+        function populateComparison() {
+            const grid = document.getElementById('comparisonGrid');
+            grid.innerHTML = '';
+
+            // Get first two visible cards for comparison
+            const visibleCards = Array.from(document.querySelectorAll('.design-card')).filter(card =>
+                card.style.display !== 'none'
+            ).slice(0, 2);
+
+            visibleCards.forEach(card => {
+                const clone = card.cloneNode(true);
+                clone.className = 'comparison-item';
+                grid.appendChild(clone);
+            });
+        }
+
+        // Tooltip functionality
+        document.querySelectorAll('.design-card').forEach(card => {
+            card.addEventListener('mouseenter', (e) => {
+                const tooltip = document.getElementById('tooltip');
+                const direction = card.dataset.direction;
+                const titles = {
+                    '1': '极简科技主义 - 突出核心体验',
+                    '2': '沉浸式数据仪表盘 - 强调AI分析',
+                    '3': '卡片化模块组织 - 清晰的功能划分',
+                    '4': '时间轴故事叙述 - 用户旅程可视化',
+                    '5': '智能工作台 - 专业工具感',
+                    '6': '社区驱动中心 - 社交证明',
+                    '7': '移动优先响应式 - 触控友好',
+                    '8': 'AI协作伙伴 - 拟人化助手'
+                };
+                tooltip.textContent = titles[direction];
+                tooltip.style.opacity = '1';
+            });
+
+            card.addEventListener('mousemove', (e) => {
+                const tooltip = document.getElementById('tooltip');
+                tooltip.style.left = e.pageX + 10 + 'px';
+                tooltip.style.top = e.pageY - 30 + 'px';
+            });
+
+            card.addEventListener('mouseleave', () => {
+                document.getElementById('tooltip').style.opacity = '0';
+            });
+        });
+
+        // Loading simulation for interactive effects
+        function simulateLoading(element) {
+            const overlay = document.createElement('div');
+            overlay.className = 'loading-overlay active';
+            overlay.innerHTML = '<div class="spinner"></div>';
+            element.appendChild(overlay);
+
+            setTimeout(() => {
+                overlay.remove();
+            }, 1000);
+        }
+
+        // Add click handlers for interactive elements
+        document.querySelectorAll('.cta-button, .module-card').forEach(element => {
+            element.addEventListener('click', () => {
+                simulateLoading(element.closest('.mockup-area'));
+            });
+        });
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            createParticles();
+
+            // Add some dynamic effects
+            setInterval(() => {
+                document.querySelectorAll('.dashboard-widget').forEach((widget, index) => {
+                    setTimeout(() => {
+                        widget.style.transform = 'scale(1.02)';
+                        setTimeout(() => {
+                            widget.style.transform = 'scale(1)';
+                        }, 200);
+                    }, index * 100);
+                });
+            }, 3000);
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeComparison();
+            }
+        });
+    </script>
+</body>
+</html>

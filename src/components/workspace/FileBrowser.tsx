@@ -497,41 +497,43 @@ function FileTreeNode({
       {/* Folder */}
       {node.type === 'directory' && (
         <div>
-          <button
-            onClick={() => onFolderClick(node)}
-            onContextMenu={(e) => onContextMenu?.(e, node)}
-            className="flex items-center gap-2 py-2 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors group w-full"
-            style={{ paddingLeft: `${depth * 20 + 8}px` }}
-            disabled={disabled}
-          >
-            {node.isLoading ? (
-              <RefreshCw className="w-4 h-4 text-gray-400 animate-spin" />
-            ) : node.isExpanded ? (
-              <ChevronDown className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-            ) : (
-              <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-            )}
-            {node.isExpanded ? (
-              <FolderOpen className="w-4 h-4 text-blue-500 dark:text-blue-400" />
-            ) : (
-              <Folder className="w-4 h-4 text-blue-500 dark:text-blue-400" />
-            )}
-            <span className="flex-1 font-medium text-gray-700 dark:text-gray-300 text-left">
-              {node.name}
-            </span>
+          <div className="flex items-center gap-2 py-2 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors group w-full">
+            <button
+              onClick={() => onFolderClick(node)}
+              onContextMenu={(e) => onContextMenu?.(e, node)}
+              className="flex items-center gap-2 flex-1 text-left"
+              style={{ paddingLeft: `${depth * 20 + 8}px` }}
+              disabled={disabled}
+            >
+              {node.isLoading ? (
+                <RefreshCw className="w-4 h-4 text-gray-400 animate-spin" />
+              ) : node.isExpanded ? (
+                <ChevronDown className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+              ) : (
+                <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+              )}
+              {node.isExpanded ? (
+                <FolderOpen className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+              ) : (
+                <Folder className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+              )}
+              <span className="flex-1 font-medium text-gray-700 dark:text-gray-300">
+                {node.name}
+              </span>
+            </button>
             {onCreateFolder && !disabled && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onCreateFolder(node.path);
                 }}
-                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded mr-2"
                 title="Create subfolder"
               >
                 <FolderPlus className="w-4 h-4 text-gray-500 dark:text-gray-400" />
               </button>
             )}
-          </button>
+          </div>
 
           {/* Children */}
           {node.isExpanded && node.children && (

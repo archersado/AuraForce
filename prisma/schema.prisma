@@ -37,9 +37,9 @@ model User {
   privacySettings       UserPrivacySettings?
   settings              UserSettings?
   workspaceProjects     UserWorkspaceProject[]
-  workspaceSessions    WorkspaceSession[]
   tenant                Tenant?                @relation(fields: [tenantId], references: [id])
   workflowSpecs         WorkflowSpec[]
+  workspaceSessions     WorkspaceSession[]
 
   @@index([tenantId], map: "users_tenant_id_fkey")
   @@map("users")
@@ -307,26 +307,30 @@ model ContentAccessLog {
 }
 
 model WorkflowSpec {
-  id            String               @id @default(uuid())
+  id            String                @id @default(uuid())
   name          String
-  description   String?              @db.Text
-  version       String?              @default("1.0.0")
+  description   String?               @db.Text
+  version       String?               @default("1.0.0")
   author        String?
-  ccPath        String               @unique @map("cc_path")
-  ccPathVersion Int                  @default(1) @map("cc_path_version")
-  userId        String               @map("user_id")
-  visibility    String               @default("private") @map("visibility") // private | public
-  status        String               @default("deployed")
-  syncStatus    String               @default("synced") @map("sync_status")
+  ccPath        String                @unique @map("cc_path")
+  ccPathVersion Int                   @default(1) @map("cc_path_version")
+  userId        String                @map("user_id")
+  status        String                @default("deployed")
+  syncStatus    String                @default("synced") @map("sync_status")
   metadata      Json?
-  contentHash   String?              @map("content_hash")
-  pathHistory   Json?                @map("path_history")
-  lastSyncAt    DateTime             @default(now()) @map("last_sync_at")
-  deployedAt    DateTime             @default(now()) @map("deployed_at")
-  updatedAt     DateTime             @updatedAt @map("updated_at")
-  dependencies  WorkflowDependency[] @relation("SourceWorkflow")
-  dependents    WorkflowDependency[] @relation("TargetWorkflow")
-  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contentHash   String?               @map("content_hash")
+  pathHistory   Json?                 @map("path_history")
+  lastSyncAt    DateTime              @default(now()) @map("last_sync_at")
+  deployedAt    DateTime              @default(now()) @map("deployed_at")
+  updatedAt     DateTime              @updatedAt @map("updated_at")
+  visibility    String                @default("private")
+  isFeatured    Boolean               @default(false) @map("is_featured")
+  featuredOrder Int?                  @map("featured_order")
+  dependencies  WorkflowDependency[]  @relation("SourceWorkflow")
+  dependents    WorkflowDependency[]  @relation("TargetWorkflow")
+  user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stats         WorkflowStats?
+  favorites     WorkflowFavorite[]
 
   @@index([userId])
   @@index([ccPath])
@@ -334,7 +338,46 @@ model WorkflowSpec {
   @@index([status, userId])
   @@index([contentHash])
   @@index([visibility])
+  @@index([visibility, status])
+  @@index([name])
+  @@index([isFeatured, featuredOrder])
   @@map("workflow_specs")
+}
+
+model WorkflowStats {
+  id            String       @id @default(uuid())
+  workflowId    String       @unique @map("workflow_id")
+  totalLoads    Int          @default(0) @map("total_loads")
+  todayLoads    Int          @default(0) @map("today_loads")
+  weekLoads     Int          @default(0) @map("week_loads")
+  monthLoads    Int          @default(0) @map("month_loads")
+  favoriteCount Int          @default(0) @map("favorite_count")
+  rating        Float        @default(0)
+  ratingCount   Int          @default(0) @map("rating_count")
+  lastUsedAt    DateTime     @map("last_used_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  workflow      WorkflowSpec @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([totalLoads])
+  @@index([todayLoads])
+  @@index([weekLoads])
+  @@index([monthLoads])
+  @@map("workflow_stats")
+}
+
+model WorkflowFavorite {
+  id         String       @id @default(uuid())
+  userId     String       @map("user_id")
+  workflowId String       @map("workflow_id")
+  createdAt  DateTime     @default(now()) @map("created_at")
+
+  workflow   WorkflowSpec @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workflowId])
+  @@index([userId, createdAt])
+  @@index([workflowId])
+  @@map("workflow_favorites")
 }
 
 model WorkflowDependency {
@@ -369,24 +412,20 @@ model UserWorkspaceProject {
   @@map("user_workspace_projects")
 }
 
-// Workspace Session Model - 编辑器会话状态模型
-// 用户在 Workspace 编辑器中的状态（打开的文件、滚动位置、光标位置等）
 model WorkspaceSession {
-  id            String               @id @default(uuid())
-  userId        String               @map("user_id")
-  projectId     String?              @map("project_id")    // 关联的 userWorkspaceProject
-  workspaceType  String               @default("user")      // user | organization | shared
-  name          String?                                  // 会话名称
-  folderPath    String               @db.Text             // 当前打开的文件夹路径
-  filePaths     Json                                     // 打开的文件标签页 [{path, name, active}]
-  scrollPositions Json                                     // 各文件的滚动位置 {path: {line, column}}
-  editorPositions  Json                                    // 各文件的光标位置 {path: {line, column}}
-  activeFilePath String?              @db.Text             @map("active_file_path")  // 当前激活的文件
-
-  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt     DateTime             @default(now()) @map("created_at")
-  updatedAt     DateTime             @updatedAt @map("updated_at")
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  projectId       String?  @map("project_id")
+  workspaceType   String   @default("user")
+  name            String?
+  folderPath      String   @db.Text
+  filePaths       Json
+  scrollPositions Json
+  editorPositions Json
+  activeFilePath  String?  @map("active_file_path") @db.Text
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([userId, projectId])

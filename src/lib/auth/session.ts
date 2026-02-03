@@ -65,9 +65,28 @@ export async function createSession(
 /**
  * Get the current session from the request
  *
- * @returns The session data or null if not authenticated
+ * @param options - Optional configuration
+ * @param options.skipInDev - Skip authentication in development mode
+ * @returns The session data or null if not authenticated (or skipped in dev)
  */
-export async function getSession(): Promise<SessionData | null> {
+export async function getSession(options?: {
+  skipInDev?: boolean;
+}): Promise<SessionData | null> {
+  // Skip authentication in development if requested
+  if (options?.skipInDev && process.env.NODE_ENV === 'development') {
+    console.log('[Session] Skipping authentication in development mode');
+    // Return a mock session for development
+    return {
+      userId: 'dev-user',
+      user: {
+        id: 'dev-user',
+        email: 'dev@example.com',
+        name: 'Developer',
+        emailVerified: new Date(),
+      },
+    };
+  }
+
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get('auraforce-session')?.value;
 

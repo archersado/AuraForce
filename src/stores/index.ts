@@ -20,6 +20,9 @@ export * from './ui/useUIStore'
 // Workflow store
 export * from './workflow/useWorkflowStore'
 
+// Workflow market store
+export * from './workflow/useWorkflowMarketStore'
+
 /**
  * Example usage:
  *

@@ -24,9 +24,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Security: prevent path traversal
-    const safeCurrentPath = path
+    // Normalize and remove leading slash to treat as relative to workspace root
+    let safeCurrentPath = path
       .normalize(currentPath)
       .replace(/^(\.\.(\/|\\|$))+/, '');
+    
+    // Remove leading slash to ensure path is relative
+    if (safeCurrentPath.startsWith('/')) {
+      safeCurrentPath = safeCurrentPath.substring(1) || '.';
+    }
 
     const safeNewName = path.basename(newName);
     if (safeNewName !== newName || safeNewName.includes('/') || safeNewName.includes('\\')) {

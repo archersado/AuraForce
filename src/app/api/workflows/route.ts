@@ -1,8 +1,9 @@
 /**
  * Workflow Specs List API Endpoint
  *
- * GET /api/workflows - Returns all workflow specs for the authenticated user
- * Supports pagination and filtering by status
+ * GET /api/workflows - Returns all workflow specs
+ * Supports pagination, filtering by status/visibility, and search
+ * Public workflows visible without authentication
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -11,15 +12,9 @@ import { getSession } from '@/lib/auth/session';
 
 export async function GET(request: NextRequest) {
   try {
-    // Verify authentication
+    // Verify authentication (optional for public workflows)
     const session = await getSession();
-    if (!session?.userId || !session.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
+    
     // Parse query parameters
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
@@ -31,22 +26,41 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit;
 
     // Build where clause
-    const where: any = {
-      OR: [
+    const where: any = {};
+
+    // If user is authenticated, show their private workflows and public workflows
+    if (session?.userId) {
+      where.OR = [
         { userId: session.userId },
         { visibility: 'public' },
-      ],
-    };
+      ];
+    } else {
+      // If not authenticated, only show public workflows
+      where.visibility = 'public';
+    }
 
     if (statusFilter && statusFilter !== 'all') {
       where.status = statusFilter;
     }
 
     if (search) {
-      where.OR = [
-        { name: { contains: search } },
-        { description: { contains: search } },
-      ];
+      const searchCondition = {
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
+          { author: { contains: search, mode: 'insensitive' } },
+        ]
+      };
+      
+      if (session?.userId) {
+        where.OR = [
+          { userId: session.userId },
+          { visibility: 'public', ...searchCondition },
+        ];
+      } else {
+        where.visibility = 'public';
+        where.AND = searchCondition;
+      }
     }
 
     // Fetch workflows with pagination
@@ -64,9 +78,29 @@ export async function GET(request: NextRequest) {
           author: true,
           ccPath: true,
           status: true,
+          visibility: true,
+          userId: true,
           metadata: true,
           deployedAt: true,
           updatedAt: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+            },
+          },
+          stats: {
+            select: {
+              totalLoads: true,
+              weekLoads: true,
+              monthLoads: true,
+              favoriteCount: true,
+              rating: true,
+              ratingCount: true,
+            },
+          },
         },
       }),
       prisma.workflowSpec.count({ where }),

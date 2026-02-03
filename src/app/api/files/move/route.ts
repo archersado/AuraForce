@@ -24,13 +24,23 @@ export async function POST(request: NextRequest) {
     }
 
     // Security: prevent path traversal
-    const safeSource = path
+    // Normalize and remove leading slash to treat as relative to workspace root
+    let safeSource = path
       .normalize(sourcePath)
       .replace(/^(\.\.(\/|\\|$))+/, '');
-
-    const safeDest = path
+    
+    let safeDest = path
       .normalize(destinationPath)
       .replace(/^(\.\.(\/|\\|$))+/, '');
+    
+    // Remove leading slashes to ensure paths are relative
+    if (safeSource.startsWith('/')) {
+      safeSource = safeSource.substring(1) || '.';
+    }
+    
+    if (safeDest.startsWith('/')) {
+      safeDest = safeDest.substring(1) || '.';
+    }
 
     if (!safeSource || !safeDest) {
       return NextResponse.json(

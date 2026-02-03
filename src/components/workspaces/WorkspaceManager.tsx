@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Folder, Trash2, Clock, ArrowRight, Check } from 'lucide-react';
+import { Plus, Folder, Trash2, Clock, ArrowRight } from 'lucide-react';
 import { apiFetch } from '@/lib/api-client';
 
 interface WorkspaceProject {
@@ -26,10 +26,6 @@ export default function WorkspaceManager({ onSelectProject, onCreateProject }: W
   const [projects, setProjects] = useState<WorkspaceProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newProjectName, setNewProjectName] = useState('');
-  const [newProjectDescription, setNewProjectDescription] = useState('');
-  const [creating, setCreating] = useState(false);
 
   const fetchProjects = useCallback(async () => {
     try {
@@ -53,50 +49,6 @@ export default function WorkspaceManager({ onSelectProject, onCreateProject }: W
       setLoading(false);
     }
   }, []);
-
-  const handleCreateProject = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!newProjectName.trim()) {
-      return;
-    }
-
-    setCreating(true);
-
-    try {
-      const response = await apiFetch('/api/workspaces', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: newProjectName.trim(),
-          description: newProjectDescription.trim() || null,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create project');
-      }
-
-      if (data.success) {
-        setNewProjectName('');
-        setNewProjectDescription('');
-        setShowCreateModal(false);
-        await fetchProjects();
-
-        if (onCreateProject) {
-          onCreateProject();
-        }
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create project');
-    } finally {
-      setCreating(false);
-    }
-  };
 
   const handleDeleteProject = async (projectId: string) => {
     if (!window.confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
@@ -165,7 +117,7 @@ export default function WorkspaceManager({ onSelectProject, onCreateProject }: W
           </p>
         </div>
         <button
-          onClick={() => setShowCreateModal(true)}
+          onClick={onCreateProject}
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
         >
           <Plus size={18} />
@@ -196,7 +148,7 @@ export default function WorkspaceManager({ onSelectProject, onCreateProject }: W
             Create your first project to get started
           </p>
           <button
-            onClick={() => setShowCreateModal(true)}
+            onClick={onCreateProject}
             className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
           >
             <Plus size={18} />
@@ -272,70 +224,6 @@ export default function WorkspaceManager({ onSelectProject, onCreateProject }: W
               </div>
             </div>
           ))}
-        </div>
-      )}
-
-      {/* Create Project Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4">
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Create New Project
-              </h3>
-              <form onSubmit={handleCreateProject}>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Project Name
-                    </label>
-                    <input
-                      type="text"
-                      value={newProjectName}
-                      onChange={(e) => setNewProjectName(e.target.value)}
-                      placeholder="my-awesome-project"
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Description (optional)
-                    </label>
-                    <textarea
-                      value={newProjectDescription}
-                      onChange={(e) => setNewProjectDescription(e.target.value)}
-                      placeholder="What is this project about?"
-                      rows={3}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                    />
-                  </div>
-                </div>
-                <div className="flex gap-2 mt-6">
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateModal(false)}
-                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={!newProjectName.trim() || creating}
-                    className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-                  >
-                    {creating ? (
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <>
-                        <Check size={18} />
-                        <span>Create</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
         </div>
       )}
     </div>

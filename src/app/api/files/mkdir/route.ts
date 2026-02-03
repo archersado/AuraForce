@@ -33,9 +33,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Security: prevent path traversal
-    const safePath = path
+    // Normalize and remove leading slash to treat as relative to workspace root
+    let safePath = path
       .normalize(targetPath)
       .replace(/^(\.\.(\/|\\|$))+/, '');
+    
+    // Remove leading slash to ensure path is relative
+    if (safePath.startsWith('/')) {
+      safePath = safePath.substring(1) || '.';
+    }
 
     // Get workspace root from environment
     const workspaceRoot = process.env.WORKSPACE_ROOT || '/tmp/workspace';

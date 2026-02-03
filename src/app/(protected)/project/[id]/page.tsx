@@ -162,17 +162,32 @@ export default function ProjectDetailPage() {
   const handleFileSelect = async (path: string) => {
     if (selectedFile === path) return;
 
+    console.log('[ProjectDetailPage] handleFileSelect called with path:', path);
+    console.log('[ProjectDetailPage] selectedProject.path:', selectedProject?.path);
+
     setLoadingFile(true);
     setFileError(null);
 
     try {
+      console.log('[ProjectDetailPage] Calling readFile API...');
       const result = await readFile(path, selectedProject?.path);
+
+      console.log('[ProjectDetailPage] API response:', {
+        contentLength: result.content?.length || 0,
+        metadata: result.metadata,
+        isBinary: result.isBinary,
+        isLarge: result.isLarge,
+        warning: result.warning,
+      });
+
       setFileContent(result.content);
       setFileMetadata(result.metadata);
       setIsBinary(result.isBinary ?? false);
       setIsLarge(result.isLarge ?? false);
       setWarning(result.warning);
       setSelectedFile(path);
+
+      console.log('[ProjectDetailPage] File loaded successfully, selectedFile set to:', path);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to load file';
       console.error('[ProjectDetailPage] Failed to load file:', err);

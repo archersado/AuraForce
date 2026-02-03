@@ -10,7 +10,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Zap, ArrowRight, MessageCircle, Eye, User, UserPlus, LogOut } from 'lucide-react';
+import { Zap, ArrowRight, MessageCircle, Eye, User, UserPlus, LogOut, FolderOpen, Workflow, Sparkles } from 'lucide-react';
 import { useUserStore } from '@/stores/user-store';
 
 export default function Home() {
@@ -147,6 +147,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
+              className="mb-12"
             >
               <button
                 onClick={handleStartJourney}
@@ -155,6 +156,7 @@ export default function Home() {
                 <span className="mr-2">{user ? '继续你的技能之旅' : '开始你的技能之旅'}</span>
                 <ArrowRight className="w-5 h-5" />
               </button>
+
               {!user && (
                 <p className="mt-4 text-sm text-gray-500">
                   还没有账号？{' '}
@@ -169,12 +171,53 @@ export default function Home() {
               )}
             </motion.div>
 
+            {/* 快捷访问入口 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+              className="mb-12"
+            >
+              <div className="flex items-center justify-center mb-6">
+                <div className="w-12 h-0.5 bg-gradient-to-r from-transparent to-purple-300"></div>
+                <h2 className="mx-4 text-lg font-semibold text-gray-500">快捷访问</h2>
+                <div className="w-12 h-0.5 bg-gradient-to-l from-transparent to-purple-300"></div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <QuickAccessCard
+                  icon={<FolderOpen className="w-6 h-6" />}
+                  title="工作流市场"
+                  description="浏览社区共享的 AI 工作流"
+                  href="/market/workflows"
+                  color="from-purple-500 to-purple-700"
+                  delay={0.05}
+                />
+                <QuickAccessCard
+                  icon={<Sparkles className="w-6 h-6" />}
+                  title="技能提取"
+                  description="快速创建自定义 AI 技能"
+                  href="/workspace"
+                  color="from-blue-500 to-blue-700"
+                  delay={0.1}
+                />
+                <QuickAccessCard
+                  icon={<Workflow className="w-6 h-6" />}
+                  title="工作空间"
+                  description="管理你的项目和工作流"
+                  href="/workspace"
+                  color="from-indigo-500 to-indigo-700"
+                  delay={0.15}
+                />
+              </div>
+            </motion.div>
+
             {/* 版本信息 */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.6 }}
-              className="mt-12 text-sm text-gray-500"
+              className="text-sm text-gray-500"
             >
               AuraForce MVP v0.1.0 - 技能经济时代的开创者
             </motion.div>
@@ -189,10 +232,65 @@ function FeatureCard({ icon, title, description }: { icon: React.ReactNode; titl
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex flex-col items-center h-full">
       <div className="flex items-center justify-center w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg mb-4 flex-shrink-0">
-        {icon}
+        <div className="text-purple-600">
+          {icon}
+        </div>
       </div>
       <h3 className="font-semibold text-gray-900 dark:text-white mb-2 text-center">{title}</h3>
       <p className="text-sm text-gray-600 dark:text-gray-400 text-center flex-grow-0">{description}</p>
     </div>
+  );
+}
+
+function QuickAccessCard({
+  icon,
+  title,
+  description,
+  href,
+  color,
+  delay
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  href: string;
+  color: string;
+  delay: number;
+}) {
+  return (
+    <Link href={href}>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay }}
+        whileHover={{ y: -4, scale: 1.02 }}
+        className="group relative bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md hover:border-purple-200 transition-all duration-300 cursor-pointer"
+      >
+        {/* Gradient icon container */}
+        <div className={`absolute -top-3 -right-3 w-12 h-12 bg-gradient-to-br ${color} rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+          <div className="flex items-center justify-center text-white">
+            {icon}
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="pt-4">
+          <h3 className="font-semibold text-gray-900 mb-2 flex items-center">
+            {title}
+          </h3>
+          <p className="text-sm text-gray-600 leading-relaxed">
+            {description}
+          </p>
+        </div>
+
+        {/* Hover indicator */}
+        <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <ArrowRight className="w-4 h-4 text-purple-600" />
+        </div>
+
+        {/* Subtle gradient border on hover */}
+        <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${color} opacity-0 group-hover:opacity-5 transition-opacity duration-300 -z-10`} />
+      </motion.div>
+    </Link>
   );
 }

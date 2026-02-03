@@ -15,8 +15,8 @@
 import { useState, useEffect } from 'react';
 import { File, AlertCircle, Image as ImageIcon, FileText, Code, Download, Copy, Trash2, Save } from 'lucide-react';
 
-import { CodeEditor } from './CodeEditor';
-import { MarkdownPreviewEditor } from './MarkdownPreviewEditor';
+import { CodeEditor } from './CodeEditor-v2';
+import { MarkdownEditor } from './SimpleMarkdownEditor';
 import { MediaPreview } from './MediaPreview';
 import { LargeFileHandler } from './LargeFileHandler';
 
@@ -31,8 +31,14 @@ interface FileEditorProps {
   path: string;
   language?: string;
   readOnly?: boolean;
-  onSave?: (content: string) => void;
+  onSave?: (content: string, filePath: string, root?: string) => Promise<void>;
   workspaceRoot?: string;
+  isBinary?: boolean;
+  isLarge?: boolean;
+  warning?: string;
+  projectRoot?: string;
+  hideFileTree?: boolean;
+  isImage?: boolean;
 }
 
 export function FileEditor({
@@ -43,7 +49,18 @@ export function FileEditor({
   readOnly = false,
   onSave,
   workspaceRoot,
+  isBinary = false,
+  isLarge = false,
+  warning,
 }: FileEditorProps) {
+  console.log('[FileEditor] Props:', {
+    path,
+    contentLength: content?.length || 0,
+    metadata: metadata?.filename,
+    isBinary,
+    isLarge,
+    warning,
+  });
   const [editorContent, setEditorContent] = useState(content);
   const [copied, setCopied] = useState(false);
 
@@ -67,7 +84,7 @@ export function FileEditor({
   // Handle save
   const handleSave = async () => {
     if (onSave) {
-      await onSave(editorContent);
+      await onSave(editorContent, path, workspaceRoot);
     }
   };
 
@@ -106,25 +123,54 @@ export function FileEditor({
 
   // Render content based on file type
   const renderContent = () => {
+    console.log('[FileEditor] renderContent called:', {
+      isImage,
+      isMarkdown,
+      isCode,
+      editorContentLength: editorContent.length,
+      warning,
+      isBinary,
+    });
+
+    // Handle warning state
+    if (warning) {
+      console.log('[FileEditor] Showing warning:', warning);
+      return (
+        <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+          <div className="text-center p-6">
+            <AlertCircle className="w-12 h-12 text-yellow-500 mx-auto mb-3" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              Warning
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400">{warning}</p>
+          </div>
+        </div>
+      );
+    }
+
     if (isImage && metadata) {
       return <MediaPreview path={path} metadata={metadata} workspaceRoot={workspaceRoot} />;
     }
 
     if (isMarkdown) {
+      console.log('[FileEditor] Rendering MarkdownEditor with', editorContent.length, 'bytes');
       return (
-        <MarkdownPreviewEditor
+        <MarkdownEditor
           content={editorContent}
-          onChange={(newContent) => setEditorContent(newContent)}
-          onSave={handleSave}
+          onChange={(newContent) => {
+            console.log('[FileEditor] MarkdownEditor onChange:', newContent.length, 'bytes');
+            setEditorContent(newContent);
+          }}
           readOnly={readOnly}
         />
       );
     }
 
     if (isCode) {
+      console.log('[FileEditor] Rendering CodeEditor for language:', language);
       // Check file size - use LargeFileHandler for files > 1MB
       const fileSize = metadata?.size || 0;
-      const isLargeFile = fileSize > 1 * 1024 * 1024;
+      const isLargeFile = fileSize > 1 * 1024 * 1024 || isLarge;
 
       if (isLargeFile) {
         return (
@@ -155,7 +201,7 @@ export function FileEditor({
 
     // Plain text - also check for large files
     const fileSize = metadata?.size || 0;
-    const isLargeTextFile = fileSize > 1 * 1024 * 1024;
+    const isLargeTextFile = fileSize > 1 * 1024 * 1024 || isLarge;
 
     if (isLargeTextFile) {
       return (
@@ -170,6 +216,7 @@ export function FileEditor({
     }
 
     // Normal text
+    console.log('[FileEditor] Rendering textarea with', editorContent.length, 'bytes');
     return (
       <textarea
         value={editorContent}

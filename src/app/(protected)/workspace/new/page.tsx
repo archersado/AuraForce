@@ -4,19 +4,15 @@
  */
 
 'use client';
-
-import * as React from 'react';
-import { ArrowLeft, CheckCircle2 } from 'lucide-react';
-import { useRouter, usePathname } from 'next/navigation';
+import { ArrowLeft, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { WorkflowSelector } from '@/components/workflows/WorkflowSelector';
 import { type WorkflowSpec } from '@/components/workflows';
-import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 
 export default function NewWorkspacePage() {
   const router = useRouter();
-  const pathname = usePathname();
 
   const [selectedWorkflow, setSelectedWorkflow] = useState<WorkflowSpec | null>(null);
   const [projectName, setProjectName] = useState('');
@@ -26,9 +22,6 @@ export default function NewWorkspacePage() {
   const handleWorkflowSelect = (workflow: WorkflowSpec) => {
     setSelectedWorkflow(workflow);
     setError(null);
-    if (workflows?.onSelect) {
-      workflows.onSelect(workflow);
-    }
   };
 
   const handleCreateProject = async () => {
@@ -63,7 +56,7 @@ export default function NewWorkspacePage() {
       }
 
       if (data.success) {
-        router.push(`/auraforce/project/${data.project.id}`);
+        router.push(`/project/${data.project.id}`);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : '创建项目失败');
@@ -79,9 +72,10 @@ export default function NewWorkspacePage() {
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center gap-4">
           <Link
-            href="/auroraforce/workspace"
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            href="/workspace"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900 transition-all duration-200 hover:shadow-sm"
           >
+            <ArrowLeft className="w-4 h-4" />
             返回工作空间
           </Link>
           <div>
@@ -92,11 +86,13 @@ export default function NewWorkspacePage() {
               选择一个工作流模板作为起点创建新项目
             </p>
           </div>
-          <Button asChild asChild>
-            <Link href="/auroraforce/market/workflows">
-              浏览工作流市场
-            </Link>
-          </Button>
+          <Link
+            href="/market/workflows"
+            className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-blue-600 rounded-full hover:from-purple-700 hover:to-blue-700 hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+          >
+            <Sparkles className="w-4 h-4" />
+            浏览工作流市场
+          </Link>
         </div>
       </div>
 
@@ -116,7 +112,7 @@ export default function NewWorkspacePage() {
           {error && (
             <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
               <div className="flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400" flex-shrink-0" />
+                <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0" />
                 <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
               </div>
             </div>
@@ -158,13 +154,26 @@ export default function NewWorkspacePage() {
                 </div>
               </div>
 
-              <Button
+              <button
                 onClick={handleCreateProject}
                 disabled={isCreating || !projectName.trim()}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold text-white bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all duration-300"
               >
-                {isCreating ? '创建中...' : '确认创建'}
-              </Button>
+                {isCreating ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    创建中...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    确认创建
+                  </>
+                )}
+              </button>
             </div>
           )}
         </div>

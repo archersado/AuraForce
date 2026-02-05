@@ -233,7 +233,7 @@ export function WorkflowSelector({
                   <WorkflowSelectableItem
                     key={workflow.id}
                     workflow={workflow}
-                    isHighlighted={selectedWorkflow?.id === workflow.id}
+                    isSelected={selectedWorkflow?.id === workflow.id}
                     onSelect={handleSelect}
                   />
                 ))}

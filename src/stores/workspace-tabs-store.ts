@@ -145,12 +145,18 @@ export const useTabsStore = create<TabsState>()(
             const closedTabIndex = state.tabs.findIndex((t) => t.id === tabId);
             const nextIndex =
               closedTabIndex >= tabs.length ? tabs.length - 1 : closedTabIndex;
-            newActiveTabId = tabs[nextIndex || tabs[0]].id;
+            newActiveTabId = (tabs[nextIndex ?? tabs[0]])?.id || tabs[0].id;
 
             // Mark new active tab
-            tabs = tabs.map((t) =>
+            const updatedTabs = tabs.map((t) =>
               t.id === newActiveTabId ? { ...t, isActive: true } : t
             );
+
+            return {
+              ...state,
+              activeTabId: newActiveTabId,
+              tabs: updatedTabs,
+            };
           }
 
           return {

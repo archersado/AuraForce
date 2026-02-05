@@ -163,6 +163,7 @@ export function LargeFileHandler({
           fileSize={fileSize}
           isOver10MB={isOver10MB}
           fileName={fileName}
+          content={content}
         />
       )}
 
@@ -206,10 +207,12 @@ function LargeFileWarning({
   fileSize,
   isOver10MB,
   fileName,
+  content,
 }: {
   fileSize: number;
   isOver10MB: boolean;
   fileName: string;
+  content: string;
 }) {
   const formatSize = (bytes: number) => {
     if (bytes === 0) return '0 B';

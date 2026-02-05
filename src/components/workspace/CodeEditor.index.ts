@@ -5,10 +5,10 @@
  */
 
 // Main component
-export { CodeEditor } from './CodeEditor-v2';
+export { default as CodeEditor } from './CodeEditor-v2';
 
-// Deprecated - kept for backward compatibility
-export { CodeEditor as CodeEditorLegacy } from './CodeEditor';
+// Deprecated - CodeEditor.ts doesn't exist anymore
+// export { CodeEditor as CodeEditorLegacy } from './CodeEditor';
 
 // Types
 export type {
@@ -42,5 +42,3 @@ export {
 // Examples
 export { testExamples } from './CodeEditor.examples';
 
-// Re-export main types for convenience
-export { languageDescriptions } from './CodeEditor-v2';

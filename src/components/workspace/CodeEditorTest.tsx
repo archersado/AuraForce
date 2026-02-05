@@ -7,7 +7,7 @@
 'use client';
 
 import { useState } from 'react';
-import { CodeEditor } from './CodeEditor-v2';
+import CodeEditor from './CodeEditor-v2';
 
 export function CodeEditorTest() {
   const [language, setLanguage] = useState('javascript');
@@ -58,15 +58,8 @@ console.log(result);
           value={code}
           onChange={setCode}
           language={language}
-          theme="dark"
           height="500px"
-          fontSize={14}
-          lineNumbers={true}
-          wrapLines={false}
-          codeFolding={true}
-          minimap={true}
-          bracketMatching={true}
-          onSave={() => alert('Code saved!')}
+          fileName="test.js"
         />
       </div>
 

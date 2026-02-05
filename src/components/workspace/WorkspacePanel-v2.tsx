@@ -10,8 +10,8 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { X, Download, Copy, Trash2, Upload, Search, MoreVertical } from 'lucide-react';
-import { FileBrowser } from './FileBrowser';
+import { X, Download, Copy, Trash2, Upload, Search, MoreVertical, FileText } from 'lucide-react';
+import { FileBrowser, type FileBrowserHandle } from './FileBrowser';
 import { TabBar } from './TabBar';
 import { FileEditor } from './FileEditor';
 import { FileUpload } from './FileUpload';
@@ -42,9 +42,13 @@ export function WorkspacePanel({
   const [deleteSuccess, setDeleteSuccess] = useState<string | null>(null);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
+  const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
+  const [contextMenuOpen, setContextMenuOpen] = useState(false);
+  const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+  const [renameTarget, setRenameTarget] = useState<{ path: string; name: string } | null>(null);
 
   // Store FileBrowser ref for refreshing
-  const fileBrowserRef = useRef<{ refresh: () => void; forceRefresh: () => void }>(null);
+  const fileBrowserRef = useRef<FileBrowserHandle>(null);
   const refreshTriggerRef = useRef<number>(0);
 
   // Load file content when tab is activated
@@ -67,11 +71,13 @@ export function WorkspacePanel({
 
       // Update or create tab with content
       openTab({
+        id: path, // Use path as tab ID
         path,
         name: path.split('/').pop() || 'file',
         content: result.content,
         language: detectLanguage(fileExtension),
         hasUnsavedChanges: false,
+        isModified: false,
       });
     } catch (err) {
       console.error('Failed to load file:', err);
@@ -144,6 +150,13 @@ export function WorkspacePanel({
       setTimeout(() => setDeleteSuccess(null), 3000);
     }
   }, [closeTab]);
+
+  // Handle tab close (wrapper for handleDelete)
+  const handleTabClose = useCallback((tabId: string) => {
+    const tab = tabs.find(t => t.id === tabId);
+    if (!tab) return;
+    handleDelete(tabId, tab.path);
+  }, [tabs, handleDelete]);
 
   // Copy file path
   const handleCopyPath = useCallback(async (path: string) => {
@@ -352,7 +365,7 @@ export function WorkspacePanel({
         </div>
 
         {/* Tab Bar */}
-        <TabBar onTabClose={handleDelete} />
+        <TabBar onTabClose={handleTabClose} />
 
         {/* Content */}
         <div className="flex-1 flex overflow-hidden">

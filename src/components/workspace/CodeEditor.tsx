@@ -264,10 +264,10 @@ export function CodeEditor({
         // Hover tooltips
         hoverTooltip((view, pos, side) => {
           // Simple hover tooltip for keywords
-          const word = view.state.wordAt(pos);
-          if (!word) return null;
+          const wordRange = view.state.wordAt(pos);
+          if (!wordRange) return null;
 
-          const keyword = word.text.toLowerCase();
+          const keyword = view.state.doc.sliceString(wordRange.from, wordRange.to).toLowerCase();
 
           // Basic keyword descriptions
           const descriptions: Record<string, string> = {
@@ -292,8 +292,8 @@ export function CodeEditor({
           if (!desc) return null;
 
           return {
-            pos: word.from,
-            end: word.to,
+            pos: wordRange.from,
+            end: wordRange.to,
             above: true,
             create(view) {
               const dom = document.createElement('div');

@@ -97,7 +97,6 @@ export default function CodeEditorV2({
       keymap.of(defaultKeymap),
       indentUnit.of('  '),
       indentOnInput(),
-      indentWithTab(),
       bracketMatching(),
       autocompletion(),
       highlightSelectionMatches(),

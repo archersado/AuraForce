@@ -227,7 +227,7 @@ export function AppHeader({
                 <button
                   onClick={async () => {
                     await apiFetch('/api/auth/signout', { method: 'POST' });
-                    window.location.href = '/auraforce/login';
+                    window.location.href = '/login';
                   }}
                   className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-red-600 dark:text-red-400"
                   title="退出登录"

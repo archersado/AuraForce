@@ -390,7 +390,6 @@ export function getLanguageFromExtension(filename: string): string {
     hpp: 'cpp',
     cxx: 'cpp',
     hxx: 'cpp',
-    cxx: 'cpp',
     // PHP
     php: 'php',
     // Rust

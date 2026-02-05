@@ -114,8 +114,8 @@ export function BatchOperations({
     const newSelectAll = !state.selectAll;
 
     const newSelected = newSelectAll
-      ? new Set(files.map((file) => file.path))
-      : new Set();
+      ? new Set<string>(files.map((file) => file.path))
+      : new Set<string>();
 
     setState((prev) => ({
       ...prev,
@@ -128,7 +128,7 @@ export function BatchOperations({
   const clearSelection = useCallback(() => {
     setState((prev) => ({
       ...prev,
-      selectedFiles: new Set(),
+      selectedFiles: new Set<string>(),
       selectAll: false,
     }));
   }, []);

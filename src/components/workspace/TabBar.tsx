@@ -14,7 +14,7 @@
 
 import { X } from 'lucide-react';
 import { useTabsStore, type Tab } from '@/stores/workspace-tabs-store';
-import { getFileIcon } from '@/lib/workspace/files-service';
+import { getFileIcon } from '@/components/workspace/CodeEditor.utils';
 
 interface TabBarProps {
   onTabClose?: (tabId: string) => void;
@@ -71,7 +71,7 @@ export function TabBar({ onTabClose }: TabBarProps) {
           >
             {/* File Type Icon */}
             <span className="text-lg flex-shrink-0" title={tab.language}>
-              {getFileIcon(tab.name)}
+              {getFileIcon(tab.name)?.icon || '📄'}
             </span>
 
             {/* Tab Name */}

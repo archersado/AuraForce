@@ -5,7 +5,20 @@
  */
 
 const API_BASE_URL = 'http://localhost:3001';
-const TEST_RESULTS = {
+
+interface TestResult {
+  testName: string;
+  passed: boolean;
+  details?: string;
+  timestamp: string;
+}
+
+interface PhaseResult {
+  name: string;
+  tests: TestResult[];
+}
+
+const TEST_RESULTS: Record<string, PhaseResult> = {
   phase1: {
     name: 'Popular Workflows API',
     tests: []
@@ -27,6 +40,7 @@ const TEST_RESULTS = {
 // 从环境变量获取用户ID和session（实际使用时需要替换）
 let TEST_USER_ID = '';
 let SESSION_COOKIE = '';
+let TEST_WORKFLOW_ID = ''; // 保存测试用的工作流ID
 
 // 辅助函数
 async function apiCall(method: string, endpoint: string, body?: any, headers: Record<string, string> = {}) {
@@ -112,8 +126,8 @@ async function testPopularWorkflowsAPI() {
 
   // 保存第一个工作流ID用于后续测试
   if (result1.data?.data?.[0]?.id) {
-    TEST_RESULTS.phase1.workflowId = result1.data.data[0].id;
-    console.log(`Saved workflow ID for testing: ${TEST_RESULTS.phase1.workflowId}\n`);
+    TEST_WORKFLOW_ID = result1.data.data[0].id;
+    console.log(`Saved workflow ID for testing: ${TEST_WORKFLOW_ID}\n`);
   }
 
   return result1.data?.data?.[0]?.id;

@@ -5,6 +5,20 @@
  * across different languages
  */
 
+export const getSupportedLanguages = () => [
+  { value: 'javascript', name: 'JavaScript' },
+  { value: 'typescript', name: 'TypeScript' },
+  { value: 'python', name: 'Python' },
+  { value: 'java', name: 'Java' },
+  { value: 'go', name: 'Go' },
+  { value: 'rust', name: 'Rust' },
+  { value: 'sql', name: 'SQL' },
+  { value: 'html', name: 'HTML' },
+  { value: 'json', name: 'JSON' },
+  { value: 'yaml', name: 'YAML' },
+  { value: 'shell', name: 'Shell' },
+];
+
 export const testExamples = {
   javascript: `// JavaScript Example
 import { useState, useEffect } from 'react';

@@ -10,7 +10,7 @@ interface ProfileFormData {
 }
 
 export default function ProfileForm() {
-  const { session, user, refetch } = useRequireAuth();
+  const { session, user } = useRequireAuth();
   const [formData, setFormData] = useState<ProfileFormData>({
     name: user?.name || '',
   });
@@ -76,8 +76,7 @@ export default function ProfileForm() {
       }
 
       setSuccess(true);
-      // Refetch session to get updated user data
-      await refetch();
+      // Note: Session will be updated automatically by the auth system
       setTimeout(() => setSuccess(false), 3000);
       setAvatarFile(null);
       setAvatarPreview(null);
@@ -89,7 +88,7 @@ export default function ProfileForm() {
     }
   };
 
-  const displayAvatar = avatarPreview || user?.image || null;
+  const displayAvatar = avatarPreview || null;
 
   return (
     <div className="space-y-8">

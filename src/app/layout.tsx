@@ -1,9 +1,6 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
-
-const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'AuraForce MVP - 技能沉淀平台',
@@ -16,8 +13,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="zh-CN">
-      <body className={inter.className}>
+    <html lang="zh-CN" className="font-sans">
+      <body>
         <Providers>{children}</Providers>
       </body>
     </html>

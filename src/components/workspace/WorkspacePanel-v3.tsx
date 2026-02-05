@@ -116,11 +116,13 @@ export function WorkspacePanelV3({
       } else {
         // Create new tab
         openTab({
+          id: path, // Use path as tab ID
           path,
           name: path.split('/').pop() || 'untitled',
           content: result.content,
           language: getLanguageFromExtension(path),
           hasUnsavedChanges: false,
+          isModified: false,
         });
       }
 
@@ -422,8 +424,8 @@ export function WorkspacePanelV3({
         <FileSearch
           visible={isSearchDialogOpen}
           onClose={() => setIsSearchDialogOpen(false)}
-          onResultSelect={(path) => {
-            handleFileSelect(path);
+          onResultSelect={(file) => {
+            handleFileSelect(file.path);
             setIsSearchDialogOpen(false);
           }}
           workspaceRoot={workspaceRoot}

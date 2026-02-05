@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Code2, Terminal, Database, Globe, FileCode, Palette, Search, Zap } from 'lucide-react';
-import { CodeEditor } from '@/components/workspace/CodeEditor-v2';
+import CodeEditor from '@/components/workspace/CodeEditor-v2';
 import { getSupportedLanguages, testExamples } from '@/components/workspace/CodeEditor.examples';
 
 export default function CodeEditorDemoPage() {
@@ -206,14 +206,8 @@ export default function CodeEditorDemoPage() {
             value={code}
             onChange={() => {}}
             language={selectedLanguage}
-            theme={theme}
             height="600px"
-            fontSize={fontSize}
-            lineNumbers={lineNumbers}
-            wrapLines={wrapLines}
-            codeFolding={codeFolding}
-            minimap={true}
-            bracketMatching={true}
+            fileName="demo.js"
           />
         </div>
 

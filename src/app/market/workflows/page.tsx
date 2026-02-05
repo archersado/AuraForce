@@ -72,7 +72,7 @@ export default function MarketplacePage() {
 
           {error && (
             <div className="text-center py-12">
-              <div className="text-red-600 dark:text-red-400 mb-2">加载失败: {error}</div>
+              <div className="text-red-600 dark:text-red-400 mb-2">加载失败: {String(error)}</div>
               <Button
                 variant="outline"
                 onClick={() => refetch?.()}

@@ -306,7 +306,7 @@ export default function ResetPasswordForm() {
 
       <div className="text-center">
         <Link
-          href="/auraforce/login"
+          href="/login"
           className="inline-flex items-center text-sm text-purple-600 hover:text-purple-700 font-medium"
         >
           <ArrowLeft className="w-4 h-4 mr-1" />

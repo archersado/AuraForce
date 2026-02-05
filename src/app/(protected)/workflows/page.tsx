@@ -2,10 +2,18 @@
 
 import { useState } from 'react';
 import { FolderOpen } from 'lucide-react';
+import NextDynamic from 'next/dynamic';
 import WorkflowSpecUpload from '@/components/workflows/WorkflowSpecUpload';
 import WorkflowSpecList from '@/components/workflows/WorkflowSpecList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { WorkspacePanel } from '@/components/workspace';
+
+// Dynamically import WorkspacePanel to avoid SSR issues
+const WorkspacePanel = NextDynamic(() => import('@/components/workspace').then(mod => ({ default: mod.WorkspacePanel })), {
+  ssr: false,
+  loading: () => null,
+});
+
+export const dynamic = 'force-dynamic';
 
 export default function WorkflowsPage() {
   const [refreshKey, setRefreshKey] = useState(0);

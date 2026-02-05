@@ -91,7 +91,7 @@ export async function improveCode(
 export async function generateDocumentation(
   request: DocumentationGenerationRequest
 ): Promise<DocumentationGenerationResponse> {
-  const doc = generateDocumentation(request);
+  const doc = generateDocumentationContent(request);
 
   return {
     documentation: doc.content,
@@ -173,8 +173,11 @@ function generateImprovements(request: CodeImprovementRequest) {
 }
 
 // Helper function to generate placeholder documentation
-function generateDocumentation(request: DocumentationGenerationRequest) {
+function generateDocumentationContent(request: DocumentationGenerationRequest) {
   const { code, filePath, includeExamples = true, format = 'markdown' } = request;
+
+  // Extract language from file extension or default to 'javascript'
+  const language = filePath?.split('.').pop()?.toLowerCase() || 'javascript';
 
   let content = '';
   let examples: string[] = [];
@@ -337,20 +340,3 @@ function getPerformanceGoal(code: string, language: string): string {
   }
   return 'Code Clarity and Maintainability';
 }
-
-// Export all functions for use in components
-export {
-  improveCode,
-  generateDocumentation,
-  explainCode,
-};
-
-// Export types
-export type {
-  CodeImprovementRequest,
-  CodeImprovementResponse,
-  DocumentationGenerationRequest,
-  DocumentationGenerationResponse,
-  CodeExplanationRequest,
-  CodeExplanationResponse,
-};

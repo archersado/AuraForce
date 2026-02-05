@@ -25,7 +25,7 @@ export function CreateFolderDialog({
   onClose,
   onSubmit,
   parentPath = '/',
-}: CreateFolderProps) {
+}: CreateFolderDialogProps) {
   const [folderName, setFolderName] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);

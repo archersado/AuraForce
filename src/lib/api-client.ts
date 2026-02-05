@@ -3,13 +3,17 @@
  *
  * 统一的 API 请求客户端，自动为所有请求添加前缀。
  * 使用环境变量 NEXT_PUBLIC_API_PREFIX 配置 API 前缀。
+ *
+ * 所有请求都会自动处理 401 响应，重定向到登录页。
  */
 
 /**
  * 获取 API 前缀
  * 默认为空，通过 NEXT_PUBLIC_API_PREFIX 环境变量配置
+ * 服务器部署时设置 .env 中 NEXT_PUBLIC_API_PREFIX=/auraforce
+ * 本地开发时不需要设置，直接使用相对路径
  */
-const API_PREFIX = process.env.NEXT_PUBLIC_API_PREFIX || '/auraforce'
+const API_PREFIX = process.env.NEXT_PUBLIC_API_PREFIX || ''
 
 /**
  * 构建 API URL
@@ -25,6 +29,27 @@ export function buildApiUrl(path: string): string {
 }
 
 /**
+ * 处理 401 未授权响应，重定向到登录页
+ *
+ * @param currentPath - 当前页面路径（用于登录后重定向回来）
+ */
+function handleUnauthorized(currentPath?: string): never {
+  // 获取当前页面路径或使用 API 前缀作为默认
+  const redirectPath = currentPath || '/'
+
+  // 构建登录 URL，带重定向参数
+  const loginPath = API_PREFIX ? `${API_PREFIX}/login` : '/login'
+  const loginUrl = new URL(loginPath, window.location.origin)
+  loginUrl.searchParams.set('redirect', redirectPath)
+
+  // 重定向到登录页
+  window.location.href = loginUrl.toString()
+
+  // 抛出错误以确保函数不会继续执行（TypeScript 需要这个）
+  throw new Error('Redirecting to login page')
+}
+
+/**
  * 获取请求选项的辅助函数
  * 注意：不设置默认 Content-Type，让 fetch 自动处理（如 FormData 会自动设置 multipart/form-data）
  */
@@ -35,7 +60,7 @@ export function getRequestOptions(options?: RequestInit): RequestInit {
 }
 
 /**
- * 封装的 fetch 函数，自动使用 API 前缀
+ * 封装的 fetch 函数，自动使用 API 前缀并处理 401 重定向
  *
  * @param path - API 路径，如 '/api/auth/signin'
  * @param options - fetch 选项
@@ -47,7 +72,16 @@ export async function apiFetch(path: string, options?: RequestInit): Promise<Res
   // 如果已经在开发环境且需要使用相对路径（避免代理问题），可以直接处理
   // 但由于你已经配置了反向代理，这里统一使用前缀
 
-  return fetch(url, getRequestOptions(options))
+  const response = await fetch(url, getRequestOptions(options))
+
+  // 处理 401 未授权响应
+  if (response.status === 401) {
+    // 获取当前页面路径用于登录后重定向
+    const currentPath = window.location.pathname + window.location.search
+    handleUnauthorized(currentPath)
+  }
+
+  return response
 }
 
 /**

@@ -11,7 +11,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { X, Download, Copy, Trash2, Upload, Search } from 'lucide-react';
-import { FileBrowser } from './FileBrowser';
+import { FileBrowser, type FileBrowserHandle } from './FileBrowser';
 import { FileEditor } from './FileEditor';
 import { TabBar } from './TabBar';
 import { FileUpload } from './FileUpload';
@@ -49,7 +49,7 @@ export function WorkspacePanel({
   const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
 
   // Store FileBrowser ref for refreshing
-  const fileBrowserRef = useRef<{ refresh: () => void; forceRefresh: () => void }>(null);
+  const fileBrowserRef = useRef<FileBrowserHandle>(null);
   const refreshTriggerRef = useRef<number>(0);
 
   // Load file when selected

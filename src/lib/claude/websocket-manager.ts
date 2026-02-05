@@ -42,12 +42,13 @@ export interface WebSocketManagerConfig {
 
 /**
  * Default WebSocket URL from environment
- * Uses basePath from next.config.js (/auraforce)
+ * Uses NEXT_PUBLIC_WS_PREFIX (configurable for deployment)
  */
+const WS_PREFIX = process.env.NEXT_PUBLIC_WS_PREFIX || ''
 const DEFAULT_WS_URL =
   typeof window !== 'undefined' && window.location
-    ? `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/auraforce/ws/chat`
-    : 'ws://localhost:3000/auraforce/ws/chat';
+    ? `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}${WS_PREFIX}/ws/chat`
+    : `ws://localhost:3000${WS_PREFIX}/ws/chat`;
 
 /**
  * Create and manage a WebSocket client

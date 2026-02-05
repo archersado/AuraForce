@@ -25,7 +25,7 @@ import {
   Minimize2,
 } from 'lucide-react';
 
-import { CodeEditor } from './CodeEditor-v2';
+import CodeEditor from './CodeEditor-v2';
 import { MarkdownEditor } from './SimpleMarkdownEditor';
 import { MediaPreview } from './MediaPreview';
 import { LargeFileHandler } from './LargeFileHandler';
@@ -158,7 +158,14 @@ export function FileEditor({
   // Render content based on file type
   const renderContent = () => {
     if (isImage && metadata) {
-      return <MediaPreview path={path} metadata={metadata} workspaceRoot={workspaceRoot} />;
+      const metadataWithMimeType = {
+        path: metadata.path,
+        size: metadata.size,
+        lastModified: metadata.lastModified || new Date().toISOString(),
+        mimeType: 'image/' + fileType,
+        filename: metadata.filename,
+      };
+      return <MediaPreview path={path} metadata={metadataWithMimeType} workspaceRoot={workspaceRoot} />;
     }
 
     if (isMarkdown) {
@@ -195,16 +202,8 @@ export function FileEditor({
           onChange={handleChange}
           language={language}
           readOnly={readOnly}
-          theme="dark"
           height="calc(100vh - 200px)"
-          fontSize={14}
-          lineNumbers={true}
-          wrapLines={false}
-          codeFolding={true}
-          minimap={true}
-          bracketMatching={true}
-          onCursorPositionChange={setCursorPosition}
-          onSave={handleSave}
+          fileName={metadata?.filename || 'file'}
         />
       );
     }

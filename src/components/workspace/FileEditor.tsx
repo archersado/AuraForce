@@ -15,7 +15,7 @@
 import { useState, useEffect } from 'react';
 import { File, AlertCircle, Image as ImageIcon, FileText, Code, Download, Copy, Trash2, Save } from 'lucide-react';
 
-import { CodeEditor } from './CodeEditor-v2';
+import CodeEditor from './CodeEditor-v2';
 import { MarkdownEditor } from './SimpleMarkdownEditor';
 import { MediaPreview } from './MediaPreview';
 import { LargeFileHandler } from './LargeFileHandler';
@@ -149,7 +149,14 @@ export function FileEditor({
     }
 
     if (isImage && metadata) {
-      return <MediaPreview path={path} metadata={metadata} workspaceRoot={workspaceRoot} />;
+      const metadataWithMimeType = {
+        path: metadata.path,
+        size: metadata.size,
+        lastModified: metadata.lastModified || new Date().toISOString(),
+        mimeType: 'image/' + fileType,
+        filename: metadata.filename,
+      };
+      return <MediaPreview path={path} metadata={metadataWithMimeType} workspaceRoot={workspaceRoot} />;
     }
 
     if (isMarkdown) {
@@ -190,11 +197,8 @@ export function FileEditor({
           onChange={(value) => setEditorContent(value)}
           language={language}
           readOnly={readOnly}
-          theme="dark"
           height="calc(100vh - 200px)"
-          fontSize={14}
-          lineNumbers={true}
-          wrapLines={false}
+          fileName={metadata?.filename || 'file'}
         />
       );
     }

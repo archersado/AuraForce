@@ -44,7 +44,7 @@ export default function DiagnosticTool() {
     detectPath();
   }, []);
 
-  const addResult = (step: string, status: 'success' | 'error', message: string, details?: any) => {
+  const addResult = (step: string, status: 'pending' | 'success' | 'error', message: string, details?: any) => {
     setResults(prev => [...prev, { step, status, message, details }]);
   };
 
@@ -63,8 +63,8 @@ export default function DiagnosticTool() {
       addResult('Listing Directory', 'pending', 'Attempting to list root directory');
       const listing = await listDirectory('/', workspaceRoot || undefined);
       addResult('Listing Directory', 'success', `Found ${listing.files.length} items`, {
-        root: listing.root,
         path: listing.path,
+        isRoot: listing.isRoot,
         filesFound: listing.files.length
       });
 

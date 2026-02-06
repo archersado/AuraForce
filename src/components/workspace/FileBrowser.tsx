@@ -84,11 +84,11 @@ const FileBrowserImpl = forwardRef<FileBrowserHandle, FileBrowserProps>(
     // Expose functions via ref
     useImperativeHandle(ref, () => ({
       refresh: () => {
-        loadRootDirectory();
+        loadRootDirectory(false); // Don't preserve state for standard refresh
       },
       forceRefresh: () => {
         loadedPathsRef.current.clear();
-        loadRootDirectory();
+        loadRootDirectory(false);
       },
       openCreateFolder: () => {
         setIsCreateFolderOpen(true);
@@ -171,11 +171,30 @@ const FileBrowserImpl = forwardRef<FileBrowserHandle, FileBrowserProps>(
     };
 
     // Load root directory
-    const loadRootDirectory = async (): Promise<void> => {
+    const loadRootDirectory = async (preserveExpandedState = false): Promise<void> => {
       if (!workspaceRoot) return;
 
       setLoading(true);
       setError(null);
+
+      // Save expanded state before clearing tree
+      const expandedPaths = preserveExpandedState
+        ? new Set<string>()
+        : new Set<string>();
+
+      if (preserveExpandedState && tree.length > 0) {
+        const collectExpandedPaths = (nodes: TreeNode[]) => {
+          for (const node of nodes) {
+            if (node.isExpanded) {
+              expandedPaths.add(node.path);
+            }
+            if (node.children) {
+              collectExpandedPaths(node.children);
+            }
+          }
+        };
+        collectExpandedPaths(tree);
+      }
 
       try {
         const result = await listDirectory('/', workspaceRoot);
@@ -183,7 +202,7 @@ const FileBrowserImpl = forwardRef<FileBrowserHandle, FileBrowserProps>(
         const rootNodes: TreeNode[] = result.files.map((file) => ({
           ...file,
           children: file.type === 'directory' ? [] : undefined,
-          isExpanded: false,
+          isExpanded: preserveExpandedState && expandedPaths.has(file.path),
           isLoading: false,
           depth: 0,
         }));
@@ -197,6 +216,13 @@ const FileBrowserImpl = forwardRef<FileBrowserHandle, FileBrowserProps>(
 
         setTree(rootNodes);
         loadedPathsRef.current.add('/');
+
+        // Re-expand folders that were previously expanded
+        if (preserveExpandedState && expandedPaths.size > 0) {
+          setTimeout(() => {
+            reloadTree(rootNodes);
+          }, 0);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load directory');
       } finally {
@@ -355,7 +381,7 @@ const FileBrowserImpl = forwardRef<FileBrowserHandle, FileBrowserProps>(
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={loadRootDirectory}
+              onClick={() => loadRootDirectory(true)}
               className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
               title="Refresh"
               disabled={disabled || loading}

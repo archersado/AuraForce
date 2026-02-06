@@ -67,7 +67,7 @@ export function MessageList() {
       aria-live="polite"
       aria-label="Chat messages"
     >
-      <div className="max-w-4xl mx-auto space-y-4">
+      <div className="max-w-6xl mx-auto space-y-4">
         {messages.map((message) => (
           <MessageBubble
             key={message.id}

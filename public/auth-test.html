@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NextAuth Test</title>
+</head>
+<body>
+  <h1>NextAuth Test Page</h1>
+
+  <div>
+    <h2>Step 1: Sign In Test</h2>
+    <form id="loginForm">
+      <div>
+        <label>Email:</label>
+        <input type="email" id="email" value="test@example.com">
+      </div>
+      <div>
+        <label>Password:</label>
+        <input type="password" id="password" value="password">
+      </div>
+      <button type="submit" id="signInBtn">Sign In</button>
+    </form>
+    <pre id="result"></pre>
+  </div>
+
+  <div>
+    <h2>Step 2: Check Cookies</h2>
+    <button id="checkCookiesBtn">Check Cookies</button>
+    <pre id="cookiesResult"></pre>
+  </div>
+
+  <div>
+    <h2>Step 3: Test Session API</h2>
+    <button id="testSessionBtn">Test Session API</button>
+    <pre id="sessionResult"></pre>
+  </div>
+
+  <script>
+    const basePath = '/auraforce';
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      document.getElementById('result').textContent = 'Signing in...';
+
+      try {
+        const response = await fetch(`${basePath}/api/auth/signin`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ email, password }),
+        });
+        const data = await response.json();
+        document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+
+        if (data.success || data.validated) {
+          // Now sign in with NextAuth.js
+          const formData = new FormData();
+          formData.append('email', email);
+          formData.append('password', password);
+          formData.append('csrf_token', '123'); // bypass CSRF for test
+
+          const signInResponse = await fetch(`${basePath}/api/auth/callback/credentials`, {
+            method: 'POST',
+            body: formData,
+            credentials: 'include',
+            redirect: 'manual',
+          });
+
+          console.log('SignIn response status:', signInResponse.status);
+          console.log('SignIn response headers:', Object.fromEntries(signInResponse.headers.entries()));
+
+          document.getElementById('result').textContent += '\n\nSignIn response status: ' + signInResponse.status;
+        }
+      } catch (error) {
+        document.getElementById('result').textContent = 'Error: ' + error;
+      }
+    });
+
+    document.getElementById('checkCookiesBtn').addEventListener('click', () => {
+      const cookies = document.cookie;
+      const cookiesObj = {};
+      cookies.split('; ').forEach(c => {
+        const [name, value] = c.split('=');
+        if (name && value) cookiesObj[name] = value;
+      });
+      document.getElementById('cookiesResult').textContent = JSON.stringify(cookiesObj, null, 2);
+    });
+
+    document.getElementById('testSessionBtn').addEventListener('click', async () => {
+      try {
+        const response = await fetch(`${basePath}/api/debug/with-request`, {
+          credentials: 'include',
+        });
+        const data = await response.json();
+        document.getElementById('sessionResult').textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        document.getElementById('sessionResult').textContent = 'Error: ' + error;
+      }
+    });
+  </script>
+
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    div { margin-bottom: 20px; }
+    input { margin-right: 10px; }
+    button { padding: 8px 16px; margin-right: 10px; }
+    pre { background: #f0f0f0; padding: 10px; overflow: auto; }
+  </style>
+</body>
+</html>

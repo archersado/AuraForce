@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { removeWorkflow } from '@/lib/workflows/deployer';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -25,7 +25,7 @@ export async function DELETE(
 
     // Verify authentication
     const session = await getSession();
-    if (!session?.userId || !session.user) {
+    if (!session?.user?.id || !session.user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -45,7 +45,7 @@ export async function DELETE(
     }
 
     // Verify ownership
-    if (workflow.userId !== session.userId) {
+    if (workflow.userId !== session?.user?.id) {
       return NextResponse.json(
         { error: 'Forbidden' },
         { status: 403 }
@@ -94,7 +94,7 @@ export async function PATCH(
 
     // Verify authentication
     const session = await getSession();
-    if (!session?.userId || !session.user) {
+    if (!session?.user?.id || !session.user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -126,7 +126,7 @@ export async function PATCH(
     }
 
     // Verify ownership
-    if (workflow.userId !== session.userId) {
+    if (workflow.userId !== session?.user?.id) {
       return NextResponse.json(
         { error: 'Forbidden' },
         { status: 403 }
@@ -175,7 +175,7 @@ export async function GET(
 
     // Verify authentication
     const session = await getSession();
-    if (!session?.userId || !session.user) {
+    if (!session?.user?.id || !session.user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -195,7 +195,7 @@ export async function GET(
     }
 
     // Verify ownership or public visibility
-    if (workflow.userId !== session.userId && workflow.visibility !== 'public') {
+    if (workflow.userId !== session?.user?.id && workflow.visibility !== 'public') {
       return NextResponse.json(
         { error: 'Forbidden' },
         { status: 403 }

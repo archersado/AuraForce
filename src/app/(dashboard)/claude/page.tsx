@@ -5,7 +5,7 @@
  * Protected route - requires authentication.
  */
 
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { redirect } from 'next/navigation';
 import { ChatInterface } from '@/components/claude';
 

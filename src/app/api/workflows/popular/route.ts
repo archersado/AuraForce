@@ -9,7 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { handleApiError } from '@/lib/errors';
 
 /**
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
   try {
     // 验证认证（可选：公开数据也可以访问）
     const session = await getSession();
-    const isAuthenticated = !!session?.userId;
+    const isAuthenticated = !!session?.user?.id;
 
     // 解析查询参数
     const { searchParams } = new URL(request.url);
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
     if (isAuthenticated) {
       where.OR = [
         { visibility: 'public' },
-        { userId: session.userId },
+        { userId: session?.user?.id },
       ];
     }
 

@@ -10,7 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { NotFoundError, ForbiddenError, AppError } from '@/lib/errors';
 import { existsSync } from 'fs';
 import AdmZip from 'adm-zip';
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // 验证认证
     const session = await getSession();
-    if (!session?.userId || !session.user) {
+    if (!session?.user?.id || !session.user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // 验证权限：只能加载公开工作流或自己的私有工作流
-    if (workflow.visibility === 'private' && workflow.userId !== session.userId) {
+    if (workflow.visibility === 'private' && workflow.userId !== session?.user?.id) {
       throw new ForbiddenError('Cannot load private workflows owned by others');
     }
 

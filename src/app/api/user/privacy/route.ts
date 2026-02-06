@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { privacyService } from '@/lib/privacy/privacy.service';
 
 /**
@@ -18,7 +18,7 @@ export async function GET() {
       );
     }
 
-    const settings = await privacyService.getPrivacySettings(session.user.id);
+    const settings = await privacyService.getPrivacySettings(session?.user?.id);
 
     return NextResponse.json({
       success: true,
@@ -71,7 +71,7 @@ export async function PATCH(request: Request) {
       );
     }
 
-    const settings = await privacyService.updatePrivacySettings(session.user.id, body);
+    const settings = await privacyService.updatePrivacySettings(session?.user?.id, body);
 
     return NextResponse.json({
       success: true,

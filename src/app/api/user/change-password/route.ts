@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { prisma } from '@/lib/db';
 import { validatePassword, verifyPassword, hashPassword } from '@/lib/auth/password-validation';
 
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
 
     // Get user with password
     const user = await prisma.user.findUnique({
-      where: { id: session.userId },
+      where: { id: session?.user?.id },
       select: {
         id: true,
         password: true,
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
 
     // Update password
     await prisma.user.update({
-      where: { id: session.userId },
+      where: { id: session?.user?.id },
       data: { password: hashedNewPassword },
     });
 

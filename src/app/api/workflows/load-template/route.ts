@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { existsSync, mkdirSync } from 'fs';
 import AdmZip from 'adm-zip';
 import path from 'path';
@@ -16,7 +16,7 @@ import path from 'path';
 export async function POST(request: NextRequest) {
   try {
     const session = await getSession();
-    if (!session?.userId) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Allow loading public templates or own templates
-    if (template.userId !== session.userId && template.visibility !== 'public') {
+    if (template.userId !== session?.user?.id && template.visibility !== 'public') {
       return NextResponse.json(
         { error: 'Access denied' },
         { status: 403 }
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     // Determine target workspace path
     const targetWorkspacePath = workspacePath
       ? workspacePath
-      : path.join(PLATFORM_WORKSPACE_ROOT, session.userId, projectName);
+      : path.join(PLATFORM_WORKSPACE_ROOT, session?.user?.id, projectName);
 
     // Check if zip path exists
     const zipPath = template.ccPath;
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
     // Check if project already exists, if not create it
     const existingProject = await prisma.userWorkspaceProject.findFirst({
       where: {
-        userId: session.userId,
+        userId: session?.user?.id,
         name: projectName,
       },
     });
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
     if (!existingProject) {
       await prisma.userWorkspaceProject.create({
         data: {
-          userId: session.userId,
+          userId: session?.user?.id,
           name: projectName,
           path: targetWorkspacePath,
           workflowTemplateId: templateId,

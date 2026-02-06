@@ -7,15 +7,10 @@ import * as React from 'react';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Time in ms before data is considered stale
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      // Time in ms that inactive queries will remain in cache
-      gcTime: 10 * 60 * 1000, // 10 minutes (was cacheTime in v4)
-      // Refetch on window focus
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
       refetchOnWindowFocus: false,
-      // Refetch on reconnect
       refetchOnReconnect: true,
-      // Retry failed queries
       retry: 1,
     },
     mutations: {

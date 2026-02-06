@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { prisma } from '@/lib/db';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
@@ -66,7 +66,7 @@ export async function PATCH(request: NextRequest) {
 
       // Generate unique filename
       const ext = avatarFile.type.split('/')[1];
-      const filename = `${session.userId}-${Date.now()}.${ext}`;
+      const filename = `${session?.user?.id}-${Date.now()}.${ext}`;
 
       // Ensure avatars directory exists
       const avatarsDir = join(process.cwd(), 'public', 'avatars');
@@ -95,7 +95,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const updatedUser = await prisma.user.update({
-      where: { id: session.userId },
+      where: { id: session?.user?.id },
       data: updates,
       select: {
         id: true,

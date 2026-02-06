@@ -8,7 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { unlink, stat } from 'fs/promises';
 import { relative, resolve } from 'path';
 
@@ -83,8 +83,8 @@ export async function DELETE(request: NextRequest) {
     // Verify authentication using custom session system
     // Skip authentication in development mode for easier testing
     const isDev = process.env.NODE_ENV === 'development';
-    const session = await getSession({ skipInDev: isDev });
-    if (!session?.userId && !isDev) {
+    const session = await getSession();
+    if (!session?.user?.id && !isDev) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }

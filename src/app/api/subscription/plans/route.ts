@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { subscriptionService } from '@/lib/subscription/subscription.service';
 import { getAllPlans } from '@/lib/subscription/plans';
 
@@ -21,7 +21,7 @@ export async function GET() {
 
     const [allPlans, currentPlan] = await Promise.all([
       getAllPlans(),
-      subscriptionService.getCurrentPlan(session.user.id),
+      subscriptionService.getCurrentPlan(session?.user?.id),
     ]);
 
     return NextResponse.json({

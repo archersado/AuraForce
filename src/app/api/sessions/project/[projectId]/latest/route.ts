@@ -8,7 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { sessionService } from '@/lib/services/session-service';
 import type { ApiResponse, SessionDTO } from '@/types/session';
 
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     // Get authenticated session
     const session = await getSession();
 
-    if (!session?.userId) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         {
           success: false,
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Get sessions for this project, ordered by updatedAt desc, limit to 1
-    const result = await sessionService.listSessions(session.userId, {
+    const result = await sessionService.listSessions(session?.user?.id, {
       projectId,
       limit: 1,
     });

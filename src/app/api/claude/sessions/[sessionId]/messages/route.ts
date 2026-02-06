@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { getClaudeSessionMessages } from '@/lib/claude/project-sessions';
 import type { ApiResponse, SessionDTO, StoredMessage, MessageRole } from '@/types/session';
 
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     // Get authenticated session
     const session = await getSession();
 
-    if (!session?.userId) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         {
           success: false,

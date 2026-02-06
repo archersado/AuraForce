@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { subscriptionService } from '@/lib/subscription/subscription.service';
 
 /**
@@ -18,7 +18,7 @@ export async function GET() {
       );
     }
 
-    const usageMetrics = await subscriptionService.getUsageMetrics(session.user.id);
+    const usageMetrics = await subscriptionService.getUsageMetrics(session?.user?.id);
 
     return NextResponse.json({
       success: true,

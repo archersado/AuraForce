@@ -14,7 +14,6 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSearchParams } from 'next/navigation';
 import { useClaudeStore } from '@/lib/store/claude-store';
-import { ChatHeader } from './ChatHeader';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
 import { ConnectionStatus, ConnectionWarning } from './ConnectionStatus';
@@ -140,20 +139,6 @@ export function ChatInterface({ projectPath, projectId, projectName }: ChatInter
   });
 
   const { latency, reconnectAttempts, maxReconnectAttempts, reconnect } = useWebSocketControls();
-
-  // Handle pause (Story 3.5)
-  const handlePause = useCallback(() => {
-    pauseSession();
-    streamManagerRef.current?.pauseStream();
-    showToast('info', 'Session paused');
-  }, [pauseSession, showToast]);
-
-  // Handle resume (Story 3.5)
-  const handleResume = useCallback(() => {
-    resumeSession();
-    streamManagerRef.current?.resumeStream();
-    showToast('info', 'Session resumed');
-  }, [resumeSession, showToast]);
 
   // Handle terminate (Story 3.5)
   const handleTerminate = useCallback(async () => {
@@ -839,16 +824,6 @@ export function ChatInterface({ projectPath, projectId, projectName }: ChatInter
         )}
       </AnimatePresence>
 
-      {/* Header */}
-      <ChatHeader
-        onNewChat={handleNewChat}
-        onSettings={handleSettings}
-        onShowSessions={handleShowSessions}
-        onShowClaudeSessions={handleShowClaudeSessions}
-        sessionTitle={currentSession?.title}
-        onReconnect={handleRetryConnection}
-      />
-
       {/* Connection Warning Banner */}
       <ConnectionWarning
         onRetry={handleRetryConnection}
@@ -884,14 +859,12 @@ export function ChatInterface({ projectPath, projectId, projectName }: ChatInter
           savingIndicator={isSavingSession}
         />
 
-        {/* Session Control Buttons (Story 3.5) */}
+        {/* Session Control Buttons - simplified to only show terminate */}
         {currentSession && (
           <div className="absolute -top-12 right-4">
             <SessionControlButtons
               controlState={sessionControlState}
               isStreaming={isStreaming}
-              onPause={handlePause}
-              onResume={handleResume}
               onTerminate={() => setShowTerminateDialog(true)}
               disabled={isLoadingSession}
             />

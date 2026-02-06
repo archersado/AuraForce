@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  basePath: '/auraforce',
-  assetPrefix: '/auraforce',
+  basePath: '/auraforce', // Commented out for local development
+  assetPrefix: '/auraforce', // Commented out for local development
   output: 'standalone',
   experimental: {
     esmExternals: true,

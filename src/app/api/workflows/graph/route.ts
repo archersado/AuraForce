@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readFile } from 'fs/promises';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import {
   WorkflowGraphBuilder,
   createWorkflowParser,
@@ -27,7 +27,7 @@ export async function GET(
   try {
     const { id } = await params;
     const session = await getSession();
-    if (!session?.userId) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -40,7 +40,7 @@ export async function GET(
       return NextResponse.json({ error: 'Workflow not found' }, { status: 404 });
     }
 
-    if (workflow.userId !== session.userId) {
+    if (workflow.userId !== session?.user?.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -119,7 +119,7 @@ export async function POST(
   try {
     const { id } = await params;
     const session = await getSession();
-    if (!session?.userId) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -135,7 +135,7 @@ export async function POST(
       return NextResponse.json({ error: 'Workflow not found' }, { status: 404 });
     }
 
-    if (workflow.userId !== session.userId) {
+    if (workflow.userId !== session?.user?.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -222,7 +222,7 @@ export async function POST(
 export async function generateWorkflowGraphAction(request: NextRequest) {
   try {
     const session = await getSession();
-    if (!session?.userId) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -240,7 +240,7 @@ export async function generateWorkflowGraphAction(request: NextRequest) {
     const workflows = await prisma.workflowSpec.findMany({
       where: {
         id: { in: ids },
-        userId: session.userId,
+        userId: session?.user?.id,
       },
     });
 

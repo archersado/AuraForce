@@ -14,7 +14,7 @@ import AdmZip from 'adm-zip';
 import path from 'path';
 import { validateWorkflowSpecContent, generateCCPath } from '@/lib/workflows/spec-validator';
 import { deployWorkflow } from '@/lib/workflows/deployer';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 
 const prisma = new PrismaClient();
 
@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
   try {
     // Verify authentication
     const session = await getSession();
-    if (!session?.userId || !session.user) {
+    if (!session?.user?.id || !session.user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -169,7 +169,7 @@ export async function POST(request: NextRequest) {
       // Check for duplicate workflow name
       const existing = await prisma.workflowSpec.findFirst({
         where: {
-          userId: session.userId,
+          userId: session?.user?.id,
           name: workflowName,
         },
       });
@@ -220,7 +220,7 @@ export async function POST(request: NextRequest) {
           version: metadata.version || '1.0.0',
           author: metadata.author || session.user.name || session.user.email || 'Unknown',
           ccPath: result.zipPath, // Store zip path
-          userId: session.userId,
+          userId: session?.user?.id,
           status: 'deployed',
           metadata: {
             ...metadata,
@@ -321,7 +321,7 @@ export async function POST(request: NextRequest) {
       // Check for duplicate workflow name
       const existing = await prisma.workflowSpec.findFirst({
         where: {
-          userId: session.userId,
+          userId: session?.user?.id,
           name: validation.metadata.name,
         },
       });
@@ -361,7 +361,7 @@ export async function POST(request: NextRequest) {
           version: validation.metadata.version || '1.0.0',
           author: validation.metadata.author || session.user.name || session.user.email || 'Unknown',
           ccPath: deployResult.ccPath,
-          userId: session.userId,
+          userId: session?.user?.id,
           status: 'deployed',
           metadata: {
             tags: validation.metadata.tags || [],

@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { NotFoundError, AppError } from '@/lib/errors';
 
 interface RouteParams {
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     // 验证认证
     const session = await getSession();
-    if (!session?.userId || !session.user) {
+    if (!session?.user?.id || !session.user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // 验证权限：私有工作流只能被创建者查看
-    if (workflow.visibility === 'private' && workflow.userId !== session.userId) {
+    if (workflow.visibility === 'private' && workflow.userId !== session?.user?.id) {
       return NextResponse.json(
         { error: 'Forbidden' },
         { status: 403 }
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const favorite = await prisma.workflowFavorite.findUnique({
       where: {
         userId_workflowId: {
-          userId: session.userId,
+          userId: session?.user?.id,
           workflowId: id,
         },
       },
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // 验证认证
     const session = await getSession();
-    if (!session?.userId || !session.user) {
+    if (!session?.user?.id || !session.user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -154,7 +154,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // 验证权限：只能收藏公开工作流或自己的私有工作流
-    if (workflow.visibility === 'private' && workflow.userId !== session.userId) {
+    if (workflow.visibility === 'private' && workflow.userId !== session?.user?.id) {
       return NextResponse.json(
         {
           error: 'FORBIDDEN',
@@ -165,7 +165,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // 不能收藏自己的工作流（可选，根据需求决定）
-    // if (workflow.userId === session.userId) {
+    // if (workflow.userId === session?.user?.id) {
     //   return NextResponse.json(
     //     { error: 'VALIDATION_ERROR', message: 'Cannot favorite your own workflow' },
     //     { status: 400 }
@@ -176,12 +176,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       // 收藏工作流
       await prisma.workflowFavorite.create({
         data: {
-          userId: session.userId,
+          userId: session?.user?.id,
           workflowId,
         },
       });
 
-      console.log(`[Workflow Favorite] User ${session.userId} favorited workflow ${workflowId}`);
+      console.log(`[Workflow Favorite] User ${session?.user?.id} favorited workflow ${workflowId}`);
 
       // 更新统计信息：增加收藏数
       try {
@@ -218,12 +218,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       // 取消收藏工作流
       await prisma.workflowFavorite.deleteMany({
         where: {
-          userId: session.userId,
+          userId: session?.user?.id,
           workflowId,
         },
       });
 
-      console.log(`[Workflow Favorite] User ${session.userId} unfavorited workflow ${workflowId}`);
+      console.log(`[Workflow Favorite] User ${session?.user?.id} unfavorited workflow ${workflowId}`);
 
       // 更新统计信息：减少收藏数
       try {
@@ -286,7 +286,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     // 验证认证
     const session = await getSession();
-    if (!session?.userId || !session.user) {
+    if (!session?.user?.id || !session.user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -296,7 +296,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     // 取消收藏工作流
     const result = await prisma.workflowFavorite.deleteMany({
       where: {
-        userId: session.userId,
+        userId: session?.user?.id,
         workflowId,
       },
     });
@@ -305,7 +305,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       throw new NotFoundError('Favorite relationship');
     }
 
-    console.log(`[Workflow Favorite] User ${session.userId} unfavorited workflow ${workflowId}`);
+    console.log(`[Workflow Favorite] User ${session?.user?.id} unfavorited workflow ${workflowId}`);
 
     // 更新统计信息：减少收藏数
     try {

@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { prisma } from '@/lib/db';
 import { app, isDevelopment } from '@/lib/config';
 import { verifyPassword, sanitizeEmail, validateEmail } from '@/lib/auth/password-validation';
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     // Rate limiting
     const ip = request.headers.get('x-forwarded-for') || 'unknown';
-    const { result } = checkRateLimit(`email-change:${session.userId}`, {
+    const { result } = checkRateLimit(`email-change:${session?.user?.id}`, {
       maxRequests: 5,
       windowMs: 60 * 60 * 1000, // 1 hour
     });
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
 
     // Get user with password
     const user = await prisma.user.findUnique({
-      where: { id: session.userId },
+      where: { id: session?.user?.id },
       select: {
         id: true,
         email: true,

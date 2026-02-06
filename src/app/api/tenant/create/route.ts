@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { tenantService } from '@/lib/tenant/tenant.service';
 import { CreateTenantDto } from '@/lib/tenant/config';
 
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
       settings,
     };
 
-    const tenant = await tenantService.createTenant(session.user.id, tenantData);
+    const tenant = await tenantService.createTenant(session?.user?.id, tenantData);
 
     return NextResponse.json({
       success: true,

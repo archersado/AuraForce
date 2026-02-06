@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { existsSync, mkdirSync } from 'fs';
 import path from 'path';
 
@@ -42,7 +42,7 @@ function ensureUserWorkspaceDir(userId: string): string {
 export async function GET(request: NextRequest) {
   try {
     const session = await getSession();
-    if (!session?.userId) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
 
     const prisma = (await import('@/lib/prisma')).prisma;
     const projects = await prisma.userWorkspaceProject.findMany({
-      where: { userId: session.userId },
+      where: { userId: session?.user?.id },
       orderBy: { createdAt: 'desc' as const },
     });
 
@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getSession();
-    if (!session?.userId) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
     const prisma = (await import('@/lib/prisma')).prisma;
     const existing = await prisma.userWorkspaceProject.findFirst({
       where: {
-        userId: session.userId,
+        userId: session?.user?.id,
         name: sanitizedName,
       },
     });
@@ -139,13 +139,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Create project directory
-    const userWorkspacePath = ensureUserWorkspaceDir(session.userId);
+    const userWorkspacePath = ensureUserWorkspaceDir(session?.user?.id);
     const projectPath = path.join(userWorkspacePath, sanitizedName);
 
     // Create project in database
     const project = await prisma.userWorkspaceProject.create({
       data: {
-        userId: session.userId,
+        userId: session?.user?.id,
         workflowTemplateId: null,
         name: sanitizedName,
         path: projectPath,

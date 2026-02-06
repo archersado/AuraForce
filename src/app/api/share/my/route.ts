@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { privacyService } from '@/lib/privacy/privacy.service';
 
 /**
@@ -18,7 +18,7 @@ export async function GET() {
       );
     }
 
-    const shareLinks = await privacyService.getUserShareLinks(session.user.id);
+    const shareLinks = await privacyService.getUserShareLinks(session?.user?.id);
 
     return NextResponse.json({
       success: true,

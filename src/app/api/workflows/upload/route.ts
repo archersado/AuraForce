@@ -10,26 +10,46 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import type { Prisma } from '@prisma/client';
 import { validateWorkflowSpecContent } from '@/lib/workflows/spec-validator';
 import { deployWorkflow } from '@/lib/workflows/deployer';
-import { auth } from '@/lib/auth';
+import { requireAuth } from '@/lib/custom-session';
+import { cookies } from 'next/headers';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB per file
 const MAX_TOTAL_SIZE = 50 * 1024 * 1024; // 50MB total
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify authentication
-    const session = await auth();
-    if (!session?.user?.id) {
+    // Debug: Check cookies first
+    const cookieStore = await cookies();
+    const sessionToken = cookieStore.get('auraforce-session');
+    console.log('[Workflow Upload] Cookies:', {
+      hasAuraforceSession: !!sessionToken,
+      tokenValue: sessionToken?.value?.substring(0, 30) + '...',
+      allCookies: cookieStore.getAll().map(c => c.name),
+    });
+
+    // Verify authentication using custom session
+    const session = await requireAuth();
+    if (!session) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Unauthorized - Please login first' },
         { status: 401 }
       );
     }
+    console.log('[Workflow Upload] Session:', {
+      user: `${session?.user?.id} (${session.user.email})`,
+      hasUserId: !!session?.user?.id,
+    });
 
     const formData = await request.formData();
     const files = formData.getAll('files');
+
+    // Get optional metadata from form (user-provided overrides)
+    const workflowName = formData.get('workflowName') as string | undefined;
+    const workflowDescription = formData.get('workflowDescription') as string | undefined;
+    const visibility = formData.get('visibility') as string | undefined;
 
     if (!files || files.length === 0) {
       return NextResponse.json(
@@ -37,6 +57,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Validate visibility value
+    const validVisibility = ['public', 'private'].includes(visibility || '') ? visibility : 'private';
 
     const results: Array<{
       fileName: string;
@@ -81,17 +104,11 @@ export async function POST(request: NextRequest) {
       // Validate workflow spec
       const validation = validateWorkflowSpecContent(content);
 
-      if (!validation.valid) {
-        results.push({
-          fileName: file.name,
-          success: false,
-          error: `Validation failed: ${validation.errors.join(', ')}`,
-          warnings: validation.warnings,
-        });
-        continue;
-      }
+      // Use provided name if available, otherwise use validated name
+      const finalName = workflowName || validation.metadata?.name;
+      const finalDescription = workflowDescription || validation.metadata?.description;
 
-      if (!validation.metadata?.name) {
+      if (!finalName || finalName.trim() === '') {
         results.push({
           fileName: file.name,
           success: false,
@@ -104,8 +121,8 @@ export async function POST(request: NextRequest) {
       // Check for duplicate workflow name
       const existing = await prisma.workflowSpec.findFirst({
         where: {
-          userId: session.user.id,
-          name: validation.metadata.name,
+          userId: session?.user?.id,
+          name: finalName,
         },
       });
 
@@ -113,7 +130,7 @@ export async function POST(request: NextRequest) {
         results.push({
           fileName: file.name,
           success: false,
-          error: `Workflow "${validation.metadata.name}" already exists`,
+          error: `Workflow "${finalName}" already exists`,
           warnings: validation.warnings,
         });
         continue;
@@ -122,8 +139,17 @@ export async function POST(request: NextRequest) {
       // Deploy to Claude Code directory
       const deployResult = await deployWorkflow(
         content,
-        validation.metadata.name,
-        validation.metadata
+        finalName,
+        validation.metadata || {
+          name: finalName,
+          description: finalDescription || '',
+          version: '1.0.0',
+          author: session.user.name || 'Unknown',
+          tags: [],
+          requires: [],
+          resources: [],
+          agents: [],
+        }
       );
 
       if (!deployResult.success) {
@@ -139,20 +165,22 @@ export async function POST(request: NextRequest) {
       // Store metadata in database
       const workflowSpec = await prisma.workflowSpec.create({
         data: {
-          name: validation.metadata.name,
-          description: validation.metadata.description,
-          version: validation.metadata.version || '1.0.0',
-          author: validation.metadata.author || session.user.name || 'Unknown',
+          name: finalName,
+          description: finalDescription,
+          version: validation.metadata?.version || '1.0.0',
+          author: validation.metadata?.author || session.user.name || 'Unknown',
           ccPath: deployResult.ccPath,
-          userId: session.user.id,
+          userId: session?.user?.id,
           status: 'deployed',
+          visibility: validVisibility,
           metadata: {
-            tags: validation.metadata.tags || [],
-            requires: validation.metadata.requires || [],
-            resources: validation.metadata.resources?.map(r => ({ path: r.path, description: r.description })) || [],
-            agents: validation.metadata.agents || [],
-            subWorkflows: validation.metadata.subWorkflows || [],
-          },
+            tags: validation.metadata?.tags || [],
+            requires: validation.metadata?.requires || [],
+            resources: validation.metadata?.resources?.map(r => ({ path: r.path, description: r.description })) || [],
+            inputs: validation.metadata?.inputs || [],
+            agents: validation.metadata?.agents || [],
+            subWorkflows: validation.metadata?.subWorkflows || [],
+          } as unknown as Prisma.InputJsonValue,
         },
       });
 
@@ -196,9 +224,9 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
-    // Authenticate
-    const session = await auth();
-    if (!session?.user?.id) {
+    // Authenticate using custom session
+    const session = await requireAuth();
+    if (!session) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -212,7 +240,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search');
 
     const where: any = {
-      userId: session.user.id,
+      userId: session?.user?.id,
     };
 
     if (status) {
@@ -263,9 +291,9 @@ export async function GET(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
-    // Authenticate
-    const session = await auth();
-    if (!session?.user?.id) {
+    // Authenticate using custom session
+    const session = await requireAuth();
+    if (!session) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -286,7 +314,7 @@ export async function DELETE(request: NextRequest) {
     const workflow = await prisma.workflowSpec.findFirst({
       where: {
         id,
-        userId: session.user.id,
+        userId: session?.user?.id,
       },
     });
 

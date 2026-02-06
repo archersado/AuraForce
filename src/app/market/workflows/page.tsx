@@ -5,55 +5,61 @@
 
 'use client';
 
-import { useEffect } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { useState } from 'react';
+import { Plus, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { WorkflowsCard, type WorkflowSpec } from '@/components/workflows/WorkflowsCard';
 import { useWorkflows } from '@/hooks/useWorkflows';
 import { Button } from '@/components/ui/button';
+import WorkflowSpecUpload from '@/components/workflows/WorkflowSpecUpload';
 
 export default function MarketplacePage() {
   const router = useRouter();
   const { data: workflowsData, isLoading: loading, error, refetch } = useWorkflows();
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
 
   const handleSelectWorkflow = (workflowId: string) => {
     router.push(`/workspace/new`);
   };
 
+  const handleUploadComplete = () => {
+    refetch?.();
+    setIsUploadDialogOpen(false);
+  };
+
   const workflows = workflowsData?.data || [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 min-h-screen flex flex-col">
-      {/* Unified AppHeader */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center gap-4">
-          <Link
-            href="/workspace"
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            返回工作空间
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              工作流市场
-            </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              浏览、下载和导入工作流模板
-            </p>
-          </div>
-          <Button asChild>
-            <Link href="/workspace/new">
-              新建工作空间
-            </Link>
-          </Button>
-        </div>
-      </div>
-
+    <div className="bg-gradient-to-br from-purple-50 via-white to-blue-50 min-h-screen flex flex-col">
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-6">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-6">
+
+          {/* Page Actions */}
+          <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                工作流市场
+              </h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                浏览、下载和导入工作流模板
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button asChild variant="outline">
+                <Link href="/workspace/new">
+                  新建工作空间
+                </Link>
+              </Button>
+              <Button onClick={() => setIsUploadDialogOpen(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                上传工作流
+              </Button>
+            </div>
+          </div>
+
+          <div className="mb-3">
             <Button
               variant="outline"
               onClick={() => refetch?.()}
@@ -104,6 +110,36 @@ export default function MarketplacePage() {
           )}
         </div>
       </div>
+
+      {/* Upload Dialog */}
+      {isUploadDialogOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-2xl flex flex-col w-full max-w-2xl max-h-[90vh]">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 rounded-t-lg">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  上传工作流
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  支持 .md, .yaml, .yml 格式的工作流文件
+                </p>
+              </div>
+              <button
+                onClick={() => setIsUploadDialogOpen(false)}
+                className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <WorkflowSpecUpload onUploadComplete={handleUploadComplete} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

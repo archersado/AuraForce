@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { FileSystemSyncService } from '@/lib/workflows/sync-service';
 
 // Simple in-memory cache (in production, use Redis or similar)
@@ -19,7 +19,7 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 export async function GET(request: NextRequest) {
   try {
     const session = await getSession();
-    if (!session?.userId || !session.user) {
+    if (!session?.user?.id || !session.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     const includeDependencies = searchParams.get('includeDependencies') === 'true';
 
     // Build cache key
-    const cacheKey = `${session.userId}:${query}:${status}:${syncStatus}:${tags}:${sortBy}:${sortOrder}:${page}:${limit}`;
+    const cacheKey = `${session?.user?.id}:${query}:${status}:${syncStatus}:${tags}:${sortBy}:${sortOrder}:${page}:${limit}`;
 
     // Check cache
     const cached = specCache.get(cacheKey);
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     // Build where clause
     const where: any = {
       OR: [
-        { userId: session.userId },
+        { userId: session?.user?.id },
         { visibility: 'public' },
       ],
     };
@@ -163,7 +163,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getSession();
-    if (!session?.userId || !session.user) {
+    if (!session?.user?.id || !session.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -181,7 +181,7 @@ export async function POST(request: NextRequest) {
     const workflows = await prisma.workflowSpec.findMany({
       where: {
         id: { in: workflowIds },
-        userId: session.userId,
+        userId: session?.user?.id,
       },
     });
 

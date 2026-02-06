@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { tenantService } from '@/lib/tenant/tenant.service';
 import { TenantRole } from '@/lib/tenant/rbac.service';
 
@@ -40,7 +40,7 @@ export async function POST(
       );
     }
 
-    const invitation = await tenantService.inviteMember(tenantId, session.user.id, email, role as TenantRole);
+    const invitation = await tenantService.inviteMember(tenantId, session?.user?.id, email, role as TenantRole);
 
     return NextResponse.json({
       success: true,

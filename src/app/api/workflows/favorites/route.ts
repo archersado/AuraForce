@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { handleApiError } from '@/lib/errors';
 
 /**
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
   try {
     // 验证认证
     const session = await getSession();
-    if (!session?.userId || !session.user) {
+    if (!session?.user?.id || !session.user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
 
     // 构建查询条件
     const where: any = {
-      userId: session.userId,
+      userId: session?.user?.id,
     };
 
     // 如果有搜索关键词，添加过滤条件

@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { FileSystemSyncService, type SyncResult } from '@/lib/workflows/sync-service';
 
 /**
@@ -14,11 +14,11 @@ import { FileSystemSyncService, type SyncResult } from '@/lib/workflows/sync-ser
 export async function GET(request: NextRequest) {
   try {
     const session = await getSession();
-    if (!session?.userId) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const diagnostic = await FileSystemSyncService.getSyncDiagnostics(session.userId);
+    const diagnostic = await FileSystemSyncService.getSyncDiagnostics(session?.user?.id);
 
     return NextResponse.json({
       success: true,
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getSession();
-    if (!session?.userId) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     switch (action) {
       case 'trigger':
         // Run sync for all workflows
-        const diagnostic = await FileSystemSyncService.triggerSync(session.userId);
+        const diagnostic = await FileSystemSyncService.triggerSync(session?.user?.id);
         return NextResponse.json({
           success: true,
           action: 'trigger',
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
 
       case 'detect-conflicts':
         // Detect all sync conflicts
-        const conflicts = await FileSystemSyncService.detectConflicts(session.userId);
+        const conflicts = await FileSystemSyncService.detectConflicts(session?.user?.id);
         return NextResponse.json({
           success: true,
           action: 'detect-conflicts',

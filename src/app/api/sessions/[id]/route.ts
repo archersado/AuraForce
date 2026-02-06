@@ -9,7 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { sessionService } from '@/lib/services/session-service';
 import type { ApiResponse, SessionDetailDTO, UpdateSessionRequest } from '@/types/session';
 
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     // Get authenticated session
     const session = await getSession();
 
-    if (!session?.userId) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         {
           success: false,
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Get session
-    const sessionData = await sessionService.getSessionById(sessionId, session.userId);
+    const sessionData = await sessionService.getSessionById(sessionId, session?.user?.id);
 
     if (!sessionData) {
       return NextResponse.json(
@@ -113,7 +113,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     // Get authenticated session
     const session = await getSession();
 
-    if (!session?.userId) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         {
           success: false,
@@ -183,7 +183,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     // Update session
     const updatedSession = await sessionService.updateSession(
       sessionId,
-      session.userId,
+      session?.user?.id,
       body
     );
 
@@ -233,7 +233,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     // Get authenticated session
     const session = await getSession();
 
-    if (!session?.userId) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         {
           success: false,
@@ -265,7 +265,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     // Delete session
-    const deleted = await sessionService.deleteSession(sessionId, session.userId);
+    const deleted = await sessionService.deleteSession(sessionId, session?.user?.id);
 
     if (!deleted) {
       return NextResponse.json(

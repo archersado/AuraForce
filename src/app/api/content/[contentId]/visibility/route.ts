@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { privacyService } from '@/lib/privacy/privacy.service';
 
 /**
@@ -40,7 +40,7 @@ export async function PATCH(
     }
 
     await privacyService.toggleContentVisibility(
-      session.user.id,
+      session?.user?.id,
       contentId,
       isPublic,
       contentType

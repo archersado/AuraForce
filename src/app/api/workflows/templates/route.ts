@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 
 /**
  * GET /api/workflows/templates - List available workflow templates
@@ -13,7 +13,7 @@ import { getSession } from '@/lib/auth/session';
 export async function GET(request: NextRequest) {
   try {
     const session = await getSession();
-    if (!session?.userId) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     const prisma = (await import('@/lib/prisma')).prisma;
     const templates = await prisma.workflowSpec.findMany({
       where: {
-        userId: session.userId,
+        userId: session?.user?.id,
         metadata: {
           path: '$.isTemplate',
           equals: true,

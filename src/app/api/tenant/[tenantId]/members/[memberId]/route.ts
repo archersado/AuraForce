@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { tenantService } from '@/lib/tenant/tenant.service';
 import { TenantRole } from '@/lib/tenant/rbac.service';
 
@@ -33,7 +33,7 @@ export async function PATCH(
       );
     }
 
-    await tenantService.updateMemberRole(tenantId, session.user.id, memberId, role as TenantRole);
+    await tenantService.updateMemberRole(tenantId, session?.user?.id, memberId, role as TenantRole);
 
     return NextResponse.json({
       success: true,
@@ -70,7 +70,7 @@ export async function DELETE(
 
     const { tenantId, memberId } = params;
 
-    await tenantService.removeMember(tenantId, session.user.id, memberId);
+    await tenantService.removeMember(tenantId, session?.user?.id, memberId);
 
     return NextResponse.json({
       success: true,

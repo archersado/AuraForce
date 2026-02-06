@@ -110,7 +110,7 @@ export function MessageInput({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className="max-w-4xl mx-auto mb-4"
+            className="max-w-6xl mx-auto mb-4"
           >
             <SlashCommandPalette
               onClose={() => setShowCommandPalette(false)}
@@ -120,7 +120,7 @@ export function MessageInput({
         )}
       </AnimatePresence>
 
-      <div className="max-w-4xl mx-auto flex items-center gap-3">
+      <div className="max-w-6xl mx-auto flex items-center gap-3">
         <div className="flex-1 relative">
           <textarea
             ref={textareaRef}

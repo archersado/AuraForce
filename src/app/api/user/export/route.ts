@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { checkRateLimit } from '@/lib/rate-limiting';
 import { formatAsJSON, formatAsCSV, getContentType, generateExportFilename } from '@/lib/data-export/formatter';
 
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Rate limiting
-    const { result, retryAfter } = checkRateLimit(`export:${session.userId}`, {
+    const { result, retryAfter } = checkRateLimit(`export:${session?.user?.id}`, {
       maxRequests: 3,
       windowMs: 60 * 60 * 1000, // 1 hour
     });
@@ -64,9 +64,9 @@ export async function GET(request: NextRequest) {
     let data: string;
     try {
       if (format === 'json') {
-        data = await formatAsJSON(session.userId);
+        data = await formatAsJSON(session?.user?.id);
       } else {
-        data = await formatAsCSV(session.userId);
+        data = await formatAsCSV(session?.user?.id);
       }
     } catch (error) {
       console.error('Data format error:', error);
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
     const contentType = getContentType(format as 'json' | 'csv');
 
     // Log export event
-    console.log(`Data export requested: User ${session.userId}, Format ${format}`);
+    console.log(`Data export requested: User ${session?.user?.id}, Format ${format}`);
 
     // Return file download response
     return new NextResponse(data, {

@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { getClaudeProjectSessions, getLatestClaudeSession } from '@/lib/claude/project-sessions';
 import type { ApiResponse } from '@/types/session';
 
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     // Get authenticated session
     const session = await getSession();
 
-    if (!session?.userId) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         {
           success: false,

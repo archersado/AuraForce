@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { rmSync, existsSync } from 'fs';
 import path from 'path';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 
 /**
  * GET /api/workspaces/[id] - Get a single project
@@ -19,7 +19,7 @@ export async function GET(
 ) {
   try {
     const session = await getSession();
-    if (!session?.userId) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -31,7 +31,7 @@ export async function GET(
     const project = await prisma.userWorkspaceProject.findFirst({
       where: {
         id: projectId,
-        userId: session.userId,
+        userId: session?.user?.id,
       },
     });
 
@@ -73,7 +73,7 @@ export async function DELETE(
 ) {
   try {
     const session = await getSession();
-    if (!session?.userId) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -85,7 +85,7 @@ export async function DELETE(
     const project = await prisma.userWorkspaceProject.findFirst({
       where: {
         id: projectId,
-        userId: session.userId,
+        userId: session?.user?.id,
       },
     });
 

@@ -8,7 +8,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { Upload, FileText, AlertCircle, CheckCircle, X, Folder } from 'lucide-react';
+import { Upload, FileText, AlertCircle, CheckCircle, X, Folder, Lock, Globe, Eye, EyeOff } from 'lucide-react';
 import { apiFetch } from '@/lib/api-client';
 
 interface UploadResult {
@@ -24,6 +24,18 @@ interface WorkflowSpecUploadProps {
   onUploadComplete?: (results: UploadResult[]) => void;
 }
 
+interface FormState {
+  name: string;
+  description: string;
+  visibility: 'private' | 'public';
+}
+
+const defaultFormState: FormState = {
+  name: '',
+  description: '',
+  visibility: 'private',
+};
+
 export default function WorkflowSpecUpload({ onUploadComplete }: WorkflowSpecUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -31,6 +43,7 @@ export default function WorkflowSpecUpload({ onUploadComplete }: WorkflowSpecUpl
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [selectedFolders, setSelectedFolders] = useState<Map<string, File[]>>(new Map());
   const [uploadMode, setUploadMode] = useState<'file' | 'folder'>('file');
+  const [form, setForm] = useState<FormState>(defaultFormState);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -42,7 +55,30 @@ export default function WorkflowSpecUpload({ onUploadComplete }: WorkflowSpecUpl
     setIsDragging(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  // Reset form when files change
+  const resetForm = useCallback(() => {
+    setForm(defaultFormState);
+  }, []);
+
+  // Read first file content to extract metadata
+  const extractMetadata = async (file: File): Promise<{ name?: string; description?: string }> => {
+    try {
+      const content = await file.text();
+      // Simple extraction for name and description from markdown/yaml
+      // Name look for pattern: name: "xxx" or name: xxx
+      const nameMatch = content.match(/name\s*:\s*["']?([^"':\n\r}{]+)/i);
+      const descMatch = content.match(/description\s*:\s*["']?([^"']+)["']?/i);
+
+      return {
+        name: nameMatch?.[1]?.trim(),
+        description: descMatch?.[1]?.trim(),
+      };
+    } catch {
+      return {};
+    }
+  };
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
 
@@ -53,6 +89,16 @@ export default function WorkflowSpecUpload({ onUploadComplete }: WorkflowSpecUpl
         return ext.endsWith('.md') || ext.endsWith('.yaml') || ext.endsWith('.yml');
       });
       setSelectedFiles(prev => [...prev, ...validFiles]);
+
+      // Auto-fill form from first file if empty
+      if (form.name === '' && validFiles.length > 0) {
+        const metadata = await extractMetadata(validFiles[0]);
+        setForm(prev => ({
+          ...prev,
+          name: metadata.name || prev.name,
+          description: metadata.description || prev.description,
+        }));
+      }
     } else {
       // Folder mode - handle dropped folders
       const items = Array.from(e.dataTransfer.items);
@@ -100,15 +146,39 @@ export default function WorkflowSpecUpload({ onUploadComplete }: WorkflowSpecUpl
           });
           return newMap;
         });
+
+        // Auto-fill from first file in first folder
+        if (form.name === '' && foldersMap.size > 0) {
+          const firstFolder = Array.from(foldersMap.values())[0];
+          if (firstFolder.length > 0) {
+            extractMetadata(firstFolder[0]).then(metadata => {
+              setForm(prev => ({
+                ...prev,
+                name: metadata.name || prev.name,
+                description: metadata.description || prev.description,
+              }));
+            });
+          }
+        }
       }, 100);
     }
-  }, [uploadMode]);
+  }, [uploadMode, form.name, form.description]);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files);
       if (uploadMode === 'file') {
         setSelectedFiles(prev => [...prev, ...files]);
+
+        // Auto-fill form from first file if empty
+        if (form.name === '' && files.length > 0) {
+          const metadata = await extractMetadata(files[0]);
+          setForm(prev => ({
+            ...prev,
+            name: metadata.name || prev.name,
+            description: metadata.description || prev.description,
+          }));
+        }
       } else {
         // Folder mode - organize files by folder
         const foldersMap = new Map<string, File[]>();
@@ -129,19 +199,43 @@ export default function WorkflowSpecUpload({ onUploadComplete }: WorkflowSpecUpl
           });
           return newMap;
         });
+
+        // Auto-fill from first file
+        if (form.name === '' && foldersMap.size > 0) {
+          const firstFolder = Array.from(foldersMap.values())[0];
+          if (firstFolder.length > 0) {
+            const metadata = await extractMetadata(firstFolder[0]);
+            setForm(prev => ({
+              ...prev,
+              name: metadata.name || prev.name,
+              description: metadata.description || prev.description,
+            }));
+          }
+        }
       }
       e.target.value = ''; // Reset input
     }
   };
 
   const removeFile = (index: number) => {
-    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    setSelectedFiles(prev => {
+      const remaining = prev.filter((_, i) => i !== index);
+      // Reset form if no files left
+      if (remaining.length === 0) {
+        resetForm();
+      }
+      return remaining;
+    });
   };
 
   const removeFolder = (folderName: string) => {
     setSelectedFolders(prev => {
       const newMap = new Map(prev);
       newMap.delete(folderName);
+      // Reset form if no folders left
+      if (newMap.size === 0) {
+        resetForm();
+      }
       return newMap;
     });
   };
@@ -151,11 +245,30 @@ export default function WorkflowSpecUpload({ onUploadComplete }: WorkflowSpecUpl
       return;
     }
 
+    // Validate form
+    if (!form.name || form.name.trim() === '') {
+      setResults([
+        {
+          fileName: 'Form',
+          success: false,
+          error: '工作流名称是必填项',
+        },
+      ]);
+      return;
+    }
+
     setIsUploading(true);
     setResults([]);
 
     try {
       const formData = new FormData();
+
+      // Add workflow metadata
+      formData.append('workflowName', form.name.trim());
+      if (form.description?.trim()) {
+        formData.append('workflowDescription', form.description.trim());
+      }
+      formData.append('visibility', form.visibility);
 
       if (uploadMode === 'file') {
         selectedFiles.forEach(file => {
@@ -163,10 +276,9 @@ export default function WorkflowSpecUpload({ onUploadComplete }: WorkflowSpecUpl
         });
       } else {
         // Upload folders
-        selectedFolders.forEach((files, folderName) => {
+        selectedFolders.forEach((files) => {
           files.forEach(file => {
-            const relativePath = (file as any).webkitRelativePath;
-            formData.append(`folder-${relativePath}`, file);
+            formData.append('files', file);
           });
         });
       }
@@ -186,6 +298,7 @@ export default function WorkflowSpecUpload({ onUploadComplete }: WorkflowSpecUpl
       if (data.results?.every((r: UploadResult) => r.success)) {
         setSelectedFiles([]);
         setSelectedFolders(new Map());
+        resetForm();
       }
 
       onUploadComplete?.(data.results || []);
@@ -206,10 +319,83 @@ export default function WorkflowSpecUpload({ onUploadComplete }: WorkflowSpecUpl
     setSelectedFiles([]);
     setSelectedFolders(new Map());
     setResults([]);
+    resetForm();
   };
+
+  const hasFiles = uploadMode === 'file' ? selectedFiles.length > 0 : selectedFolders.size > 0;
+  const canUpload = hasFiles && form.name.trim() !== '';
 
   return (
     <div className="space-y-6">
+      {/* Form Fields */}
+      <div className="space-y-4">
+        {/* Workflow Name */}
+        <div>
+          <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
+            工作流名称 <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            value={form.name}
+            onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))}
+            placeholder="例如: 代码审查助手"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          />
+        </div>
+
+        {/* Description */}
+        <div>
+          <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
+            描述
+          </label>
+          <textarea
+            value={form.description}
+            onChange={(e) => setForm(prev => ({ ...prev, description: e.target.value }))}
+            placeholder="描述这个工作流的功能和用途..."
+            rows={3}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+          />
+        </div>
+
+        {/* Visibility */}
+        <div>
+          <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
+            可见性
+          </label>
+          <div className="flex gap-4">
+            <button
+              type="button"
+              onClick={() => setForm(prev => ({ ...prev, visibility: 'private' }))}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors flex-1 ${
+                form.visibility === 'private'
+                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
+                  : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400'
+              }`}
+            >
+              {form.visibility === 'private' ? <Lock size={18} /> : <EyeOff size={18} />}
+              <span>私有</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setForm(prev => ({ ...prev, visibility: 'public' }))}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors flex-1 ${
+                form.visibility === 'public'
+                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
+                  : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400'
+              }`}
+            >
+              {form.visibility === 'public' ? <Globe size={18} /> : <Eye size={18} />}
+              <span>公开</span>
+            </button>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            {form.visibility === 'private'
+              ? '仅您自己可以看到此工作流'
+              : '所有用户都可以在市场中发现并使用此工作流'}
+          </p>
+        </div>
+      </div>
+
       {/* Upload Mode Toggle */}
       <div className="flex gap-2">
         <button
@@ -317,8 +503,12 @@ export default function WorkflowSpecUpload({ onUploadComplete }: WorkflowSpecUpl
           </div>
           <button
             onClick={handleUpload}
-            disabled={isUploading}
-            className="w-full py-2 px-4 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            disabled={!canUpload || isUploading}
+            className={`w-full py-2 px-4 font-medium rounded-lg transition-colors ${
+              canUpload && !isUploading
+                ? 'bg-purple-600 text-white hover:bg-purple-700'
+                : 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
+            }`}
           >
             {isUploading ? '上传中...' : '上传并部署'}
           </button>
@@ -380,8 +570,12 @@ export default function WorkflowSpecUpload({ onUploadComplete }: WorkflowSpecUpl
           </div>
           <button
             onClick={handleUpload}
-            disabled={isUploading}
-            className="w-full py-2 px-4 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            disabled={!canUpload || isUploading}
+            className={`w-full py-2 px-4 font-medium rounded-lg transition-colors ${
+              canUpload && !isUploading
+                ? 'bg-purple-600 text-white hover:bg-purple-700'
+                : 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
+            }`}
           >
             {isUploading ? '上传中...' : '上传并部署'}
           </button>
@@ -434,6 +628,17 @@ export default function WorkflowSpecUpload({ onUploadComplete }: WorkflowSpecUpl
               </div>
             ))}
           </div>
+          {/* Show form fields on success for workflow name and visibility */}
+          {results.some(r => r.success) && form.name && (
+            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <p className="text-sm font-medium text-blue-900 dark:text-blue-100">已保存设置:</p>
+              <div className="mt-2 text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                <p><strong>名称:</strong> {form.name}</p>
+                {form.description && <p><strong>描述:</strong> {form.description}</p>}
+                <p><strong>可见性:</strong> {form.visibility === 'public' ? '公开' : '私有'}</p>
+              </div>
+            </div>
+          )}
           {results.some(r => r.success) && (
             <button
               onClick={reset}

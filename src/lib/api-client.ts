@@ -56,7 +56,11 @@ function handleUnauthorized(currentPath?: string): never {
 export function getRequestOptions(options?: RequestInit): RequestInit {
   // 如果 options 中已经有 headers，直接使用
   // 不要设置默认的 Content-Type，因为 FormData 等需要浏览器自动设置
-  return options || {}
+  // Important: include credentials to send cookies with requests
+  return {
+    ...options,
+    credentials: 'include',
+  }
 }
 
 /**

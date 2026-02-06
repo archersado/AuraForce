@@ -18,7 +18,7 @@ import { FileBrowser, type FileBrowserHandle } from './FileBrowser';
 import { FileEditor } from './FileEditor';
 import { FileUpload } from './FileUpload';
 import { FileSearch } from './FileSearch';
-import { TabBar } from './TabBar';
+import { TabBar } from './TabBar.enhanced';
 import {
   readFile,
   writeFile,

@@ -12,7 +12,6 @@ import {
   User,
   LogOut,
 } from 'lucide-react';
-import { apiFetch } from '@/lib/api-client';
 
 // 简化接口，将 showBackButton 隐含在 backHref 的存在性中
 interface AppHeaderProps {
@@ -28,6 +27,8 @@ interface AppHeaderProps {
     name?: string;
     settingsHref?: string;
   };
+  // 登出函数
+  onSignOut?: () => void;
 }
 
 const workspaceNavigation = [
@@ -50,6 +51,7 @@ export function AppHeader({
   compact = false,
   market = false,
   user,
+  onSignOut,
 }: AppHeaderProps) {
   const pathname = usePathname();
 
@@ -214,20 +216,21 @@ export function AppHeader({
             {user && (
               <>
                 <Link
-                  href={user.settingsHref || '/profile/settings'}
+                  href={user.settingsHref || '/workspace'}
                   className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                   title="用户设置"
                 >
                   <User className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:inline">
-                    {user.name || '设置'}
+                    {user.name || '用户'}
                   </span>
                 </Link>
 
                 <button
                   onClick={async () => {
-                    await apiFetch('/api/auth/signout', { method: 'POST' });
-                    window.location.href = '/login';
+                    if (onSignOut) {
+                      await onSignOut();
+                    }
                   }}
                   className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-red-600 dark:text-red-400"
                   title="退出登录"

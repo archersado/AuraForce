@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { privacyService } from '@/lib/privacy/privacy.service';
 
 /**
@@ -36,14 +36,14 @@ export async function DELETE(
       );
     }
 
-    if (shareToken.userId !== session.user.id) {
+    if (shareToken.userId !== session?.user?.id) {
       return NextResponse.json(
         { error: 'FORBIDDEN', message: '无权操作此分享链接' },
         { status: 403 }
       );
     }
 
-    await privacyService.revokeShareLink(session.user.id, shareToken.id);
+    await privacyService.revokeShareLink(session?.user?.id, shareToken.id);
 
     return NextResponse.json({
       success: true,

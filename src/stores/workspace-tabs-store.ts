@@ -32,6 +32,7 @@ interface TabsState {
   // Actions
   openTab: (tab: Omit<Tab, 'isActive'>) => void;
   closeTab: (tabId: string) => void;
+  closeTabWithConfirmation: (tabId: string) => { shouldClose: boolean; hasUnsaved: boolean };
   setActiveTab: (tabId: string) => void;
   closeAllTabs: () => void;
   closeOtherTabs: () => void;
@@ -40,6 +41,9 @@ interface TabsState {
   markTabAsUnsaved: (tabId: string) => void;
   getActiveTab: () => Tab | null;
   getTabsByPath: (path: string) => Tab[];
+  getUnsavedTabs: () => Tab[];
+  hasUnsavedTabs: () => boolean;
+  reorderTab: (fromIndex: number, toIndex: number) => void;
 }
 
 /**
@@ -243,6 +247,44 @@ export const useTabsStore = create<TabsState>()(
       // Get tabs by path
       getTabsByPath: (path) => {
         return get().tabs.filter((t) => t.path === path);
+      },
+
+      // Reorder tab by moving from one index to another
+      reorderTab: (fromIndex: number, toIndex: number) => {
+        set((state) => {
+          if (fromIndex < 0 || fromIndex >= state.tabs.length ||
+              toIndex < 0 || toIndex >= state.tabs.length) {
+            return state;
+          }
+
+          const newTabs = [...state.tabs];
+          const [movedTab] = newTabs.splice(fromIndex, 1);
+          newTabs.splice(toIndex, 0, movedTab);
+
+          return {
+            ...state,
+            tabs: newTabs,
+          };
+        });
+      },
+
+      // Check if any tabs have unsaved changes
+      hasUnsavedTabs: () => {
+        return get().tabs.some((t) => t.hasUnsavedChanges);
+      },
+
+      // Get unsaved tabs
+      getUnsavedTabs: () => {
+        return get().tabs.filter((t) => t.hasUnsavedChanges);
+      },
+
+      // Close tab with confirmation check
+      closeTabWithConfirmation: (tabId: string) => {
+        const tab = get().tabs.find((t) => t.id === tabId);
+        if (!tab) {
+          return { shouldClose: false, hasUnsaved: false };
+        }
+        return { shouldClose: true, hasUnsaved: tab.hasUnsavedChanges };
       },
     }),
     {

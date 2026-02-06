@@ -8,6 +8,7 @@
 import { readFileSync } from 'fs';
 import YAML from 'js-yaml';
 import matter from 'gray-matter';
+import type { WorkflowInput } from '@/types/workflow';
 
 export interface SpecMetadata {
   name: string;
@@ -20,6 +21,7 @@ export interface SpecMetadata {
     path: string;
     description?: string;
   }>;
+  inputs?: WorkflowInput[];
   workflowConfig?: Record<string, unknown>;
   agents?: Array<{
     name: string;
@@ -64,8 +66,21 @@ export function validateWorkflowSpecContent(content: string): ValidationResult {
 
   if (extension === '.md') {
     // Parse markdown with frontmatter
-    const parsed = matter(content);
-    metadata = extractMetadataFromFrontmatter(parsed.data);
+    try {
+      const parsed = matter(content);
+      metadata = extractMetadataFromFrontmatter(parsed.data);
+    } catch (error) {
+      // Provide more helpful error message for YAML syntax errors
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      const yamlError = errorMsg.includes('YAMLException')
+        ? `YAML frontmatter syntax error: ${errorMsg.split('at line')[0].trim()}. Please check for missing commas, quotes, or indentation in the frontmatter block.`
+        : `Failed to parse frontmatter: ${errorMsg}`;
+      return {
+        valid: false,
+        errors: [yamlError],
+        warnings: [],
+      };
+    }
   } else {
     // Try to parse as YAML
     try {
@@ -144,6 +159,35 @@ export function validateWorkflowSpecContent(content: string): ValidationResult {
     }
   }
 
+  // Validate inputs configuration if provided
+  if (metadata.inputs && metadata.inputs.length > 0) {
+    const inputNames = new Set<string>();
+    for (let i = 0; i < metadata.inputs.length; i++) {
+      const input = metadata.inputs[i];
+      if (!input.name || input.name.trim() === '') {
+        errors.push(`Invalid input entry at index ${i}: missing required name`);
+      }
+      if (input.name) {
+        if (inputNames.has(input.name)) {
+          errors.push(`Duplicate input name: ${input.name}`);
+        }
+        inputNames.add(input.name);
+      }
+      if (!input.type) {
+        errors.push(`Invalid input entry at index ${i}: missing required type`);
+      }
+      const validTypes = ['string', 'number', 'boolean', 'select', 'multiselect', 'textarea', 'file', 'json'];
+      if (input.type && !validTypes.includes(input.type)) {
+        errors.push(`Invalid input type "${input.type}" at index ${i}: must be one of ${validTypes.join(', ')}`);
+      }
+      if (input.type === 'select' || input.type === 'multiselect') {
+        if (!input.options || input.options.length === 0) {
+          errors.push(`Input of type "${input.type}" at index ${i} must have options defined`);
+        }
+      }
+    }
+  }
+
   return {
     valid: errors.length === 0,
     errors,
@@ -170,6 +214,7 @@ function extractMetadataFromFrontmatter(data: Record<string, unknown>): SpecMeta
     tags: data.tags ? ensureStringArray(data.tags) : undefined,
     requires: data.requires ? ensureStringArray(data.requires) : undefined,
     resources: extractResources(data.resources),
+    inputs: extractInputs(data.inputs),
     workflowConfig: data.workflow_config ? (data.workflow_config as Record<string, unknown>) : undefined,
     agents: extractAgents(data.agents),
     subWorkflows: extractWorkflows(data.workflows || data.subWorkflows),
@@ -188,6 +233,7 @@ function extractMetadataFromYaml(data: Record<string, unknown>): SpecMetadata {
     tags: data.tags ? ensureStringArray(data.tags) : undefined,
     requires: data.requires ? ensureStringArray(data.requires) : undefined,
     resources: extractResources(data.resources),
+    inputs: extractInputs(data.inputs),
     workflowConfig: data.workflow_config ? (data.workflow_config as Record<string, unknown>) : undefined,
     agents: extractAgents(data.agents),
     subWorkflows: extractWorkflows(data.workflows || data.subWorkflows),
@@ -266,6 +312,70 @@ function extractWorkflows(workflows: unknown): Array<{ name: string; path: strin
       };
     })
     .filter((w): w is { name: string; path: string } => w !== null);
+}
+
+/**
+ * Extract inputs from metadata
+ */
+function extractInputs(inputs: unknown): WorkflowInput[] | undefined {
+  if (!Array.isArray(inputs)) {
+    return undefined;
+  }
+
+  const validTypes = ['string', 'number', 'boolean', 'select', 'multiselect', 'textarea', 'file', 'json'];
+
+  return inputs
+    .map((item): WorkflowInput | null => {
+      if (typeof item !== 'object' || item === null) {
+        return null;
+      }
+
+      const input = item as Record<string, unknown>;
+      const name = input.name ? String(input.name) : '';
+
+      if (!name) {
+        return null;
+      }
+
+      const defaultValue = input.default ?? undefined;
+      let normalizedDefault: string | number | boolean | string[] | undefined = undefined;
+      if (typeof defaultValue === 'string') {
+        normalizedDefault = defaultValue;
+      } else if (typeof defaultValue === 'number') {
+        normalizedDefault = defaultValue;
+      } else if (typeof defaultValue === 'boolean') {
+        normalizedDefault = defaultValue;
+      } else if (Array.isArray(defaultValue)) {
+        normalizedDefault = defaultValue.map(String);
+      }
+
+      const validationValue = input.validation;
+      let validationProps: WorkflowInput['validation'] = undefined;
+      if (validationValue && typeof validationValue === 'object') {
+        const validationObj = validationValue as Record<string, unknown>;
+        const min = typeof validationObj.min === 'number' ? validationObj.min : undefined;
+        const max = typeof validationObj.max === 'number' ? validationObj.max : undefined;
+        const pattern = typeof validationObj.pattern === 'string' ? validationObj.pattern : undefined;
+        const custom = typeof validationObj.custom === 'string' ? validationObj.custom : undefined;
+
+        if (min !== undefined || max !== undefined || pattern !== undefined || custom !== undefined) {
+          validationProps = { min, max, pattern, custom };
+        }
+      }
+
+      return {
+        name,
+        label: input.label ? String(input.label) : undefined,
+        type: (validTypes.includes(String(input.type)) ? String(input.type) : 'string') as WorkflowInput['type'],
+        description: input.description ? String(input.description) : undefined,
+        required: input.required === true,
+        default: normalizedDefault,
+        options: input.options && Array.isArray(input.options) ? input.options.map(String) : undefined,
+        placeholder: input.placeholder ? String(input.placeholder) : undefined,
+        validation: validationProps,
+      };
+    })
+    .filter((item): item is WorkflowInput => item !== null);
 }
 
 /**

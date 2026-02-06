@@ -14,11 +14,21 @@
 
 import { useState, useEffect } from 'react';
 import { File, AlertCircle, Image as ImageIcon, FileText, Code, Download, Copy, Trash2, Save } from 'lucide-react';
+import dynamic from 'next/dynamic';
 
 import CodeEditor from './CodeEditor-v2';
-import { MarkdownEditor } from './SimpleMarkdownEditor';
 import { MediaPreview } from './MediaPreview';
 import { LargeFileHandler } from './LargeFileHandler';
+
+// Dynamically import MarkdownEditor with SSR disabled to avoid navigator not defined error
+const MarkdownEditor = dynamic(() => import('./SimpleMarkdownEditor').then(mod => ({ default: mod.MarkdownEditor })), {
+  ssr: false,
+  loading: () => (
+    <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="text-gray-500">Loading Markdown editor...</div>
+    </div>
+  ),
+});
 
 interface FileEditorProps {
   content?: string;

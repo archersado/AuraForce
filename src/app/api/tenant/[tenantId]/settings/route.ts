@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { tenantService } from '@/lib/tenant/tenant.service';
 
 /**
@@ -32,7 +32,7 @@ export async function PATCH(
       );
     }
 
-    const tenant = await tenantService.updateSettings(tenantId, session.user.id, settings);
+    const tenant = await tenantService.updateSettings(tenantId, session?.user?.id, settings);
 
     return NextResponse.json({
       success: true,

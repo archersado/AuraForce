@@ -8,7 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { sessionService } from '@/lib/services/session-service';
 import type { ApiResponse, SessionsListResponse, SessionDTO, CreateSessionRequest } from '@/types/session';
 
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     // Get authenticated session
     const session = await getSession();
 
-    if (!session?.userId) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         {
           success: false,
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     const projectId = searchParams.get('projectId') || undefined;
 
     // Get sessions
-    const result = await sessionService.listSessions(session.userId, {
+    const result = await sessionService.listSessions(session?.user?.id, {
       limit,
       offset,
       status,
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     // Get authenticated session
     const session = await getSession();
 
-    if (!session?.userId) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         {
           success: false,
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create session
-    const newSession = await sessionService.createSession(session.userId, body);
+    const newSession = await sessionService.createSession(session?.user?.id, body);
 
     const response: ApiResponse<SessionDTO> = {
       success: true,

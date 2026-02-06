@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { subscriptionService } from '@/lib/subscription/subscription.service';
 import { SubscriptionLevel, BillingCycle } from '@/lib/subscription/plans';
 
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
 
     // Change plan
     const result = await subscriptionService.changePlan(
-      session.user.id,
+      session?.user?.id,
       targetPlan as SubscriptionLevel,
       billingCycle as BillingCycle
     );

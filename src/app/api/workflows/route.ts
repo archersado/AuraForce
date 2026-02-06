@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 
 export async function GET(request: NextRequest) {
   try {
@@ -29,9 +29,9 @@ export async function GET(request: NextRequest) {
     const where: any = {};
 
     // If user is authenticated, show their private workflows and public workflows
-    if (session?.userId) {
+    if (session?.user?.id) {
       where.OR = [
-        { userId: session.userId },
+        { userId: session?.user?.id },
         { visibility: 'public' },
       ];
     } else {
@@ -52,9 +52,9 @@ export async function GET(request: NextRequest) {
         ]
       };
       
-      if (session?.userId) {
+      if (session?.user?.id) {
         where.OR = [
-          { userId: session.userId },
+          { userId: session?.user?.id },
           { visibility: 'public', ...searchCondition },
         ];
       } else {

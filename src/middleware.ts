@@ -7,7 +7,7 @@
 
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getSession } from '@/lib/auth/session'
+import { getSession } from '@/lib/custom-session'
 
 /**
  * Middleware function for route protection
@@ -15,24 +15,31 @@ import { getSession } from '@/lib/auth/session'
 export default async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  // Public routes that don't require authentication
+  // Handle basePath - remove it from pathname for matching
+  const basePath = '/auraforce'
+  const pathWithoutBase = pathname.startsWith(basePath)
+    ? pathname.slice(basePath.length) || '/'
+    : pathname
+
+  // Public routes that don't require authentication (without basePath prefix)
   const publicRoutes = [
     '/',
     '/login',
     '/register',
     '/verify',
     '/forgot-password',
-    '/api/auth/signup',
-    '/api/auth/verify-email',
-    '/api/auth/resend-verification',
-    '/api/auth/signin',
+    '/market',
+    '/clear-test',
+    '/test-*',
+    '/auth*',
+    '/simple*',
     '/_next',
     '/favicon.ico',
   ]
 
   // Check if the current path is a public route
   const isPublicRoute = publicRoutes.some(route =>
-    pathname === route || pathname.startsWith(route)
+    pathWithoutBase === route || pathWithoutBase.startsWith(route)
   )
 
   // Allow public routes
@@ -40,24 +47,27 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.next()
   }
 
-  // Protected routes require authentication
+  // Protected routes require authentication - use custom session
   const session = await getSession()
 
-  if (!session) {
+  if (!session?.user?.id) {
     // User is not authenticated, redirect to login
-    const loginUrl = new URL('/login', req.url)
-    loginUrl.searchParams.set('redirect', pathname)
-    return NextResponse.redirect(loginUrl)
+    // Use relative path - Next.js will handle basePath automatically
+    // Pass the original pathname as redirect (without basePath prefix)
+    req.nextUrl.pathname = basePath + '/login'
+    req.nextUrl.searchParams.set('redirect', pathWithoutBase)
+    return NextResponse.redirect(req.nextUrl)
   }
 
   // Tenant-specific routes handling
   // If accessing a tenant-specific route (like /tenant/[tenantId])
-  if (pathname.startsWith('/tenant/')) {
-    const segments = pathname.split('/')
+  if (pathWithoutBase.startsWith('/tenant/')) {
+    const segments = pathWithoutBase.split('/')
 
-    if (segments.length >= 3) {
-      const tenantId = segments[2]
+    // Find the tenantId in the path
+    const tenantId = segments.length >= 3 ? segments[2] : null
 
+    if (tenantId) {
       // Verify user belongs to this tenant
       const prisma = (await import('@/lib/prisma')).prisma
       const user = await prisma.user.findUnique({
@@ -67,7 +77,8 @@ export default async function middleware(req: NextRequest) {
 
       if (!user || user.tenantId !== tenantId) {
         // User doesn't belong to this tenant
-        return NextResponse.redirect(new URL('/', req.url))
+        req.nextUrl.pathname = basePath
+        return NextResponse.redirect(req.nextUrl)
       }
     }
   }

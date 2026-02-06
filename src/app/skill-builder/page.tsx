@@ -2,15 +2,18 @@
  * AuraForce 技能构建主页面
  *
  * 功能：整合技能提取对话、可视化展示、CC资产生成的完整用户界面
+ *
+ * 更新：添加隐式指令触发功能，进入页面后自动发送
+ * /bmad:bmb:workflows:create-workflow 命令来启动工作流
  */
 
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Brain, Zap, Target, Sparkles, MessageCircle, Eye,
+  Zap, Target, Sparkles, MessageCircle, Eye,
   CheckCircle, ArrowRight, Download, Play, Pause
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api-client';
@@ -61,12 +64,56 @@ export default function SkillBuilder() {
   const [isProcessing, setIsProcessing] = React.useState<boolean>(false);
   const [progress, setProgress] = React.useState<number>(0);
 
+  const implicitCommandTriggered = useRef(false);
+
   // 用户信息
   const [userInfo, setUserInfo] = React.useState<UserInfo>({
     name: '',
     role: '营销专家',
     experience: ''
   });
+
+  /**
+   * 触发隐式指令
+   * 进入页面后自动发送 /bmad:bmb:workflows:create-workflow
+   * 该指令不会显示在用户界面中
+   */
+  useEffect(() => {
+    if (implicitCommandTriggered.current) return;
+
+    const triggerImplicitCommand = async () => {
+      console.log('[SkillBuilder] Triggering implicit command:', '/bmad:bmb:workflows:create-workflow');
+
+      try {
+        // 存储隐式指令标志，前端其他组件可以读取这个标志
+        sessionStorage.setItem('skill-builder-implicit-command', '/bmad:bmb:workflows:create-work');
+
+        // 可选：调用后端 API 记录隐式指令已发送
+        const response = await fetch('/api/skill-builder/implicit-command', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            command: '/bmad:bmb:workflows:create-workflow',
+            silent: true,
+          }),
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          console.log('[SkillBuilder] Implicit command acknowledged:', result);
+        }
+      } catch (error) {
+        console.error('[SkillBuilder] Failed to trigger implicit command:', error);
+      }
+
+      implicitCommandTriggered.current = true;
+    };
+
+    // 延迟一下触发，确保页面完全加载
+    const timeoutId = setTimeout(triggerImplicitCommand, 500);
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   /**
    * 开始技能提取会话
@@ -226,32 +273,14 @@ export default function SkillBuilder() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      {/* 头部导航 */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link
-              href="/workspace"
-              className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
-            >
-              <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-                <Brain className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                  AuraForce
-                </h1>
-                <p className="text-sm text-gray-600">技能沉淀平台</p>
-              </div>
-            </Link>
-
-            <ProgressIndicator progress={progress} stage={currentStage} />
-          </div>
-        </div>
-      </header>
+    <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50 min-h-screen">
 
       <main className="max-w-7xl mx-auto px-4 py-8">
+        {/* Progress Indicator */}
+        <div className="mb-8">
+          <ProgressIndicator progress={progress} stage={currentStage} />
+        </div>
+
         <AnimatePresence mode="wait">
           {/* 欢迎阶段 */}
           {currentStage === 'welcome' && (

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { tenantService } from '@/lib/tenant/tenant.service';
 
 /**
@@ -28,7 +28,7 @@ export async function GET(
 
     // Get user's role in this tenant
     const user = await (await import('@/lib/prisma')).prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: session?.user?.id },
       select: { tenantId: true, tenantRole: true },
     });
 
@@ -84,7 +84,7 @@ export async function PATCH(
     const body = await request.json();
     const { tenantId } = params;
 
-    const tenant = await tenantService.updateTenant(tenantId, session.user.id, body);
+    const tenant = await tenantService.updateTenant(tenantId, session?.user?.id, body);
 
     return NextResponse.json({
       success: true,

@@ -3,11 +3,11 @@
  *
  * GET /api/auth/session
  *
- * Returns the current session data for client-side access.
+ * Returns the current session data using custom JWT-based sessions.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 
 /**
  * GET - Get current session
@@ -17,18 +17,20 @@ export async function GET(request: NextRequest) {
     const session = await getSession();
 
     if (!session) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json(null);
     }
 
-    return NextResponse.json(session);
+    return NextResponse.json({
+      user: {
+        id: session?.user?.id,
+        email: session.user.email,
+        name: session.user.name,
+        emailVerified: session.user.emailVerified?.toISOString() || null,
+      },
+      expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    });
   } catch (error) {
-    console.error('Session error:', error);
-    return NextResponse.json(
-      { error: 'Failed to get session' },
-      { status: 500 }
-    );
+    console.error('[Session API] Error:', error);
+    return NextResponse.json(null);
   }
 }

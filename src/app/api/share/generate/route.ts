@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { getSession } from '@/lib/custom-session';
 import { privacyService } from '@/lib/privacy/privacy.service';
 
 /**
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     }
 
     const shareLink = await privacyService.generateShareLink(
-      session.user.id,
+      session?.user?.id,
       contentId,
       contentType,
       options

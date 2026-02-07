@@ -7,6 +7,7 @@ import { SearchBox } from './SearchBox';
 import { CategoryTabs } from './CategoryTabs';
 import { WorkflowsCard, type WorkflowSpec } from './WorkflowsCard';
 import { cn } from '@/lib/utils';
+import { apiGet } from '@/lib/api-client';
 
 interface WorkflowPanelProps {
   isOpen: boolean;
@@ -49,7 +50,7 @@ export function WorkflowPanel({
         status: activeTab === 'all' ? 'all' : activeTab === 'recommended' ? 'deployed' : 'all',
       });
 
-      const response = await fetch(`/api/workflows?${params.toString()}`);
+      const response = await apiGet(`/api/workflows?${params.toString()}`);
       const data = await response.json();
 
       if (data.success) {

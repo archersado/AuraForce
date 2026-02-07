@@ -8,7 +8,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Trash2, Search, ChevronDown, ChevronUp, FolderOpen, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Trash2, Search, ChevronDown, ChevronUp, FolderOpen, Eye, EyeOff, Loader2, Play } from 'lucide-react';
+import WorkflowExecuteDialog from './WorkflowExecuteDialog';
+import { apiGet, apiFetch } from '@/lib/api-client';
 
 interface WorkflowMetadata {
   tags?: string[];
@@ -48,6 +50,8 @@ export default function WorkflowSpecList({ onDelete, refreshKey }: WorkflowSpecL
   const [expandedWorkflow, setExpandedWorkflow] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [togglingVisibilityId, setTogglingVisibilityId] = useState<string | null>(null);
+  const [executeDialogOpen, setExecuteDialogOpen] = useState(false);
+  const [executingWorkflow, setExecutingWorkflow] = useState<WorkflowSpec | null>(null);
 
   const fetchWorkflows = async () => {
     setLoading(true);
@@ -67,7 +71,7 @@ export default function WorkflowSpecList({ onDelete, refreshKey }: WorkflowSpecL
         params.set('search', searchTerm);
       }
 
-      const response = await fetch(`/api/workflows?${params.toString()}`);
+      const response = await apiGet(`/api/workflows?${params.toString()}`);
 
       if (!response.ok) {
         throw new Error('Failed to fetch workflows');
@@ -105,7 +109,7 @@ export default function WorkflowSpecList({ onDelete, refreshKey }: WorkflowSpecL
     setDeletingId(workflowId);
 
     try {
-      const response = await fetch(`/api/workflows/${workflowId}`, {
+      const response = await apiFetch(`/api/workflows/${workflowId}`, {
         method: 'DELETE',
       });
 
@@ -128,7 +132,7 @@ export default function WorkflowSpecList({ onDelete, refreshKey }: WorkflowSpecL
     try {
       const newVisibility = currentVisibility === 'public' ? 'private' : 'public';
 
-      const response = await fetch(`/api/workflows/${workflowId}`, {
+      const response = await apiFetch(`/api/workflows/${workflowId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -150,6 +154,11 @@ export default function WorkflowSpecList({ onDelete, refreshKey }: WorkflowSpecL
     } finally {
       setTogglingVisibilityId(null);
     }
+  };
+
+  const handleExecute = (workflow: WorkflowSpec) => {
+    setExecutingWorkflow(workflow);
+    setExecuteDialogOpen(true);
   };
 
   const getStatusBadge = (status: string) => {
@@ -293,6 +302,14 @@ export default function WorkflowSpecList({ onDelete, refreshKey }: WorkflowSpecL
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleExecute(workflow)}
+                  disabled={workflow.status !== 'deployed'}
+                  title={workflow.status !== 'deployed' ? '工作流未部署' : '执行工作流'}
+                  className="p-2 text-green-500 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-950/20 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Play className="w-5 h-5" />
+                </button>
                 <button
                   onClick={() => handleToggleVisibility(workflow.id, workflow.visibility || 'private')}
                   disabled={togglingVisibilityId === workflow.id}
@@ -442,6 +459,18 @@ export default function WorkflowSpecList({ onDelete, refreshKey }: WorkflowSpecL
             下一页
           </button>
         </div>
+      )}
+
+      {/* Execute Dialog */}
+      {executingWorkflow && (
+        <WorkflowExecuteDialog
+          workflow={executingWorkflow}
+          open={executeDialogOpen}
+          onClose={() => {
+            setExecuteDialogOpen(false);
+            setExecutingWorkflow(null);
+          }}
+        />
       )}
     </div>
   );

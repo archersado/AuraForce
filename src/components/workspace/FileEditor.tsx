@@ -17,7 +17,7 @@ import { File, AlertCircle, Image as ImageIcon, FileText, Code, Download, Copy, 
 import dynamic from 'next/dynamic';
 
 import CodeEditor from './CodeEditor-v2';
-import { MediaPreview } from './MediaPreview';
+import { MediaPreviewEnhanced } from './MediaPreview.enhanced';
 import { LargeFileHandler } from './LargeFileHandler';
 
 // Dynamically import MarkdownEditor with SSR disabled to avoid navigator not defined error
@@ -166,7 +166,7 @@ export function FileEditor({
         mimeType: 'image/' + fileType,
         filename: metadata.filename,
       };
-      return <MediaPreview path={path} metadata={metadataWithMimeType} workspaceRoot={workspaceRoot} />;
+      return <MediaPreviewEnhanced path={path} metadata={metadataWithMimeType} workspaceRoot={workspaceRoot} />;
     }
 
     if (isMarkdown) {

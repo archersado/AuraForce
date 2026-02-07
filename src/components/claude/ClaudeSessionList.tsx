@@ -10,6 +10,7 @@
 import { useState, useEffect } from 'react';
 import { History, MessageSquare, Clock, Trash2, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { apiGet } from '@/lib/api-client';
 
 interface ClaudeSessionDTO {
   id: string;
@@ -55,7 +56,7 @@ export function ClaudeSessionList({
     setError(null);
 
     try {
-      const response = await fetch(
+      const response = await apiGet(
         `/api/claude/sessions?projectPath=${encodeURIComponent(projectPath)}&limit=20`
       );
 

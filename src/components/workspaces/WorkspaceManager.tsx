@@ -56,7 +56,7 @@ export default function WorkspaceManager({ onSelectProject, onCreateProject }: W
     }
 
     try {
-      const response = await fetch(`/api/workspaces/${projectId}`, {
+      const response = await apiFetch(`/api/workspaces/${projectId}`, {
         method: 'DELETE',
       });
 

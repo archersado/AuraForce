@@ -13,9 +13,9 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { X, Download, Copy, Trash2, Upload, Search } from 'lucide-react';
 import { FileBrowser, type FileBrowserHandle } from './FileBrowser';
 import { FileEditor } from './FileEditor';
-import { TabBar } from './TabBar';
+import { TabBarEnhanced } from './TabBar.enhanced';
 import { FileUpload } from './FileUpload';
-import { FileSearch } from './FileSearch';
+import { FileSearchEnhanced } from './FileSearch.enhanced';
 import {
   readFile,
   writeFile,
@@ -35,106 +35,109 @@ export function WorkspacePanel({
   onClose,
   workspaceRoot,
 }: WorkspacePanelProps) {
-  const [selectedPath, setSelectedPath] = useState<string | null>(null);
-  const [fileContent, setFileContent] = useState<string>('');
-  const [fileMetadata, setFileMetadata] = useState<FileMetadata | undefined>();
-  const [isBinary, setIsBinary] = useState(false);
-  const [isLarge, setIsLarge] = useState(false);
-  const [warning, setWarning] = useState<string | undefined>();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [sidebarWidth, setSidebarWidth] = useState(300);
-  const [deleteSuccess, setDeleteSuccess] = useState<string | null>(null);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
-
+  const [sidebarWidth, setSidebarWidth] = useState(300);
+  const [deleteSuccess, setDeleteSuccess] = useState<string | null>(null);
+  
   // Store FileBrowser ref for refreshing
   const fileBrowserRef = useRef<FileBrowserHandle>(null);
   const refreshTriggerRef = useRef<number>(0);
 
-  // Load file when selected
-  const loadFile = useCallback(async (path: string) => {
-    setLoading(true);
-    setError(null);
+  // Use tabs store
+  const { openTab, setActiveTab, closeTab, activeTabId, tabs, markTabAsSaved, markTabAsUnsaved } = useTabsStore();
 
+  // Load file content and open as a tab
+  const loadFileAndOpenTab = useCallback(async (path: string) => {
     try {
       const result = await readFile(path);
-      setFileContent(result.content);
-      setFileMetadata(result.metadata);
-      setIsBinary(result.isBinary ?? false);
-      setIsLarge(result.isLarge ?? false);
-      setWarning(result.warning);
-      setSelectedPath(path);
+      
+      // Open or activate tab
+      openTab({
+        id: btoa(path).replace(/[^a-zA-Z0-9]/g, ''),
+        path,
+        name: path.split('/').pop() || path,
+        content: result.content,
+        hasUnsavedChanges: false,
+        language: result.metadata?.filename?.split('.').pop() || 'text',
+        isActive: true,
+        isModified: false,
+      });
+
       setDeleteSuccess(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load file');
-    } finally {
-      setLoading(false);
+      console.error('Failed to load file:', err);
+      alert(err instanceof Error ? err.message : 'Failed to load file');
     }
-  }, []);
+  }, [openTab]);
 
   // Handle file selection from browser
   const handleFileSelect = useCallback(
     (path: string) => {
-      if (selectedPath === path) return;
-      loadFile(path);
+      if (activeTab?.path === path) return;
+      loadFileAndOpenTab(path);
     },
-    [loadFile, selectedPath]
+    [activeTab?.path, loadFileAndOpenTab]
   );
 
   // Save file
   const handleSave = useCallback(async (path: string, content: string) => {
     try {
       await writeFile(path, content);
-      setFileContent(content);
+      
+      // Update tab content and mark as saved
+      const tab = tabs.find((t) => t.path === path);
+      if (tab) {
+        markTabAsSaved(tab.id);
+      }
     } catch (err) {
       throw err;
     }
-  }, []);
+  }, [tabs, markTabAsSaved]);
 
   // Copy file path
   const handleCopyPath = useCallback(async () => {
-    if (!selectedPath) return;
+    if (!activeTab?.path) return;
 
     try {
-      await navigator.clipboard.writeText(selectedPath);
+      await navigator.clipboard.writeText(activeTab.path);
       alert('Path copied to clipboard!');
     } catch (err) {
       console.error('Failed to copy path:', err);
       alert('Failed to copy path');
     }
-  }, [selectedPath]);
+  }, [activeTab?.path]);
 
   // Download file
   const handleDownload = useCallback(() => {
-    if (!selectedPath || !fileContent) return;
+    if (!activeTab?.path || !activeTab.content) return;
 
-    const blob = new Blob([fileContent], { type: 'text/plain' });
+    const blob = new Blob([activeTab.content], { type: 'text/plain' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = fileMetadata?.filename || selectedPath.split('/').pop() || 'file.txt';
+    a.download = activeTab.name || 'file.txt';
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
-  }, [selectedPath, fileContent, fileMetadata]);
+  }, [activeTab]);
 
   // Delete file
   const handleDelete = useCallback(async () => {
-    if (!selectedPath) {
+    if (!activeTab?.path) {
       alert('No file selected');
       return;
     }
 
     const confirmed = window.confirm(
-      `Are you sure you want to delete ${fileMetadata?.filename || selectedPath}?\n\nThis action cannot be undone.`
+      `Are you sure you want to delete ${activeTab.name || activeTab.path}?\n\nThis action cannot be undone.`
     );
 
     if (!confirmed) return;
 
     try {
-      const result = await deleteFile(selectedPath, true);
+      const result = await deleteFile(activeTab.path, true);
 
       if (result.requiresConfirmation) {
         alert('Please confirm deletion');
@@ -142,12 +145,10 @@ export function WorkspacePanel({
       }
 
       if (result.success) {
-        setDeleteSuccess(`File "${fileMetadata?.filename || selectedPath}" deleted successfully`);
-        setSelectedPath(null);
-        setFileContent('');
-        setFileMetadata(undefined);
+        setDeleteSuccess(`File "${activeTab.name}" deleted successfully`);
+        closeTab(activeTab.id);
 
-        // Force refresh the file browser by incrementing refresh trigger
+        // Force refresh the file browser
         refreshTriggerRef.current += 1;
 
         // Auto-dismiss success message after 3 seconds
@@ -157,10 +158,10 @@ export function WorkspacePanel({
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to delete file';
-      setError(errorMsg);
+      setError?.(errorMsg);
       alert(`Failed to delete file: ${errorMsg}`);
     }
-  }, [selectedPath, fileMetadata]);
+  }, [activeTab, closeTab]);
 
   // Handle search result selection
   const handleSearchResultSelect = useCallback((file: any) => {
@@ -207,8 +208,8 @@ export function WorkspacePanel({
       if (e.ctrlKey && e.shiftKey && e.key === 'U') {
         setIsUploadDialogOpen(!isUploadDialogOpen);
       }
-      // Ctrl+K to open search dialog
-      if (e.ctrlKey && e.key === 'k') {
+      // Ctrl+F to open search dialog
+      if (e.ctrlKey && e.key === 'f') {
         setIsSearchDialogOpen((prev) => !prev);
         e.preventDefault();
       }
@@ -334,67 +335,67 @@ export function WorkspacePanel({
             <FileBrowser
               ref={fileBrowserRef}
               workspaceRoot={workspaceRoot}
-              selectedPath={selectedPath}
+              selectedPath={activeTab?.path}
               onFileSelect={handleFileSelect}
               refreshTrigger={refreshTriggerRef.current}
             />
           </div>
 
-          {/* File Editor */}
-          <div className="flex-1 overflow-hidden flex flex-col h-full min-h-0">
-            {selectedPath ? (
-              loading ? (
+          {/* Main Editor Area */}
+          <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+            {/* Tab Bar */}
+            {tabs.length > 0 && (
+              <TabBarEnhanced onTabClose={handleTabClose} />
+            )}
+
+            {/* File Editor */}
+            <div className={`flex-1 overflow-hidden flex flex-col h-full min-h-0 ${activeTab?.path ? 'flex' : 'hidden'}`}>
+              {activeTab ? (
+                <FileEditor
+                  path={activeTab.path}
+                  content={activeTab.content}
+                  metadata={{
+                    path: activeTab.path,
+                    size: activeTab.content.length,
+                    filename: activeTab.name,
+                  }}
+                  isBinary={false}
+                  isLarge={false}
+                  warning={undefined}
+                  onSave={handleSave}
+                  workspaceRoot={workspaceRoot}
+                />
+              ) : activeTabId ? (
                 <div className="flex items-center justify-center h-full text-gray-400">
                   Loading...
                 </div>
-              ) : error ? (
-                <div className="flex flex-col items-center justify-center h-full text-red-600">
-                  <p className="mb-4">{error}</p>
-                  <button
-                    onClick={() => selectedPath && loadFile(selectedPath)}
-                    className="px-4 py-2 bg-red-100 hover:bg-red-200 rounded transition-colors"
-                  >
-                    Retry
-                  </button>
-                </div>
               ) : (
-                <FileEditor
-                  path={selectedPath}
-                  content={fileContent}
-                  metadata={fileMetadata}
-                  isBinary={isBinary}
-                  isLarge={isLarge}
-                  warning={warning}
-                  onSave={handleSave}
-                  projectRoot={workspaceRoot}
-                />
-              )
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full min-h-full bg-gray-50 text-gray-400">
-                <svg
-                  className="w-12 h-12 mb-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-                <p className="text-sm">Select a file to edit</p>
-                <p className="text-xs mt-2">
-                  Files are loaded from the workspace directory
-                </p>
-              </div>
-            )}
+                <div className="flex flex-col items-center justify-center h-full min-h-full bg-gray-50 text-gray-400">
+                  <svg
+                    className="w-12 h-12 mb-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                  <p className="text-sm">Select a file to edit</p>
+                  <p className="text-xs mt-2">
+                    Files are loaded from the workspace directory
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Search Dialog */}
-        <FileSearch
+        <FileSearchEnhanced
           visible={isSearchDialogOpen}
           onClose={() => setIsSearchDialogOpen(false)}
           onResultSelect={handleSearchResultSelect}

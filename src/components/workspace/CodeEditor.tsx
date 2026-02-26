@@ -8,17 +8,19 @@
  * - Keyboard shortcuts
  * - Line numbers and minimap
  * - Dark/Light theme support
+ * - AI Code Assistant integration
  */
 
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { EditorView, basicSetup } from 'codemirror';
 import { keymap, hoverTooltip } from '@codemirror/view';
 import { autocompletion } from '@codemirror/autocomplete';
 import { indentOnInput, bracketMatching, syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language';
 import { defaultKeymap } from '@codemirror/commands';
 import { highlightSelectionMatches } from '@codemirror/search';
+import AICodeAssistant from './AICodeAssistant';
 
 // Language imports
 import { javascript } from '@codemirror/lang-javascript';
@@ -45,6 +47,8 @@ interface CodeEditorProps {
   lineNumbers?: boolean;
   wrapLines?: boolean;
   minimap?: boolean;
+  enableAIAssistant?: boolean;
+  onApplyAISuggestion?: (suggestedCode: string) => void;
 }
 
 export function CodeEditor({
@@ -58,9 +62,25 @@ export function CodeEditor({
   lineNumbers = true,
   wrapLines = true,
   minimap = true,
+  enableAIAssistant = false,
+  onApplyAISuggestion,
 }: CodeEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
+  const [isAIPanelOpen, setIsAIPanelOpen] = useState(false);
+
+  // Handle AI suggestion application
+  const handleApplyAISuggestion = useCallback((suggestedCode: string) => {
+    onChange(suggestedCode);
+
+    // If parent provided a callback, use it
+    if (onApplyAISuggestion) {
+      onApplyAISuggestion(suggestedCode);
+    }
+
+    // Close AI panel after applying
+    setIsAIPanelOpen(false);
+  }, [onChange, onApplyAISuggestion]);
 
   // Get language extension
   const getLanguageExtension = (lang: string) => {
@@ -359,11 +379,55 @@ export function CodeEditor({
   }, [value]);
 
   return (
-    <div
-      ref={editorRef}
-      style={{ height, width: '100%' }}
-      className="rounded-lg overflow-hidden border border-gray-300 dark:border-gray-700"
-    />
+    <div className="flex flex-col h-full">
+      {/* Toolbar with AI toggle */}
+      {enableAIAssistant && (
+        <div className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-700">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsAIPanelOpen(!isAIPanelOpen)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                isAIPanelOpen
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+              }`}
+            >
+              <span className="text-lg">🤖</span>
+              <span>AI 助手</span>
+              {isAIPanelOpen ? '×' : '+'}
+            </button>
+          </div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            {language.toUpperCase()}
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-1 overflow-hidden">
+        {/* Editor */}
+        <div className="flex-1 overflow-hidden">
+          <div
+            ref={editorRef}
+            style={{ height, width: '100%' }}
+            className="w-full h-full"
+          />
+        </div>
+
+        {/* AI Assistant Panel */}
+        {enableAIAssistant && isAIPanelOpen && (
+          <div className="w-96 border-l border-gray-300 dark:border-gray-700 overflow-y-auto bg-gray-50 dark:bg-gray-800">
+            <AICodeAssistant
+              code={value}
+              language={language}
+              onApplySuggestion={handleApplyAISuggestion}
+              isOpen={true}
+              onClose={() => setIsAIPanelOpen(false)}
+              className="h-full"
+            />
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 

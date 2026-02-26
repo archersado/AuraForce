@@ -103,8 +103,8 @@ export function ChatInterface({ projectPath, projectId, projectName }: ChatInter
   // Claude session list panel state
   const [showClaudeSessionList, setShowClaudeSessionList] = useState(false);
 
-  // Track active tool execution for handling tool_use events
-  const [currentToolMap] = useState<Map<string, { toolName: string; input: any; toolId: string; message_id?: string }>>(new Map());
+  // Track active tool execution for handling tool_use events - use ref to get latest value in SSE loop
+  const currentToolMapRef = useRef<Map<string, { toolName: string; input: any; toolId: string; message_id?: string; fileOperation?: string; filePath?: string }>>(new Map());
 
   // Current running tool for UI display (temporary state that disappears on completion)
   const [currentRunningTool, setCurrentRunningTool] = useState<{ toolName: string; status: 'running' | 'completed' } | null>(null);
@@ -482,6 +482,9 @@ export function ChatInterface({ projectPath, projectId, projectName }: ChatInter
           try {
             const jsonData = JSON.parse(line.slice(6));
 
+            // Log all event types for debugging (remove later)
+            console.log('[ChatInterface] SSE event type:', jsonData.type, 'data:', JSON.stringify(jsonData).substring(0, 200));
+
             // Handle status message
             if (jsonData.type === 'status') {
               setConnectionState('connected');
@@ -499,25 +502,32 @@ export function ChatInterface({ projectPath, projectId, projectName }: ChatInter
             }
             // Handle Claude response (streaming content)
             else if (jsonData.type === 'claude-response') {
+              console.log('[ChatInterface] claude-response received, sdkMessage.type:', jsonData.data?.type);
               const sdkMessage = jsonData.data;
 
               // Handle user messages (tool results) - detect file operations
               if (sdkMessage.type === 'user' && sdkMessage.message) {
+                console.log('[ChatInterface] user message with content:', sdkMessage.message);
                 const content = sdkMessage.message.content;
                 if (Array.isArray(content)) {
+                  console.log('[ChatInterface] content is array, length:', content.length);
                   for (const item of content) {
+                    console.log('[ChatInterface] item:', item.type);
                     if (item.type === 'tool_result') {
                       const toolUseId = item.tool_use_id;
                       console.log('[ChatInterface] Tool result received:', {
                         tool_use_id: toolUseId,
                         is_error: item.is_error,
+                        currentToolMapKeys: Array.from(currentToolMapRef.current.keys()),
                       });
 
                       // Check if we tracked this tool operation
-                      const trackedTool = toolUseId ? currentToolMap.get(toolUseId) : null;
-                      if (trackedTool && (trackedTool as any).fileOperation && !item.is_error) {
-                        const fileOperation = (trackedTool as any).fileOperation;
-                        const filePath = (trackedTool as any).filePath;
+                      const trackedTool = toolUseId ? currentToolMapRef.current.get(toolUseId) : null;
+                      console.log('[ChatInterface] Tracked tool for tool_use_id:', toolUseId, '=>', trackedTool);
+
+                      if (trackedTool && trackedTool.fileOperation && !item.is_error) {
+                        const fileOperation = trackedTool.fileOperation;
+                        const filePath = trackedTool.filePath;
                         console.log('[ChatInterface] File operation success:', fileOperation, filePath);
 
                         // Trigger file operation notification
@@ -590,40 +600,48 @@ export function ChatInterface({ projectPath, projectId, projectName }: ChatInter
 
               // Handle streaming text deltas
               else if (sdkMessage.type === 'stream_event' && sdkMessage.event) {
+                console.log('[ChatInterface] stream_event received, type:', sdkMessage.event?.type);
                 const event = sdkMessage.event as any;
 
                 // Handle content_block_start - tool_use or text starts
                 if (event.type === 'content_block_start') {
+                  console.log('[ChatInterface] content_block_start received:', event);
                   const block = event.content_block;
                   if (block && block.type === 'tool_use') {
                     const toolName = block.name || 'unknown';
                     const toolInput = block.input || {};
                     const toolId = block.id || crypto.randomUUID();
 
-                    console.log('[ChatInterface] Tool use started:', toolName, 'with input:', JSON.stringify(toolInput));
+                    console.log('[ChatInterface] Tool use started:', toolName, 'toolId:', toolId, 'with input:', JSON.stringify(toolInput));
 
                     // Set current running tool for UI display (temporary state)
                     setCurrentRunningTool({ toolName, status: 'running' });
 
                     // Track this tool in the map with file operation info
-                    currentToolMap.set(toolId, { toolName, input: toolInput, toolId });
+                    const toolData: { toolName: string; input: any; toolId: string; message_id?: string; fileOperation?: string; filePath?: string } = {
+                      toolName,
+                      input: toolInput,
+                      toolId,
+                    };
 
                     // Detect file operations from tool input BEFORE execution
                     // We'll verify success from the tool_result
                     if (toolName === 'Write' && toolInput.file_path) {
                       console.log('[ChatInterface] Write tool detected for file:', toolInput.file_path);
-                      // Store in the map with operation type, will be verified in tool_result
-                      (currentToolMap.get(toolId) as any).fileOperation = 'create';
-                      (currentToolMap.get(toolId) as any).filePath = toolInput.file_path;
+                      toolData.fileOperation = 'create';
+                      toolData.filePath = toolInput.file_path;
                     } else if (toolName === 'Read' && toolInput.file_path) {
                       console.log('[ChatInterface] Read tool detected for file:', toolInput.file_path);
-                      (currentToolMap.get(toolId) as any).fileOperation = 'read';
-                      (currentToolMap.get(toolId) as any).filePath = toolInput.file_path;
+                      toolData.fileOperation = 'read';
+                      toolData.filePath = toolInput.file_path;
                     } else if (toolName === 'Edit' && toolInput.file_path) {
                       console.log('[ChatInterface] Edit tool detected for file:', toolInput.file_path);
-                      (currentToolMap.get(toolId) as any).fileOperation = 'update';
-                      (currentToolMap.get(toolId) as any).filePath = toolInput.file_path;
+                      toolData.fileOperation = 'update';
+                      toolData.filePath = toolInput.file_path;
                     }
+
+                    // Store in ref
+                    currentToolMapRef.current.set(toolId, toolData);
                   }
                 }
                 // Handle content_block_delta - incremental updates
@@ -662,7 +680,7 @@ export function ChatInterface({ projectPath, projectId, projectName }: ChatInter
               setStreaming(false);
               setActiveStreamId(null);
               // Clear tool map
-              currentToolMap.clear();
+              currentToolMapRef.current.clear();
             }
             // Handle stream error
             else if (jsonData.type === 'claude-error') {

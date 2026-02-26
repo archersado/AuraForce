@@ -1,53 +1,61 @@
 /**
- * Tab Bar Component - Enhanced
+ * TabBar Enhanced Component
  *
- * Displays file tabs with:
- * - Drag and drop reordering
- * - Right-click context menu
- * - Unsaved file warnings
- * - Close buttons
+ * Displays file tabs with drag-and-drop reordering and context menu.
+ * Features:
+ * - File type icons
+ * - Unsaved indicator (*)
+ * - Close buttons (x)
+ * - Hover effects
  * - Active tab highlight
+ * - Drag-and-drop reordering
+ * - Right-click context menu
+ *
+ * @version 2.0.0 (Enhanced with drag-and-drop and context menu)
  */
 
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
-import { X, Copy, Settings, Lock, Layout, RotateCcw, XCircle } from 'lucide-react';
+import { X, Copy, XCircle, MoreHorizontal } from 'lucide-react';
+import { useTabsStore, type Tab } from '@/stores/workspace-tabs-store';
+import { getFileIcon } from '@/components/workspace/CodeEditor.utils';
 import {
   DndContext,
   closestCenter,
+  DragOverlay,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
+  DragStartEvent,
   DragEndEvent,
 } from '@dnd-kit/core';
 import {
+  arrayMove,
+  SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
-  arrayMove,
+  verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useTabsStore, type Tab } from '@/stores/workspace-tabs-store';
-import { getFileIcon } from '@/components/workspace/CodeEditor.utils';
-import { ConfirmationDialog } from '@/components/ui/confirm-dialog';
+import { useState, useCallback, useEffect } from 'react';
 
 interface TabBarProps {
   onTabClose?: (tabId: string) => void;
 }
 
-interface SortableTabItemProps {
+interface TabItemProps {
   tab: Tab;
-  isActive: boolean;
-  onClick: () => void;
-  onClose: (e: React.MouseEvent) => void;
-  onContextMenu: (e: React.MouseEvent) => void;
+  index: number;
+  onTabClose?: (tabId: string) => void;
+  onCloseWithConfirmation?: (tab: Tab) => Promise<boolean>;
+  onContextMenu?: (e: React.MouseEvent) => void;
 }
 
-/**
- * Sortable Tab Item
- */
-function SortableTabItem({ tab, isActive, onClick, onClose, onContextMenu }: SortableTabItemProps) {
+// Sortable Tab Item
+function SortableTab({ tab, index, onTabClose, onCloseWithConfirmation, onContextMenu }: TabItemProps) {
+  const { activeTabId, setActiveTab, closeTab } = useTabsStore();
+
   const {
     attributes,
     listeners,
@@ -68,23 +76,61 @@ function SortableTabItem({ tab, isActive, onClick, onClose, onContextMenu }: Sor
     return name.substring(0, maxLength - 3) + '...';
   };
 
+  const handleClose = () => {
+    if (tab.hasUnsavedChanges && onCloseWithConfirmation) {
+      onCloseWithConfirmation(tab).then((shouldClose) => {
+        if (shouldClose) {
+          closeTab(tab.id);
+          if (onTabClose) {
+            onTabClose(tab.id);
+          }
+        }
+      });
+    } else {
+      closeTab(tab.id);
+      if (onTabClose) {
+        onTabClose(tab.id);
+      }
+    }
+  };
+
+  const handleMiddleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    handleClose();
+  };
+
   return (
     <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
-      className={`group flex items-center gap-2 px-3 py-2 rounded-t-sm border-t-2 transition-all cursor-pointer min-w-0 flex-shrink-0 max-w-xs ${
-        isActive
+      className={`group flex items-center gap-2 px-3 py-2 rounded-t-sm border-t-2 transition-all cursor-pointer min-w-0 flex-shrink-0 max-w-xs select-none ${
+        tab.isActive
           ? 'border-blue-600 bg-blue-50'
           : 'border-transparent hover:border-gray-300 hover:bg-gray-50'
       }`}
-      onClick={onClick}
-      onContextMenu={onContextMenu}
+      onClick={() => setActiveTab(tab.id)}
+      onAuxClick={(e) => {
+        if (e.button === 1) {
+          handleMiddleClick(e);
+        }
+      }}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        if (onContextMenu) {
+          onContextMenu(e);
+        }
+      }}
       title={tab.path}
     >
-      {/* Drag Handle Indicator */}
-      <div className="flex-shrink-0 w-1 h-4 mr-1 rounded-full bg-gray-300 opacity-0 group-hover:opacity-100" />
+      {/* Drag Handle */}
+      <div
+        {...attributes}
+        {...listeners}
+        className="flex-shrink-0 cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600"
+        title="Drag to reorder"
+      >
+        <MoreHorizontal className="w-3.5 h-3.5" />
+      </div>
 
       {/* File Type Icon */}
       <span className="text-lg flex-shrink-0" title={tab.language}>
@@ -100,9 +146,12 @@ function SortableTabItem({ tab, isActive, onClick, onClose, onContextMenu }: Sor
 
       {/* Close Button */}
       <button
-        onClick={onClose}
+        onClick={(e) => {
+          e.stopPropagation();
+          handleClose();
+        }}
         className={`flex-shrink-0 w-5 h-5 rounded flex items-center justify-center transition-colors ${
-          isActive
+          tab.isActive
             ? 'hover:bg-red-100 text-gray-500'
             : 'hover:bg-red-50 text-gray-400'
         }`}
@@ -114,94 +163,92 @@ function SortableTabItem({ tab, isActive, onClick, onClose, onContextMenu }: Sor
   );
 }
 
-/**
- * Context Menu Component
- */
+// Context Menu Component
 function TabContextMenu({
-  position,
-  visible,
-  onClose,
-  onSelect,
   tab,
+  x,
+  y,
+  onClose,
+  onCloseTab,
+  onCloseOthers,
+  onCloseAll,
+  onCopyPath,
 }: {
-  position: { x: number; y: number };
-  visible: boolean;
+  tab: Tab;
+  x: number;
+  y: number;
   onClose: () => void;
-  onSelect: (action: string) => void;
-  tab: Tab | null;
+  onCloseTab: (tab: Tab) => void;
+  onCloseOthers: (tab: Tab) => void;
+  onCloseAll: () => void;
+  onCopyPath: (path: string) => void;
 }) {
-  useEffect(() => {
-    const handleClickOutside = () => onClose();
-    if (visible) {
-      document.addEventListener('click', handleClickOutside);
-    }
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, [visible, onClose]);
-
-  if (!visible || !tab) return null;
-
-  const menuItems = [
-    { id: 'close', icon: X, label: 'Close Tab', danger: false, separator: false },
-    { id: 'close-others', icon: XCircle, label: 'Close Others', danger: false, separator: false },
-    { id: 'close-all', icon: RotateCcw, label: 'Close All', danger: true, separator: true },
-    { id: 'copy-path', icon: Copy, label: 'Copy Path', danger: false, separator: true },
-    { id: 'pin', icon: Lock, label: 'Pin Tab', danger: false, separator: false },
-    { id: 'format', icon: Layout, label: 'Format Code', danger: false, separator: false },
-    { id: 'settings', icon: Settings, label: 'Settings', danger: false, separator: true },
-  ];
-
   return (
     <div
-      className="fixed z-50 min-w-[200px] bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1"
-      style={{ left: position.x, top: position.y }}
+      className="fixed bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50 min-w-[200px]"
+      style={{ left: x, top: y }}
       onClick={(e) => e.stopPropagation()}
     >
-      {menuItems.map((item) => (
-        <div key={item.id}>
-          {item.separator && <div className="border-t border-gray-200 dark:border-gray-700 my-1 mx-2" />}
-          <button
-            onClick={() => onSelect(item.id)}
-            className={`w-full flex items-center gap-3 px-3 py-2 text-sm transition-colors ${
-              item.danger
-                ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
-                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            }`}
-          >
-            <item.icon className="w-4 h-4" />
-            <span>{item.label}{tab.hasUnsavedChanges && item.id === 'close' && ' *'}</span>
-          </button>
-        </div>
-      ))}
+      <button
+        onClick={() => {
+          onCloseTab(tab);
+          onClose();
+        }}
+        className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+      >
+        <X className="w-4 h-4" />
+        Close Tab
+      </button>
+      <button
+        onClick={() => {
+          onCloseOthers(tab);
+          onClose();
+        }}
+        className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+      >
+        <XCircle className="w-4 h-4" />
+        Close Others
+      </button>
+      <div className="border-t border-gray-200 my-1" />
+      <button
+        onClick={() => {
+          onCopyPath(tab.path);
+          onClose();
+        }}
+        className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+      >
+        <Copy className="w-4 h-4" />
+        Copy Path
+      </button>
+      <div className="border-t border-gray-200 my-1" />
+      <button
+        onClick={() => {
+          onCloseAll();
+          onClose();
+        }}
+        className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+      >
+        <XCircle className="w-4 h-4" />
+        Close All
+      </button>
     </div>
   );
 }
 
-/**
- * Main TabBar Component
- */
-export function TabBar({ onTabClose }: TabBarProps) {
-  const { tabs, activeTabId, setActiveTab, closeTab, closeOtherTabs, closeAllTabs, reorderTab, hasUnsavedTabs, markTabAsSaved } = useTabsStore();
-
+export function TabBarEnhanced({ onTabClose }: TabBarProps) {
+  const { tabs, activeTabId, closeTab, closeOtherTabs, closeAllTabs } = useTabsStore();
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{
-    visible: boolean;
-    tab: Tab | null;
-    position: { x: number; y: number };
-  }>({
-    visible: false,
-    tab: null,
-    position: { x: 0, y: 0 },
-  });
+    tab: Tab;
+    x: number;
+    y: number;
+  } | null>(null);
 
-  const [confirmDialog, setConfirmDialog] = useState<{
-    visible: boolean;
-    message: string;
-    onConfirm: () => void;
-  }>({ visible: false, message: '', onConfirm: () => {} });
-
+  // Configure sensors for drag-and-drop
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 5, // 5px movement required to start drag
       },
     }),
     useSensor(KeyboardSensor, {
@@ -209,133 +256,96 @@ export function TabBar({ onTabClose }: TabBarProps) {
     })
   );
 
+  // Handle drag start
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  }, []);
+
+  // Handle drag end
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
       const oldIndex = tabs.findIndex((tab) => tab.id === active.id);
       const newIndex = tabs.findIndex((tab) => tab.id === over.id);
-      reorderTab(oldIndex, newIndex);
+
+      // Reorder tabs in store
+      const newTabs = arrayMove(tabs, oldIndex, newIndex);
+      storeReorderedTabs(newTabs);
     }
-  }, [tabs, reorderTab]);
 
-  const handleTabClick = useCallback((tab: Tab) => {
-    setActiveTab(tab.id);
-  }, [setActiveTab]);
+    setActiveId(null);
+  }, [tabs]);
 
-  const handleTabClose = useCallback((e: React.MouseEvent, tab: Tab, saveBeforeClose = false) => {
-    e.stopPropagation();
+  // Store reordered tabs
+  const storeReorderedTabs = useCallback((newTabs: Tab[]) => {
+    // Update store with new order
+    useTabsStore.setState({ tabs: newTabs });
+  }, []);
 
+  // Handle tab close with confirmation
+  const handleCloseWithConfirmation = useCallback(async (tab: Tab): Promise<boolean> => {
     if (tab.hasUnsavedChanges) {
-      setConfirmDialog({
-        visible: true,
-        message: `Do you want to close "${tab.name}"? All unsaved changes will be lost.`,
-        onConfirm: async () => {
-          if (saveBeforeClose) {
-            // TODO: Save before closing
-            // For now, just close with warning
-          }
-          closeTab(tab.id);
-          if (onTabClose) {
-            onTabClose(tab.id);
-          }
-          setConfirmDialog({ visible: false, message: '', onConfirm: () => {} });
-        },
-      });
-    } else {
-      closeTab(tab.id);
-      if (onTabClose) {
-        onTabClose(tab.id);
+      const confirmed = window.confirm(
+        `Save changes to "${tab.name}" before closing?`
+      );
+
+      if (confirmed) {
+        // TODO: Implement save functionality
+        return true;
       }
+      return false;
+    }
+    return true;
+  }, []);
+
+  // Handle context menu actions
+  const handleCloseTab = useCallback((tab: Tab) => {
+    if (tab.hasUnsavedChanges) {
+      const confirmed = window.confirm(
+        `Discard unsaved changes to "${tab.name}" and close?`
+      );
+      if (!confirmed) return;
+    }
+    closeTab(tab.id);
+    if (onTabClose) {
+      onTabClose(tab.id);
     }
   }, [closeTab, onTabClose]);
 
-  const handleTabContextMenu = useCallback((e: React.MouseEvent, tab: Tab) => {
-    e.preventDefault();
-    setContextMenu({
-      visible: true,
-      tab,
-      position: { x: e.clientX, y: e.clientY },
-    });
+  const handleCloseOthers = useCallback((tab: Tab) => {
+    closeOtherTabs();
+  }, [closeOtherTabs]);
+
+  const handleCloseAll = useCallback(() => {
+    closeAllTabs();
+  }, [closeAllTabs]);
+
+  const handleCopyPath = useCallback(async (path: string) => {
+    try {
+      await navigator.clipboard.writeText(path);
+      // Could show a toast notification here
+    } catch (err) {
+      console.error('Failed to copy path:', err);
+    }
   }, []);
 
-  const handleContextMenuSelect = useCallback((action: string) => {
-    const tabToClose = contextMenu.tab;
-
-    setContextMenu({ visible: false, tab: null, position: { x: 0, y: 0 } });
-
-    switch (action) {
-      case 'close':
-        if (tabToClose) {
-          handleTabClose({ stopPropagation: () => {} } as React.MouseEvent, tabToClose);
-        }
-        break;
-      case 'close-others':
-        if (activeTabId) {
-          // Close all tabs except the current one
-          const tabsToClose = tabs.filter((t) => t.id !== activeTabId && t.hasUnsavedChanges);
-          if (tabsToClose.length > 0) {
-            setConfirmDialog({
-              visible: true,
-              message: `Do you want to close other tabs? ${tabsToClose.length} file(s) have unsaved changes.`,
-              onConfirm: () => {
-                closeOtherTabs();
-                setConfirmDialog({ visible: false, message: '', onConfirm: () => {} });
-              },
-            });
-          } else {
-            closeOtherTabs();
-          }
-        }
-        break;
-      case 'close-all':
-        if (hasUnsavedTabs()) {
-          setConfirmDialog({
-            visible: true,
-            message: 'Do you want to close all tabs? All unsaved changes will be lost.',
-            onConfirm: () => {
-              closeAllTabs();
-              setConfirmDialog({ visible: false, message: '', onConfirm: () => {} });
-            },
-          });
-        } else {
-          closeAllTabs();
-        }
-        break;
-      case 'copy-path':
-        if (tabToClose) {
-          navigator.clipboard.writeText(tabToClose.path);
-        }
-        break;
-      case 'pin':
-        // TODO: Implement pinning functionality
-        break;
-      case 'format':
-        // TODO: Implement format functionality
-        break;
-      case 'settings':
-        // TODO: Open settings
-        break;
-    }
-  }, [handleTabClose, contextMenu, activeTabId, tabs, closeOtherTabs, closeAllTabs, hasUnsavedTabs]);
-
-  // Window beforeunload handler for unsaved tabs
+  // Close context menu on click outside
   useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasUnsavedTabs()) {
-        e.preventDefault();
-        e.returnValue = '';
-      }
+    const handleClickOutside = () => {
+      setContextMenu(null);
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [hasUnsavedTabs]);
+    if (contextMenu) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [contextMenu]);
 
   if (tabs.length === 0) {
     return (
-      <div className="h-12 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 flex items-center">
-        <p className="text-sm text-gray-500 dark:text-gray-400 px-4">
+      <div className="h-12 bg-gray-50 border-b border-gray-200 flex items-center">
+        <p className="text-sm text-gray-500 px-4">
           No files open
         </p>
       </div>
@@ -344,96 +354,85 @@ export function TabBar({ onTabClose }: TabBarProps) {
 
   return (
     <>
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <div className="h-12 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 flex items-center overflow-x-auto">
-          {/* Tabs */}
-          <div className="flex items-center gap-1 px-2">
-            {tabs.map((tab) => (
-              <SortableTabItem
-                key={tab.id}
-                tab={tab}
-                isActive={tab.id === activeTabId}
-                onClick={() => handleTabClick(tab)}
-                onClose={(e) => handleTabClose(e, tab)}
-                onContextMenu={(e) => handleTabContextMenu(e, tab)}
-              />
-            ))}
-          </div>
-
-          {/* Close All / Close Others */}
-          {tabs.length > 1 && (
-            <div className="flex items-center gap-1 ml-2 pl-2 border-l border-gray-200 dark:border-gray-700">
-              <button
-                onClick={() => {
-                  if (activeTabId) {
-                    const tabsToClose = tabs.filter((t) => t.id !== activeTabId && t.hasUnsavedChanges);
-                    if (tabsToClose.length > 0) {
-                      setConfirmDialog({
-                        visible: true,
-                        message: `Do you want to close other tabs? ${tabsToClose.length} file(s) have unsaved changes.`,
-                        onConfirm: () => {
-                          closeOtherTabs();
-                          setConfirmDialog({ visible: false, message: '', onConfirm: () => {} });
-                        },
-                      });
-                    } else {
-                      closeOtherTabs();
-                    }
-                  }
-                }}
-                className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-xs transition-colors"
-                title="Close Others"
-              >
-                Close Others
-              </button>
-              <button
-                onClick={() => {
-                  if (hasUnsavedTabs()) {
-                    setConfirmDialog({
-                      visible: true,
-                      message: 'Do you want to close all tabs? All unsaved changes will be lost.',
-                      onConfirm: () => {
-                        closeAllTabs();
-                        setConfirmDialog({ visible: false, message: '', onConfirm: () => {} });
-                      },
+      <div className="h-12 bg-white border-b border-gray-200 flex items-center overflow-x-auto">
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={tabs.map(tab => tab.id)} strategy={verticalListSortingStrategy}>
+            <div className="flex items-center gap-1 px-2">
+              {tabs.map((tab, index) => (
+                <SortableTab
+                  key={tab.id}
+                  tab={tab}
+                  index={index}
+                  onTabClose={onTabClose}
+                  onCloseWithConfirmation={handleCloseWithConfirmation}
+                  onContextMenu={(e: React.MouseEvent) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setContextMenu({
+                      tab,
+                      x: e.clientX,
+                      y: e.clientY,
                     });
-                  } else {
-                    closeAllTabs();
-                  }
-                }}
-                className="p-1.5 text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-xs transition-colors"
-                title="Close All"
-              >
-                Close All
-              </button>
+                  }}
+                />
+              ))}
             </div>
-          )}
-        </div>
-      </DndContext>
+          </SortableContext>
+
+          <DragOverlay>
+            {activeId ? (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-t-sm border-t-2 border-blue-600 bg-blue-50 min-w-0 flex-shrink-0 max-w-xs">
+                <MoreHorizontal className="w-3.5 h-3.5 text-gray-400" />
+                <span className="text-lg">{getFileIcon(tabs.find(t => t.id === activeId)?.name || '')?.icon || '📄'}</span>
+                <span className="text-sm truncate">
+                  {tabs.find(t => t.id === activeId)?.name || ''}
+                </span>
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+
+        {/* Close All / Close Others */}
+        {tabs.length > 1 && (
+          <div className="flex items-center gap-1 ml-2 pl-2 border-l border-gray-200">
+            <button
+              onClick={() => closeOtherTabs()}
+              className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded text-xs transition-colors"
+              title="Close Others"
+            >
+              Close Others
+            </button>
+            <button
+              onClick={() => closeAllTabs()}
+              className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded text-xs transition-colors"
+              title="Close All"
+            >
+              Close All
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Context Menu */}
-      <TabContextMenu
-        visible={contextMenu.visible}
-        position={contextMenu.position}
-        tab={contextMenu.tab}
-        onClose={() => setContextMenu({ visible: false, tab: null, position: { x: 0, y: 0 } })}
-        onSelect={handleContextMenuSelect}
-      />
-
-      {/* Confirmation Dialog */}
-      <ConfirmationDialog
-        open={confirmDialog.visible}
-        title="Unsaved Changes"
-        message={confirmDialog.message}
-        confirmText="Close"
-        cancelText="Cancel"
-        onConfirm={confirmDialog.onConfirm}
-        onCancel={() => setConfirmDialog({ visible: false, message: '', onConfirm: () => {} })}
-      />
+      {contextMenu && (
+        <TabContextMenu
+          tab={contextMenu.tab}
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={() => setContextMenu(null)}
+          onCloseTab={handleCloseTab}
+          onCloseOthers={handleCloseOthers}
+          onCloseAll={handleCloseAll}
+          onCopyPath={handleCopyPath}
+        />
+      )}
     </>
   );
 }
+
+export default TabBarEnhanced;

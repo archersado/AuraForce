@@ -408,6 +408,23 @@ async function handleRealChat(
     timestamp: new Date().toISOString(),
   });
 
+  // Determine node path to fix "spawn node ENOENT" issue
+  // Use absolute path to current node to ensure SDK can find it
+  const nodePath = process.execPath;
+  const nodeDir = nodePath.substring(0, nodePath.lastIndexOf('/'));
+
+  console.log(`[WS ${ws.connectionId}] Node path check:`, { nodePath, nodeDir });
+
+  // Build PATH ensuring Node.js directory is included
+  // Make sure nodeDir is first and appears in PATH to help SDK find node
+  const existingPath = process.env.PATH || '';
+  const pathDirs = [
+    nodeDir, // Add node directory first for priority
+    existingPath.includes(nodeDir) ? existingPath : `${nodeDir}:${existingPath}`,
+  ].filter(p => p).join(':');
+
+  console.log(`[WS ${ws.connectionId}] PATH (first 200 chars):`, pathDirs.slice(0, 200));
+
   // Configure SDK options
   const sdkOptions: Record<string, unknown> = {
     model: actualModel,
@@ -421,8 +438,10 @@ async function handleRealChat(
     includePartialMessages: true,
     ...(resumeSessionId && { resume: resumeSessionId }),
     env: {
-      // IMPORTANT: Keep PATH so child processes can find Node.js
-      ...(process.env.PATH && { PATH: process.env.PATH }),
+      // CRITICAL: Use absolute node path and ensure PATH includes node directory
+      NODE: nodePath,
+      PATH: pathDirs,
+      // IMPORTANT: Keep other environment variables
       ...(claudeConfig.authToken && { ANTHROPIC_AUTH_TOKEN: claudeConfig.authToken }),
       ...(claudeConfig.baseUrl && { ANTHROPIC_BASE_URL: claudeConfig.baseUrl }),
       ...(claudeConfig.defaultModel && { ANTHROPIC_MODEL: claudeConfig.defaultModel }),
@@ -436,6 +455,12 @@ async function handleRealChat(
     },
   };
 
+  // Declare variables in outer scope for catch block access
+  let sessionId = '';
+  let messageCount = 0;
+  let lastMessage: any = null;
+  let actualError: string | null = null;
+
   try {
     const queryInstance = query({
       prompt: content,
@@ -444,9 +469,6 @@ async function handleRealChat(
 
     ws.currentQuery = queryInstance[Symbol.asyncIterator]?.();
 
-    let sessionId = '';
-    let messageCount = 0;
-
     // Process streaming messages
     for await (const message of queryInstance) {
       if (ws.readyState !== WS.OPEN) {
@@ -454,6 +476,13 @@ async function handleRealChat(
       }
 
       messageCount++;
+      lastMessage = message;
+
+      // Check for error in result messages
+      if ((message as any).type === 'result' && (message as any).is_error === true) {
+        actualError = (message as any).result || 'Unknown error from Claude SDK';
+        console.error(`[WS ${ws.connectionId}] SDK error detected:`, actualError);
+      }
 
       // Capture session ID from first message
       if ((message as any).session_id && !sessionId) {
@@ -486,6 +515,19 @@ async function handleRealChat(
       });
     }
 
+    // Send error if we captured one
+    if (actualError) {
+      sendError(ws, 'CLAUDE_SDK_ERROR', actualError, false);
+      return;
+    }
+
+    // Check if last message was a result with error but not caught above
+    if (lastMessage?.type === 'result' && lastMessage?.is_error === true && !actualError) {
+      const errorMsg = lastMessage?.result || 'Claude SDK reported an error';
+      sendError(ws, 'CLAUDE_SDK_ERROR', errorMsg, false);
+      return;
+    }
+
     // Send completion notification
     sendMessage(ws, {
       id: crypto.randomUUID(),
@@ -500,6 +542,36 @@ async function handleRealChat(
     });
 
   } catch (error) {
+    // Check if this is a process exit error with an underlying error message
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
+    // If we already captured an error from the SDK messages, don't throw
+    if (actualError) {
+      sendError(ws, 'CLAUDE_SDK_ERROR', actualError, false);
+      return;
+    }
+
+    // If error is just about process exiting, we need better details
+    if (errorMessage.includes('exited with code')) {
+      // Check if we have any messages at all - if we completed work, it's fine
+      // If we have an error result, use that
+      if (lastMessage?.type === 'result' && lastMessage?.is_error === true) {
+        sendError(ws, 'CLAUDE_SDK_ERROR', lastMessage.result || 'Claude SDK failed', false);
+        return;
+      }
+
+      // If we received messages but process exited with non-zero code, it's probably an error
+      const exitCodeMatch = errorMessage.match(/exited with code (\d+)/);
+      if (exitCodeMatch && parseInt(exitCodeMatch[1], 10) !== 0 && messageCount > 0) {
+        const isGracefulExit = lastMessage?.type === 'result' && lastMessage?.subtype === 'success' && !lastMessage?.is_error;
+        if (!isGracefulExit) {
+          sendError(ws, 'CLAUDE_SDK_ERROR', `Claude SDK process exited abnormally: ${errorMessage}`, false);
+          return;
+        }
+      }
+    }
+
+    // Otherwise, rethrow the error
     throw error;
   }
 }

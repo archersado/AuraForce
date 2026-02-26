@@ -1,11 +1,72 @@
 'use client';
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { Document, Page, pdfjs } from 'react-pdf';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Download, X, Loader2 } from 'lucide-react';
 
-// Configure PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+// Try to import react-pdf with error handling
+const usePdfComponents = () => {
+  const [components, setComponents] = useState<(typeof import('react-pdf')) | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadPdfComponents = async () => {
+      try {
+        // Check if running on client side
+        if (typeof window === 'undefined') {
+          return;
+        }
+
+        // Dynamically import react-pdf
+        const pdfModule = await import('react-pdf');
+
+        // Set up PDF.js worker if not already set
+        try {
+          const pdfjs = await import('pdfjs-dist');
+          const pdfjsLib = pdfjs.default || pdfjs;
+          if (pdfjsLib && pdfjsLib.GlobalWorkerOptions && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
+            const workerUrl = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+            pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
+          }
+        } catch (workerError) {
+          console.warn('Could not set up PDF.js worker:', workerError);
+        }
+
+        if (isMounted) {
+          setComponents(pdfModule);
+        }
+      } catch (err) {
+        if (isMounted) {
+          const errMsg = err instanceof Error ? err.message : 'Failed to load PDF viewer';
+          setError(errMsg);
+          console.error('Failed to load react-pdf:', err);
+        }
+      }
+    };
+
+    loadPdfComponents();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Dynamically create Document and Page components
+  const Document = (props: any) => {
+    if (!components?.Document) return null;
+    const DocumentComponent = components.Document;
+    return React.createElement(DocumentComponent, props);
+  };
+
+  const Page = (props: any) => {
+    if (!components?.Page) return null;
+    const PageComponent = components.Page;
+    return React.createElement(PageComponent, props);
+  };
+
+  return { Document, Page, isLoading: !components && !error, error };
+};
 
 interface PdfPreviewProps {
   fileUrl: string;
@@ -20,17 +81,74 @@ export default function PdfPreview({ fileUrl, fileName, onClose, onDownload, cla
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [scale, setScale] = useState<number>(1.0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [renderError, setRenderError] = useState<string | null>(null);
+
+  const { Document, Page, isLoading: isLibraryLoading, error: libraryError } = usePdfComponents();
+
+  // Fallback: show download-only view if PDF library fails to load
+  if (libraryError || !Document || !Page) {
+    return (
+      <div className={`flex flex-col h-full bg-white dark:bg-gray-900 ${className}`}>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+          <h3 className="font-medium text-gray-900 dark:text-white truncate">
+            {fileName || 'Document Preview'}
+          </h3>
+          <div className="flex items-center gap-2">
+            {onDownload && (
+              <button
+                onClick={onDownload}
+                className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                title="Download"
+              >
+                <Download size={16} className="text-gray-700 dark:text-gray-300" />
+              </button>
+            )}
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="p-1.5 rounded hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                title="Close"
+              >
+                <X size={16} className="text-red-600 dark:text-red-400" />
+              </button>
+            )}
+          </div>
+        </div>
+        <div className="flex-1 overflow-auto bg-gray-100 dark:bg-gray-950 p-6 flex items-center justify-center">
+          <div className="text-center max-w-md mx-auto">
+            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+              <Download className="w-10 h-10 text-gray-500 dark:text-gray-400" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              PDF Preview Unavailable
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              {libraryError || 'For security reasons, PDF preview requires specific browser settings. Please download the file to view it.'}
+            </p>
+            {onDownload && (
+              <button
+                onClick={onDownload}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors"
+              >
+                <Download size={16} />
+                Download PDF
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleDocumentLoadSuccess = useCallback(({ numPages: loadedNumPages }: { numPages: number }) => {
     setNumPages(loadedNumPages);
     setIsLoading(false);
-    setError(null);
+    setRenderError(null);
   }, []);
 
   const handleDocumentLoadError = useCallback((err: Error) => {
     console.error('PDF load error:', err);
-    setError('Failed to load PDF. Please try again or download the file.');
+    setRenderError('Failed to load PDF. Please try again or download the file.');
     setIsLoading(false);
   }, []);
 
@@ -51,7 +169,7 @@ export default function PdfPreview({ fileUrl, fileName, onClose, onDownload, cla
 
   const handleError = useCallback((e: unknown) => {
     console.error('PDF rendering error:', e);
-    setError('An error occurred while rendering the PDF. Please try again.');
+    setRenderError('An error occurred while rendering the PDF. Please try again.');
   }, []);
 
   // Reset state when file changes
@@ -59,7 +177,7 @@ export default function PdfPreview({ fileUrl, fileName, onClose, onDownload, cla
     setPageNumber(1);
     setScale(1.0);
     setIsLoading(true);
-    setError(null);
+    setRenderError(null);
   }, [fileUrl]);
 
   return (
@@ -146,13 +264,13 @@ export default function PdfPreview({ fileUrl, fileName, onClose, onDownload, cla
 
       {/* Content */}
       <div className="flex-1 overflow-auto bg-gray-100 dark:bg-gray-950 p-4 flex items-center justify-center">
-        {error ? (
+        {renderError ? (
           <div className="text-center p-8 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
             <X className="mx-auto h-12 w-12 text-red-600 dark:text-red-400 mb-3" />
             <h3 className="text-lg font-medium text-red-900 dark:text-red-200 mb-2">
               Preview Error
             </h3>
-            <p className="text-sm text-red-700 dark:text-red-300 mb-4">{error}</p>
+            <p className="text-sm text-red-700 dark:text-red-300 mb-4">{renderError}</p>
             {onDownload && (
               <button
                 onClick={onDownload}
@@ -163,10 +281,12 @@ export default function PdfPreview({ fileUrl, fileName, onClose, onDownload, cla
               </button>
             )}
           </div>
-        ) : isLoading ? (
+        ) : isLoading || isLibraryLoading ? (
           <div className="flex flex-col items-center justify-center">
             <Loader2 className="w-8 h-8 text-blue-600 dark:text-blue-400 animate-spin mb-3" />
-            <p className="text-sm text-gray-600 dark:text-gray-400">Loading PDF...</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {isLibraryLoading ? 'Loading PDF viewer...' : 'Loading PDF...'}
+            </p>
           </div>
         ) : (
           <div className="pdf-content-wrapper" style={{ transform: `scale(${scale})`, transformOrigin: 'top center' }}>
@@ -192,7 +312,7 @@ export default function PdfPreview({ fileUrl, fileName, onClose, onDownload, cla
       </div>
 
       {/* Footer Info */}
-      {!error && !isLoading && numPages > 0 && (
+      {!renderError && !isLoading && !isLibraryLoading && numPages > 0 && (
         <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <p className="text-xs text-gray-500 dark:text-gray-400">
             Use arrow keys to navigate pages. Use +/- keys to zoom.

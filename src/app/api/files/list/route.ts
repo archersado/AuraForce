@@ -10,8 +10,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/custom-session';
 import { workspace } from '@/lib/config';
-import { readdir, stat } from 'fs/promises';
-import { join, relative, resolve, join as pathJoin } from 'path';
+import { existsSync } from 'fs';
+import { mkdir, readdir, stat } from 'fs/promises';
+import { join, relative, resolve } from 'path';
+import { isSafePath } from '@/lib/api/path-security';
 
 // Workspace root directory (project root for development)
 const WORKSPACE_ROOT = process.cwd();
@@ -40,24 +42,6 @@ const EXCLUDED_ITEMS = [
   'coverage',
   '.nyc_output',
 ];
-
-/**
- * Check if a path is safe (within workspace root)
- */
-function isSafePath(path: string, root: string): boolean {
-  const resolvedPath = resolve(path);
-  const resolvedRoot = resolve(root);
-
-  // Check if resolved path is within root
-  const relativePath = relative(resolvedRoot, resolvedPath);
-
-  // Path should not start with '..' and should not be absolute
-  if (relativePath.startsWith('..') || relativePath.startsWith('/') || relativePath.startsWith('\\')) {
-    return false;
-  }
-
-  return true;
-}
 
 /**
  * Check if an item should be excluded from listings
@@ -185,14 +169,18 @@ export async function GET(request: NextRequest) {
 
     // Resolve the target path relative to the root directory
     let targetPath: string;
+    let isListingRoot = false;
+
     if (pathParam && pathParam !== '/') {
       targetPath = resolve(rootDirectory, pathParam);
     } else {
       targetPath = rootDirectory;
+      isListingRoot = true;
     }
 
     // Security check: ensure path is within workspace root
-    if (!isSafePath(targetPath, rootDirectory)) {
+    // Allow root directory when listing
+    if (!isSafePath(targetPath, rootDirectory, { allowRoot: isListingRoot })) {
       console.warn('[Files API] Path traversal attempt:', targetPath);
       return NextResponse.json(
         { error: 'Path traversal not allowed' },
@@ -201,7 +189,28 @@ export async function GET(request: NextRequest) {
     }
 
     // Get directory stats
-    const fileStat = await stat(targetPath);
+    let fileStat;
+    try {
+      fileStat = await stat(targetPath);
+    } catch (error) {
+      // Handle missing directories gracefully - create directory if it doesn't exist
+      if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
+        console.log('[Files API] Directory does not exist, creating:', targetPath);
+        try {
+          // Only create if it's within a valid workspace path
+          await mkdir(targetPath, { recursive: true });
+          fileStat = await stat(targetPath);
+        } catch (createError) {
+          console.error('[Files API] Failed to create directory:', createError);
+          return NextResponse.json(
+            { error: 'Failed to create directory' },
+            { status: 500 }
+          );
+        }
+      } else {
+        throw error;
+      }
+    }
 
     // Ensure path is a directory
     if (!fileStat.isDirectory()) {

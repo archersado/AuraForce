@@ -17,6 +17,7 @@ import { workspace } from '@/lib/config';
 import { readFile, stat } from 'fs/promises';
 import { join, relative, resolve } from 'path';
 import { createReadStream } from 'fs';
+import { isSafePath } from '@/lib/api/path-security';
 
 // Workspace root directory
 const WORKSPACE_ROOT = process.cwd();
@@ -31,41 +32,6 @@ const PLATFORM_WORKSPACE_ROOT = workspace.root ||
 
 // Maximum file size for download (100MB)
 const MAX_DOWNLOAD_SIZE = 100 * 1024 * 1024;
-
-// Files/directories that should not be downloaded
-const EXCLUDED_PATTERNS = [
-  /node_modules/,
-  /.git/,
-  /.env/,
-  /.next/,
-  /dist/,
-  /build/,
-];
-
-/**
- * Check if a path is safe (within workspace root)
- */
-function isSafePath(path: string, root: string): boolean {
-  const resolvedPath = resolve(path);
-  const resolvedRoot = resolve(root);
-
-  // Check if resolved path is within root
-  const relativePath = relative(resolvedRoot, resolvedPath);
-
-  // Path should not start with '..' and should not be absolute
-  if (relativePath.startsWith('..') || relativePath.startsWith('/') || relativePath.startsWith('\\')) {
-    return false;
-  }
-
-  // Check against excluded patterns
-  for (const pattern of EXCLUDED_PATTERNS) {
-    if (pattern.test(relativePath)) {
-      return false;
-    }
-  }
-
-  return true;
-}
 
 /**
  * Map file extensions to MIME types

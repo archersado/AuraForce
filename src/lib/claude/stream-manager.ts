@@ -94,12 +94,24 @@ export class StreamManager {
       return;
     }
 
+    // Check if the chunk contains think tags for debugging
+    const chunkContent = chunk.content || '';
+    const hasThinkStart = chunkContent.includes('<think') || chunkContent.includes('');
+    if (hasThinkStart) {
+      console.log('[StreamManager] Chunk contains think tag:', chunkContent.substring(0, 100));
+    }
 
     // Accumulate chunk in buffer
     const oldLength = streamingMessage.streamBuffer.length;
     streamingMessage.streamBuffer += chunk.content;
     streamingMessage.content = streamingMessage.streamBuffer;
     streamingMessage.lastChunkTime = new Date();
+
+    // Log when think tags appear in buffer
+    const bufferHasThink = streamingMessage.content.includes('<think') || streamingMessage.content.includes('');
+    if (bufferHasThink && oldLength === 0) {
+      console.log('[StreamManager] Buffer now contains think tag, content preview:', streamingMessage.content.substring(0, 150));
+    }
 
 
     // Schedule throttled update

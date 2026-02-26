@@ -1,46 +1,17 @@
 {
   root: '/Users/archersado/clawd/projects/AuraForce',
   registry: 'https://registry.npmmirror.com',
-  pkgs: [
-    {
-      name: '@codemirror/lang-xml',
-      version: 'latest',
-      type: 'tag',
-      alias: undefined,
-      arg: [Result]
-    },
-    {
-      name: '@codemirror/lang-shell',
-      version: 'latest',
-      type: 'tag',
-      alias: undefined,
-      arg: [Result]
-    },
-    {
-      name: '@codemirror/lang-yaml',
-      version: 'latest',
-      type: 'tag',
-      alias: undefined,
-      arg: [Result]
-    },
-    {
-      name: '@codemirror/lang-toml',
-      version: 'latest',
-      type: 'tag',
-      alias: undefined,
-      arg: [Result]
-    }
-  ],
+  pkgs: [],
   production: false,
   cacheStrict: false,
   cacheDir: '/Users/archersado/.npminstall_tarball',
   env: {
     npm_config_registry: 'https://registry.npmmirror.com',
-    npm_config_argv: '{"remain":[],"cooked":["--fix-bug-versions","--china","--userconfig=/Users/archersado/.cnpmrc","--disturl=https://cdn.npmmirror.com/binaries/node","--registry=https://registry.npmmirror.com","-S","@codemirror/lang-xml","@codemirror/lang-shell","@codemirror/lang-yaml","@codemirror/lang-toml"],"original":["--fix-bug-versions","--china","--userconfig=/Users/archersado/.cnpmrc","--disturl=https://cdn.npmmirror.com/binaries/node","--registry=https://registry.npmmirror.com","-S","@codemirror/lang-xml","@codemirror/lang-shell","@codemirror/lang-yaml","@codemirror/lang-toml"]}',
-    npm_config_user_agent: 'npminstall/7.12.0 npm/? node/v24.13.0 darwin arm64',
+    npm_config_argv: '{"remain":[],"cooked":["--fix-bug-versions","--china","--userconfig=/Users/archersado/.cnpmrc","--disturl=https://cdn.npmmirror.com/binaries/node","--registry=https://registry.npmmirror.com"],"original":["--fix-bug-versions","--china","--userconfig=/Users/archersado/.cnpmrc","--disturl=https://cdn.npmmirror.com/binaries/node","--registry=https://registry.npmmirror.com"]}',
+    npm_config_user_agent: 'npminstall/7.12.0 npm/? node/v20.16.0 darwin arm64',
     npm_config_cache: '/Users/archersado/.npminstall_tarball',
-    NODE: '/Users/archersado/.nvm/versions/node/v24.13.0/bin/node',
-    npm_node_execpath: '/Users/archersado/.nvm/versions/node/v24.13.0/bin/node',
+    NODE: '/Users/archersado/.nvm/versions/node/v20.16.0/bin/node',
+    npm_node_execpath: '/Users/archersado/.nvm/versions/node/v20.16.0/bin/node',
     npm_execpath: '/Users/archersado/.nvm/versions/node/v20.16.0/lib/node_modules/cnpm/node_modules/npminstall/bin/install.js',
     npm_config_userconfig: '/Users/archersado/.cnpmrc',
     npm_config_disturl: 'https://cdn.npmmirror.com/binaries/node',

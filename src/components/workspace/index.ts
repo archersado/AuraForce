@@ -7,3 +7,4 @@
 export { FileBrowser } from './FileBrowser';
 export { FileEditor } from './FileEditor';
 export { WorkspacePanel } from './WorkspacePanel';
+export { FileUpload } from './FileUpload';

@@ -325,8 +325,16 @@ export const useClaudeStore = create<ClaudeState>()(
           console.log('[ClaudeStore] updateMessageStreaming:', {
             messageId,
             isStreaming,
+            contentLength: content.length,
+            hasThinkTag: content.includes('<think') || content.includes(''),
             totalMessages: state.messages.length,
           });
+
+          // Log content preview if it has think tags
+          if (content.includes('<think') || content.includes('')) {
+            console.log('[ClaudeStore] Content with think tag preview:', content.substring(0, 200));
+          }
+
           return {
             messages: state.messages.map((msg) => {
               if (msg.id === messageId) {

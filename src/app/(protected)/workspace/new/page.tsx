@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { WorkflowSelector } from '@/components/workflows/WorkflowSelector';
 import { type WorkflowSpec } from '@/components/workflows';
+import { apiFetch } from '@/lib/api-client';
 import { useState } from 'react';
 
 export default function NewWorkspacePage() {
@@ -40,7 +41,7 @@ export default function NewWorkspacePage() {
 
     try {
       // TODO: Implement workspace creation API call
-      const response = await fetch('/api/workspaces', {
+      const response = await apiFetch('/api/workspaces', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

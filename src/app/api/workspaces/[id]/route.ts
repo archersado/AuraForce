@@ -18,7 +18,22 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getSession();
+    // Development mode: allow test user authentication
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    let session = await getSession();
+
+    // Development: Use test user if no session
+    if (!session?.user?.id && isDevelopment) {
+      const prisma = (await import('@/lib/prisma')).prisma;
+      const testUser = await prisma.user.findUnique({
+        where: { email: 'playwright@test.com' },
+        select: { id: true },
+      });
+      if (testUser) {
+        session = { user: { id: testUser.id, email: 'playwright@test.com', name: 'Playwright Test', image: null, emailVerified: null } };
+      }
+    }
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -72,7 +87,22 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getSession();
+    // Development mode: allow test user authentication
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    let session = await getSession();
+
+    // Development: Use test user if no session
+    if (!session?.user?.id && isDevelopment) {
+      const prisma = (await import('@/lib/prisma')).prisma;
+      const testUser = await prisma.user.findUnique({
+        where: { email: 'playwright@test.com' },
+        select: { id: true },
+      });
+      if (testUser) {
+        session = { user: { id: testUser.id, email: 'playwright@test.com', name: 'Playwright Test', image: null, emailVerified: null } };
+      }
+    }
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

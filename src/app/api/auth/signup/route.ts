@@ -104,17 +104,30 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Send verification email
-    const emailSent = await sendVerificationEmail({
-      to: sanitizedEmail,
-      token,
-    });
-
+    // Development mode: skip email verification
+    const isDevelopment = process.env.NODE_ENV === 'development';
     let message = '注册成功！';
-    if (emailSent) {
-      message += '验证邮件已发送到您的邮箱';
+
+    if (isDevelopment) {
+      // Development mode: auto-verify the user
+      user.emailVerified = new Date();
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerified: new Date() },
+      });
+      message += '开发模式下已自动验证邮箱（跳过邮件发送）';
     } else {
-      message += '验证邮件已发送（邮件服务未配置，请查看控制台获取验证码）';
+      // Send verification email
+      const emailSent = await sendVerificationEmail({
+        to: sanitizedEmail,
+        token,
+      });
+
+      if (emailSent) {
+        message += '验证邮件已发送到您的邮箱';
+      } else {
+        message += '验证邮件已发送（邮件服务未配置，请查看控制台获取验证码）';
+      }
     }
 
     return NextResponse.json({

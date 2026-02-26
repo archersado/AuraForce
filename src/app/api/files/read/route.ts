@@ -11,7 +11,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/custom-session';
 import { workspace } from '@/lib/config';
 import { readFile, stat } from 'fs/promises';
-import { join, relative, resolve, join as pathJoin } from 'path';
+import { join, relative, resolve } from 'path';
+import { isSafePath } from '@/lib/api/path-security';
 
 // Workspace root directory
 const WORKSPACE_ROOT = process.cwd();
@@ -29,43 +30,6 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 // Threshold for warning (1MB)
 const LARGE_FILE_THRESHOLD = 1 * 1024 * 1024;
-
-// Files/directories that should not be read
-const EXCLUDED_PATTERNS = [
-  /node_modules/,
-  /.git/,
-  /.env/,
-  /.next/,
-  /dist/,
-  /build/,
-  /coverage/,
-  /\.lock$/,
-];
-
-/**
- * Check if a path is safe (within workspace root)
- */
-function isSafePath(path: string, root: string): boolean {
-  const resolvedPath = resolve(path);
-  const resolvedRoot = resolve(root);
-
-  // Check if resolved path is within root
-  const relativePath = relative(resolvedRoot, resolvedPath);
-
-  // Path should not start with '..' and should not be absolute
-  if (relativePath.startsWith('..') || relativePath.startsWith('/') || relativePath.startsWith('\\')) {
-    return false;
-  }
-
-  // Check against excluded patterns
-  for (const pattern of EXCLUDED_PATTERNS) {
-    if (pattern.test(relativePath)) {
-      return false;
-    }
-  }
-
-  return true;
-}
 
 // Text file extensions that should always be treated as text (even if they have unusual characters)
 const TEXT_FILE_EXTENSIONS = [
@@ -241,9 +205,20 @@ export async function GET(request: NextRequest) {
     // Resolve the target path relative to the root directory
     const targetPath = resolve(rootDirectory, pathParam);
 
+    // Debug logging
+    console.log('[Files API] Path check:', {
+      pathParam,
+      rootDirectory,
+      targetPath,
+    });
+
     // Security check: ensure path is within root directory
     if (!isSafePath(targetPath, rootDirectory)) {
-      console.warn('[Files API] Path traversal attempt:', targetPath);
+      console.warn('[Files API] Path traversal attempt:', {
+        targetPath,
+        rootDirectory,
+        computedRelative: relative(rootDirectory, targetPath),
+      });
       return NextResponse.json(
         { error: 'Path traversal not allowed' },
         { status: 403 }

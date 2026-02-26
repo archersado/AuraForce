@@ -20,7 +20,7 @@ import {
   revokeObjectURLs,
   type PPTXSlide,
   type PPTXParseResult,
-} from '@/utils/pptx-parser';
+} from '@/lib/workspace/pptx-parser';
 
 interface PPTPreviewProps {
   src: string;

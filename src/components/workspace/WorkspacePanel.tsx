@@ -39,13 +39,18 @@ export function WorkspacePanel({
   const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(300);
   const [deleteSuccess, setDeleteSuccess] = useState<string | null>(null);
-  
+  const [error, setError] = useState<string | null>(null);
+  const [selectedPath, setSelectedPath] = useState(workspaceRoot || '');
+
   // Store FileBrowser ref for refreshing
   const fileBrowserRef = useRef<FileBrowserHandle>(null);
   const refreshTriggerRef = useRef<number>(0);
 
   // Use tabs store
-  const { openTab, setActiveTab, closeTab, activeTabId, tabs, markTabAsSaved, markTabAsUnsaved } = useTabsStore();
+  const { openTab, setActiveTab, closeTab, activeTabId, tabs, markTabAsSaved, markTabAsUnsaved, getActiveTab } = useTabsStore();
+
+  // Get active tab
+  const activeTab = getActiveTab();
 
   // Load file content and open as a tab
   const loadFileAndOpenTab = useCallback(async (path: string) => {
@@ -63,21 +68,33 @@ export function WorkspacePanel({
         isActive: true,
         isModified: false,
       });
-
+      setSelectedPath(path);
       setDeleteSuccess(null);
+      setError(null);
     } catch (err) {
       console.error('Failed to load file:', err);
-      alert(err instanceof Error ? err.message : 'Failed to load file');
+      const errorMsg = err instanceof Error ? err.message : 'Failed to load file';
+      setError(errorMsg);
+      alert(errorMsg);
     }
   }, [openTab]);
+
+  // Load file (alias for loadFileAndOpenTab)
+  const loadFile = useCallback(async (path: string) => {
+    await loadFileAndOpenTab(path);
+  }, [loadFileAndOpenTab]);
 
   // Handle file selection from browser
   const handleFileSelect = useCallback(
     (path: string) => {
-      if (activeTab?.path === path) return;
+      if (activeTab?.path === path) {
+        // If clicking on the already active file, don't reload
+        setActiveTab(activeTab.id);
+        return;
+      }
       loadFileAndOpenTab(path);
     },
-    [activeTab?.path, loadFileAndOpenTab]
+    [activeTab?.path, loadFileAndOpenTab, setActiveTab]
   );
 
   // Save file
@@ -236,6 +253,11 @@ export function WorkspacePanel({
       setIsUploadDialogOpen(false);
     }
   }, []);
+
+  // Handle tab close
+  const handleTabClose = useCallback((tabId: string) => {
+    closeTab(tabId);
+  }, [closeTab]);
 
   if (!isOpen) return null;
 

@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/custom-session';
 import { existsSync, mkdirSync } from 'fs';
+import AdmZip from 'adm-zip';
 import path from 'path';
 
 // Platform workspaces root
@@ -104,7 +105,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, description } = body;
+    const { name, description, workflowTemplateId } = body;
 
     if (!name || typeof name !== 'string') {
       return NextResponse.json(
@@ -113,7 +114,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const sanitizedName = name.trim().replace(/[^a-zA-Z0-9_-]/g, '_');
+    // Sanitize project name - keep Chinese characters and most UTF-8 characters
+    // Only replace characters that are unsafe for file systems: / \ : * ? " < > |
+    const sanitizedName = name.trim().replace(/[\\/:*?"<>|]/g, '_');
 
     if (!sanitizedName) {
       return NextResponse.json(
@@ -138,15 +141,80 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create project directory
+    // Create project directory on disk
     const userWorkspacePath = ensureUserWorkspaceDir(session?.user?.id);
     const projectPath = path.join(userWorkspacePath, sanitizedName);
+
+    if (!existsSync(projectPath)) {
+      mkdirSync(projectPath, { recursive: true });
+    }
+
+    // Extract workflow template if provided
+    let extractedFiles: string[] = [];
+    if (workflowTemplateId) {
+      const template = await prisma.workflowSpec.findUnique({
+        where: { id: workflowTemplateId },
+      });
+
+      if (!template) {
+        return NextResponse.json(
+          { error: 'Template not found' },
+          { status: 404 }
+        );
+      }
+
+      // Allow loading public templates or own templates
+      if (template.userId !== session?.user?.id && template.visibility !== 'public') {
+        return NextResponse.json(
+          { error: 'Access denied to template' },
+          { status: 403 }
+        );
+      }
+
+      // Check if zip path exists
+      const zipPath = template.ccPath;
+      console.log('[Workspaces API] Template zip path:', zipPath);
+
+      if (existsSync(zipPath)) {
+        try {
+          // Extract template to workspace
+          const zip = new AdmZip(zipPath);
+          const zipEntries = zip.getEntries();
+
+          console.log('[Workspaces API] Extracting', zipEntries.length, 'entries from template');
+
+          // Extract all files, maintaining the directory structure from the ZIP
+          for (const entry of zipEntries) {
+            if (!entry.isDirectory) {
+              const entryPath = path.join(projectPath, entry.entryName);
+              const entryDir = path.dirname(entryPath);
+
+              // Create directory if it doesn't exist
+              if (!existsSync(entryDir)) {
+                mkdirSync(entryDir, { recursive: true });
+              }
+
+              zip.extractEntryTo(entry, projectPath, true, true);
+              extractedFiles.push(entry.entryName);
+              console.log('[Workspaces API] Extracted:', entry.entryName);
+            }
+          }
+
+          console.log('[Workspaces API] Successfully extracted', extractedFiles.length, 'files');
+        } catch (error) {
+          console.error('[Workspaces API] Failed to extract template:', error);
+          // Continue with project creation even if extraction fails
+        }
+      } else {
+        console.warn('[Workspaces API] Template zip file not found:', zipPath);
+      }
+    }
 
     // Create project in database
     const project = await prisma.userWorkspaceProject.create({
       data: {
         userId: session?.user?.id,
-        workflowTemplateId: null,
+        workflowTemplateId: workflowTemplateId || null,
         name: sanitizedName,
         path: projectPath,
         description: description || null,
@@ -155,8 +223,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Project "${sanitizedName}" created successfully`,
+      message: `Project "${sanitizedName}" created successfully${workflowTemplateId ? ` with ${extractedFiles.length} files from template` : ''}`,
       project,
+      extractedFilesCount: extractedFiles.length,
     });
   } catch (error) {
     console.error('[Workspaces API] Error:', error);

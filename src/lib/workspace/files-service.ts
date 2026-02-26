@@ -145,14 +145,21 @@ export async function readFile(
     url.searchParams.set('root', root);
   }
 
+  console.log('[files-service] readFile requesting:', { path, root, url: url.toString() });
+
   const response = await fetch(url.toString());
+
+  console.log('[files-service] readFile response status:', response.status);
 
   if (!response.ok) {
     const error = await response.json();
+    console.error('[files-service] readFile error:', error);
     throw new Error(error.error || 'Failed to read file');
   }
 
-  return response.json();
+  const result = await response.json();
+  console.log('[files-service] readFile result:', { contentLength: result.content?.length, metadata: result.metadata });
+  return result;
 }
 
 /**
@@ -443,4 +450,62 @@ export function isPresentationFile(filename: string): boolean {
   const ext = filename.split('.').pop()?.toLowerCase() || '';
   const presentationExtensions = ['ppt', 'pptx', 'odp'];
   return presentationExtensions.includes(ext);
+}
+
+/**
+ * Asset file to be copied to workspace
+ */
+export interface AssetFile {
+  name: string;
+  content: string;
+  type: 'workflow' | 'subagent' | 'skill' | 'script';
+  path?: string;
+  directory?: string;
+}
+
+/**
+ * Response from copy assets endpoint
+ */
+export interface CopyAssetsResponse {
+  success: boolean;
+  message: string;
+  workspaceRoot: string;
+  baseDirectory?: string;
+  results: Array<{
+    asset: string;
+    success: boolean;
+    path?: string;
+    error?: string;
+  }>;
+  summary: {
+    total: number;
+    success: number;
+    failed: number;
+  };
+}
+
+/**
+ * Copy generated assets to workspace
+ */
+export async function copyAssetsToWorkspace(options: {
+  projectId?: string;
+  customPath?: string;
+  assets: AssetFile[];
+  createDirectory?: boolean;
+  directoryName?: string;
+}): Promise<CopyAssetsResponse> {
+  const response = await apiFetch('/api/assets/copy', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(options),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to copy assets to workspace');
+  }
+
+  return response.json();
 }

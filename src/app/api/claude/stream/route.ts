@@ -182,6 +182,34 @@ The Story 3.3 implementation includes:
             const workingDir = projectPath || process.cwd();
             console.log('[Stream API] Working directory:', workingDir);
 
+            // Determine node path to fix "spawn node ENOENT" issue
+            // Use absolute path to current node to ensure SDK can find it
+            const nodePath = process.execPath;
+            const nodeDir = nodePath.substring(0, nodePath.lastIndexOf('/'));
+
+            console.log('[Stream API] Node path check:');
+            console.log('[Stream API]   process.execPath:', nodePath);
+            console.log('[Stream API]   nodeDir:', nodeDir);
+            console.log('[Stream API]   exists:', await (async () => {
+              const { access } = await import('fs/promises');
+              try {
+                await access(nodePath);
+                return true;
+              } catch {
+                return false;
+              }
+            })());
+
+            // Build PATH ensuring Node.js directory is included
+            // Make sure nodeDir is first and appears in PATH to help SDK find node
+            const existingPath = process.env.PATH || '';
+            const pathDirs = [
+              nodeDir, // Add node directory first for priority
+              existingPath.includes(nodeDir) ? existingPath : `${nodeDir}:${existingPath}`,
+            ].filter(p => p).join(':');
+
+            console.log('[Stream API]   PATH constructed (first 200 chars):', pathDirs.slice(0, 200));
+
             const sdkOptions: Record<string, unknown> = {
               model: actualModel,
               permissionMode,
@@ -195,10 +223,12 @@ The Story 3.3 implementation includes:
               includePartialMessages: true,
               // IMPORTANT: Resume session to maintain context (claudecodeui pattern)
               ...(resumeSessionId && { resume: resumeSessionId }),
-              // Add environment variables for SDK (only essential ones)
+              // Add environment variables for SDK
               env: {
-                // IMPORTANT: Keep PATH so child processes can find Node.js
-                ...(process.env.PATH && { PATH: process.env.PATH }),
+                // CRITICAL: Use absolute node path and ensure PATH includes node directory
+                NODE: nodePath,
+                PATH: pathDirs,
+                // IMPORTANT: Keep other environment variables
                 ...(claudeConfig.authToken && { ANTHROPIC_AUTH_TOKEN: claudeConfig.authToken }),
                 ...(claudeConfig.baseUrl && { ANTHROPIC_BASE_URL: claudeConfig.baseUrl }),
                 ...(claudeConfig.defaultModel && { ANTHROPIC_MODEL: claudeConfig.defaultModel }),
@@ -220,6 +250,8 @@ The Story 3.3 implementation includes:
 
               let sessionId = '';
               let messageCount = 0;
+              let lastMessage: any = null;
+              let actualError: string | null = null;
               let startTime = Date.now();
               let lastMessageTime = Date.now();
               const timeoutMs = 120000; // 2分钟超时
@@ -243,6 +275,18 @@ The Story 3.3 implementation includes:
                   const elapsed = Date.now() - startTime;
                   lastMessageTime = Date.now();
                   messageCount++;
+                  lastMessage = message;
+
+                  // Log all message types for debugging
+                  console.log('[Stream API] Message received:', {
+                    type: message.type,
+                    hasSessionId: !!message.session_id,
+                    hasEvent: !!message.event,
+                    eventType: message.event?.type,
+                    hasContent: !!message.message,
+                    messageType: message.message?.type,
+                    contentFirstType: message.message?.content?.[0]?.type,
+                  });
 
                   // Capture session ID from first message
                   if (message.session_id && !sessionId) {
@@ -254,6 +298,12 @@ The Story 3.3 implementation includes:
                     });
                   }
 
+                  // Check for error in result messages
+                  if (message.type === 'result' && (message as any).is_error === true) {
+                    actualError = (message as any).result || 'Unknown error from Claude SDK';
+                    console.error('[Stream API] SDK error detected:', actualError);
+                  }
+
                   // 转换并发送消息 - 不要跳过任何消息，按 claudecodeui 的方式处理
                   sendSSE({
                     type: 'claude-response',
@@ -263,8 +313,40 @@ The Story 3.3 implementation includes:
               } catch (loopError) {
                 // Check if this is the expected "process exited" error after receiving messages
                 const errorMessage = loopError instanceof Error ? loopError.message : String(loopError);
+
+                // If we captured an actual error from the SDK messages, use that instead
+                if (actualError) {
+                  console.error('[Stream API] SDK error (captured from messages):', actualError);
+                  sendSSE({
+                    type: 'claude-error',
+                    error: actualError,
+                    timestamp: new Date().toISOString(),
+                  });
+                  return; // Exit early after sending error
+                }
+
+                // Check if this is a graceful exit after completing work
                 if (messageCount > 0 && (errorMessage.includes('exited with code') || errorMessage.includes('exited'))) {
-                  // Not a real error - just the cleanup of the child process
+                  // Check if exit code is non-zero and we don't have a completion message
+                  // This indicates an actual error (like invalid API key)
+                  const exitCodeMatch = errorMessage.match(/exited with code (\d+)/);
+                  if (exitCodeMatch && parseInt(exitCodeMatch[1], 10) !== 0) {
+                    // Non-zero exit code after receiving messages - likely an error
+                    // Check if last message was a result with data (indicates completion with data)
+                    const isGracefulExit = lastMessage?.type === 'result' && lastMessage?.subtype === 'success' && !lastMessage?.is_error;
+                    
+                    if (!isGracefulExit) {
+                      console.error('[Stream API] Process exited with non-zero code:', errorMessage);
+                      const errorDetail = actualError || `Claude SDK process exited abnormally: ${errorMessage}`;
+                      sendSSE({
+                        type: 'claude-error',
+                        error: errorDetail,
+                        timestamp: new Date().toISOString(),
+                      });
+                      return;
+                    }
+                  }
+                  // Otherwise, it's just the normal cleanup of the child process
                 } else {
                   // Real error - rethrow
                   console.error('[Stream API] Real error:', errorMessage);

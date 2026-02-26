@@ -35,6 +35,7 @@ export default async function middleware(req: NextRequest) {
     '/simple*',
     '/_next',
     '/favicon.ico',
+    '/experience-center', // Allow public access to experience center for testing
   ]
 
   // Check if the current path is a public route

@@ -87,12 +87,19 @@ export default function RegisterForm() {
         throw new Error(result.message || '注册失败');
       }
 
-      setSuccess('注册成功！验证邮件已发送到您的邮箱');
-
-      // Redirect to verification page after delay
-      setTimeout(() => {
-        router.push(`/verify?email=${encodeURIComponent(data.email)}`);
-      }, 2000);
+      // In development mode with auto-verification, redirect to workspace
+      if (process.env.NODE_ENV === 'development' && result.requireVerification === false) {
+        setSuccess('注册成功！已自动登录');
+        setTimeout(() => {
+          router.push('/workspace');
+        }, 1500);
+      } else {
+        setSuccess('注册成功！验证邮件已发送到您的邮箱');
+        // Redirect to verification page after delay
+        setTimeout(() => {
+          router.push(`/verify?email=${encodeURIComponent(data.email)}`);
+        }, 2000);
+      }
 
     } catch (err) {
       setError(err instanceof Error ? err.message : '注册失败，请稍后重试');

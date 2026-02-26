@@ -93,13 +93,11 @@ export function MessageBubble({ message, onInteractiveResponse, onToolResponse, 
         </div>
 
         {/* Message content with markdown rendering */}
-        <div className="prose prose-sm max-w-none overflow-auto">
-          <MarkdownRenderer
-            content={message.content}
-            isStreaming={message.isStreaming}
-            isUserMessage={isUser}
-          />
-        </div>
+        <MarkdownRenderer
+          content={message.content}
+          isStreaming={message.isStreaming}
+          isUserMessage={isUser}
+        />
 
         {/* Tool executions */}
         {message.toolExecutions && message.toolExecutions.length > 0 && (

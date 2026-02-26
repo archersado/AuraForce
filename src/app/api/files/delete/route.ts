@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/custom-session';
 import { unlink, stat } from 'fs/promises';
 import { relative, resolve } from 'path';
+import { isSafePath } from '@/lib/api/path-security';
 
 // Workspace root directory
 const WORKSPACE_ROOT = process.cwd();
@@ -35,24 +36,6 @@ const PROTECTED_PATTERNS = [
   /^src\/lib$/,
   /^prisma$/,
 ];
-
-/**
- * Check if a path is safe (within workspace root)
- */
-function isSafePath(path: string, root: string): boolean {
-  const resolvedPath = resolve(path);
-  const resolvedRoot = resolve(root);
-
-  // Check if resolved path is within root
-  const relativePath = relative(resolvedRoot, resolvedPath);
-
-  // Path should not start with '..' and should not be absolute
-  if (relativePath.startsWith('..') || relativePath.startsWith('/') || relativePath.startsWith('\\')) {
-    return false;
-  }
-
-  return true;
-}
 
 /**
  * Check if a path is protected (should not be deleted)

@@ -1,0 +1,96 @@
+/**
+ * Data Models for Prisma Schema
+ *
+ * This file contains the Prisma schema additions needed for:
+ * - Epic 14: Workspace Editor & File Management
+ * - Epic 5: Success Case Experience Center
+ */
+
+/**
+ * Add these models to your prisma/schema.prisma file
+ */
+
+/*
+model ExperienceSession {
+  id          String   @id @default(cuid())
+  userId      String
+  caseId      String
+  industry    String
+  startedAt   DateTime
+  completedAt DateTime?
+  status      String   @default("in_progress") // in_progress, paused, completed, abandoned
+  userProfile Json?
+  duration    Int?     // seconds
+  score       Int?     // 0-100
+  decisions   Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  case        Case?    @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([caseId])
+  @@index([status])
+  @@index([userId, status])
+}
+
+model ExperienceHistory {
+  id          String   @id @default(cuid())
+  userId      String
+  caseId      String
+  caseTitle   String
+  industry    String
+  completedAt DateTime @default(now())
+  duration    Int      // seconds
+  score       Int      // 0-100
+  strategy    String?  // aggressive, balanced, conservative
+  decisions   Json?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([caseId])
+  @@index([userId, industry])
+  @@index([completedAt])
+}
+
+model Case {
+  id          String      @id @default(cuid())
+  title       String
+  slug        String      @unique
+  description String
+  industry    String
+  duration    Int         // in minutes
+  difficulty  String      // beginner, intermediate, advanced
+  category    String?
+  tags        String[]
+  imageData   String?
+  status      String      @default("active") // active, draft, archived
+  outcomes    Json?
+  steps       Json?       // Experience step definitions
+  analytics   Json?       // Usage analytics
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  sessions    ExperienceSession[]
+
+  @@index([industry])
+  @@index([status])
+  @@index([industry, status])
+}
+
+// Update User model to include experience profile
+model User {
+  // ... existing fields ...
+
+  experienceProfile Json?
+  experienceHistory ExperienceHistory[]
+}
+*/
+
+// Note: Run these commands after adding models:
+// 1. npx prisma db push
+// 2. Update frontend types accordingly

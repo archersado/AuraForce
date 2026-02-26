@@ -1,0 +1,27 @@
+code: ai-dev-team
+name: "AI Dev Team: 协作式AI产研团队"
+header: "协作式AI产研团队 - 通过多Agent协作实现敏捷开发全流程自动化"
+subheader: "Agent and Workflow Configuration for AI Dev Team"
+default_selected: false
+
+# Variables from Core Config inserted:
+## user_name
+## communication_language
+## document_output_language
+## output_folder
+
+# Custom Variables
+project_name:
+  prompt: "What is the name of the project you want to develop?"
+  default: "{directory_name}"
+  result: "{value}"
+
+artifacts_folder:
+  prompt: "Where should project artifacts (code, designs, deliverables) be stored?"
+  default: "{output_folder}/project-artifacts"
+  result: "{project-root}/{value}"
+
+dev_docs_folder:
+  prompt: "Where should development documents (PRD, technical specs) be stored?"
+  default: "dev-docs"
+  result: "{project-root}/{value}"

@@ -1,7 +1,6 @@
 # Auto Claude data directory
 .auto-claude/
 .playwright-mcp/
-/_*
 /.next
 /node_modules
 /workspaces
